@@ -1,0 +1,6 @@
+*.egg-info
+*.swp
+snapshots
+data/block*
+gene_phewas.db
+__pycache__
