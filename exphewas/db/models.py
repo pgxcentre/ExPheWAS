@@ -78,7 +78,7 @@ class Result(Base):
     id = Column(Integer, Sequence("result_id_seq"), primary_key=True)
 
     # Ensembl ID, e.g. ENSG000...
-    gene = Column(String)
+    gene = Column(String, ForeignKey("genes.ensembl_id"))
 
     # Variance explained for the analysis, e.g. 95
     # This determines the number of principal components included in the
@@ -89,7 +89,7 @@ class Result(Base):
     outcome_id = Column(ForeignKey("outcomes.id"))
 
     __table_args__ = (
-        UniqueConstraint("gene", "analysis", "outcome_id",
+        UniqueConstraint("gene", "analysis", "outcome_id", "variance_pct",
                          name="result_key_uq"),
     )
 

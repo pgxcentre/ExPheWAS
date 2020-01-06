@@ -27,3 +27,8 @@ n_pcs:
 .PHONY: clear_results
 clear_results:
 	exphewas-db delete-results
+
+
+.PHONY: serve
+serve:
+	FLASK_ENV=development FLASK_APP=exphewas.api flask run
