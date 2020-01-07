@@ -4,3 +4,5 @@ snapshots
 data/block*
 gene_phewas.db
 __pycache__
+frontend/node_modules
+frontend/dist/*
