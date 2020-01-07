@@ -6,6 +6,7 @@ import json
 
 from sqlalchemy.orm.exc import NoResultFound
 from flask import Flask, jsonify, abort
+from flask_cors import CORS
 
 from ..db import models
 from ..db.engine import Session
@@ -13,6 +14,8 @@ from ..db.utils import mod_to_dict
 
 
 app = Flask(__name__)
+
+CORS(app)
 
 
 @app.errorhandler(404)
