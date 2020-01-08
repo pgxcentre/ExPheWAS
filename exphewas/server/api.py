@@ -3,34 +3,66 @@ Flask-based REST API for the results of the ExPheWAS analysis.
 """
 
 import json
+import functools
 
 from sqlalchemy.orm.exc import NoResultFound
-from flask import Flask, jsonify, abort
-from flask_cors import CORS
+from flask import Blueprint, jsonify, abort
 
 from ..db import models
 from ..db.engine import Session
 from ..db.utils import mod_to_dict
 
 
-app = Flask(__name__)
-
-CORS(app)
+api = Blueprint("api_blueprint", __name__, url_prefix="/api")
 
 
-@app.errorhandler(404)
+class make_api(object):
+    def __init__(self, rule, handler=None):
+        self.rule = rule
+        self.handler = handler
+
+    @staticmethod
+    def _default_api_call_handler(f, *args, **kwargs):
+        try:
+            results = f(*args, **kwargs)
+        except RessourceNotFoundError as exception:
+            return resource_not_found(exception.message)
+
+        return jsonify(results)
+
+    def __call__(self, f):
+        if self.handler is None:
+            handler = self._default_api_call_handler
+        else:
+            handler = self.handler
+
+        api.add_url_rule(
+            self.rule,
+            f.__name__,
+            functools.partial(handler, f=f)
+        )
+
+        return f
+
+
+class RessourceNotFoundError(Exception):
+    def __init__(self, message):
+        self.message = message
+
+
+@api.errorhandler(404)
 def resource_not_found(e):
     return jsonify(error=str(e)), 404
 
 
-@app.route("/api/outcome")
+@make_api("/outcome")
 def get_outcomes():
     res = Session.query(models.Outcome).all()
 
-    return jsonify([{"id": i.id, "label": i.label} for i in res])
+    return [{"id": i.id, "label": i.label} for i in res]
 
 
-@app.route("/api/outcome/<id>")
+@make_api("/outcome/<id>")
 def get_outcome(id):
     try:
         outcome = Session.query(models.Outcome).filter_by(id=id).one()
@@ -57,10 +89,10 @@ def get_outcome(id):
             "n": outcome.n,
         })
 
-    return jsonify(d)
+    return d
 
 
-@app.route("/api/outcome/<id>/results")
+@make_api("/outcome/<id>/results")
 def get_outcome_results(id):
     try:
         gene = Session.query(models.Outcome).filter_by(id=id).one()
@@ -89,10 +121,10 @@ def get_outcome_results(id):
 
     results = [dict(zip(fields, i)) for i in results]
 
-    return jsonify(results)
+    return results
 
 
-@app.route("/api/gene/name/<name>")
+@make_api("/gene/name/<name>")
 def get_gene_by_name(name):
     try:
         gene = Session.query(models.Gene).filter_by(name=name).one()
@@ -103,10 +135,10 @@ def get_gene_by_name(name):
     d = mod_to_dict(gene)
     d.update({"uniprot_id": gene.uniprot_ids})
 
-    return jsonify(d)
+    return d
 
 
-@app.route("/api/gene/ensembl/<ensg>")
+@make_api("/gene/ensembl/<ensg>")
 def get_gene_by_ensembl_id(ensg):
     try:
         gene = Session.query(models.Gene).filter_by(ensembl_id=ensg).one()
@@ -119,15 +151,15 @@ def get_gene_by_ensembl_id(ensg):
     d = mod_to_dict(gene)
     d.update({"uniprot_id": gene.uniprot_ids})
 
-    return jsonify(d)
+    return d
 
 
-@app.route("/api/gene/<ensg>/results")
+@make_api("/gene/<ensg>/results")
 def get_gene_results(ensg):
     try:
-        gene = Session.query(models.Gene).filter_by(ensembl_id=ensg).one()
+        Session.query(models.Gene).filter_by(ensembl_id=ensg).one()
     except NoResultFound:
-        return resource_not_found(
+        raise RessourceNotFoundError(
             f"Could not find gene (by Ensembl ID) '{ensg}'."
         )
 
@@ -151,9 +183,4 @@ def get_gene_results(ensg):
 
     results = [dict(zip(fields, i)) for i in results]
 
-    return jsonify(results)
-
-
-@app.teardown_appcontext
-def shutdown_session(exception=None):
-    Session.remove()
+    return results

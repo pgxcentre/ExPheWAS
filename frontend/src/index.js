@@ -6,33 +6,61 @@ import * as dt from 'datatables.net';
 import { API_URL } from "./config";
 
 
-async function get_outcomes() {
-  let outcomes;
-
+async function api_call(endpoint) {
+  let results;
   try {
-    let response = await fetch(`${API_URL}/api/outcome`);
-    outcomes = await response.json();
+    let response = await fetch(API_URL + endpoint);
+    results = await response.json();
   }
   catch (err) {
     console.log(err);
   }
 
-  return outcomes;
+  return results;
 }
 
 
-async function main() {
-  let outcomes = await get_outcomes();
-
+async function mainOutcomeList() {
   $('#app #outcomes')
-    .DataTable( {
-      data: outcomes,
+    .DataTable({
+      data: await api_call('/outcome'),
       columns: [
-          { data: 'id' },
-          { data: 'label' }
+        {data: 'id'},
+        {data: 'label'}
+      ],
+      columnDefs: [
+        {
+          targets: 0,
+          render: function(data, type, row, meta) {
+            return `<a href="/outcome/${data}">${data}</a>`;
+          }
+        },
+        {
+          targets: 1,
+          render: function (data, type, row, meta) {
+            return `<a href="/outcome/${row.id}">${data}</a>`;
+          }
+        }
       ]
-  } );
-
+  });
 }
 
-main();
+
+async function mainOutcomeResults(id) {
+  $('#app #outcomeResults')
+    .DataTable({
+      data: await api_call(`/outcome/${id}/results`),
+      columns: [
+        {data: 'analysis'},
+        {data: 'gene'},
+        {data: 'p'},
+        {data: 'variance_pct'}
+      ]
+  });
+}
+
+
+window.pages = {
+  mainOutcomeList,
+  mainOutcomeResults
+}

@@ -1,0 +1,28 @@
+{% extends "index.html" %}
+{% block body %}
+    <h1>Outcome '{{ label }}' ({{ id }})</h1>
+    <div id="app">
+
+      Trying to write the label here {{ label }}.
+
+      <div class="outcomeResults">
+        <table id="outcomeResults" class="display" style="width:100%">
+          <thead>
+            <tr>
+              <th>Analysis</th>
+              <th>Gene</th>
+              <th>P-Value</th>
+              <th>Pct Variance Explained</th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+
+    </div>
+{% endblock %}
+
+{% block other_script %}
+    <script>
+      window.pages.mainOutcomeResults("{{ id }}");
+    </script>
+{% endblock %}

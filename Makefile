@@ -31,4 +31,4 @@ clear_results:
 
 .PHONY: serve
 serve:
-	FLASK_ENV=development FLASK_APP=exphewas.api flask run
+	FLASK_ENV=development FLASK_APP=exphewas.server flask run --port 5001

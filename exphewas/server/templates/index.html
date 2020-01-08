@@ -10,19 +10,11 @@
 
     <title>ExPheWAS Browser</title>
   </head>
+
   <body>
-    <div id="app">
+  {% block body %}{% endblock %}
 
-      <table id="outcomes" class="display" style="width:100%">
-        <thead>
-          <tr>
-            <th>Outcome Id</th>
-            <th>Description</th>
-          </tr>
-        </thead>
-      </table>
-
-    </div>
-    <script type="text/javascript" src="dist/main.js"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='main.js') }}"></script>
+    {% block other_script %}{% endblock %}
   </body>
 </html>
