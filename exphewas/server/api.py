@@ -94,13 +94,13 @@ def get_outcome(id):
 @make_api("/outcome/<id>/results")
 def get_outcome_results(id):
     try:
-        gene = Session.query(models.Outcome).filter_by(id=id).one()
+        Session.query(models.Outcome).filter_by(id=id).one()
     except NoResultFound:
         raise RessourceNotFoundError(f"Could not find outcome '{id}'.")
 
     # Find all results.
     fields = ("id", "gene", "analysis", "outcome_id", "outcome_label",
-              "variance_pct", "p")
+              "variance_pct", "p", "gene_name")
 
     results = Session\
         .query(
@@ -111,8 +111,10 @@ def get_outcome_results(id):
             models.Outcome.label,
             models.Result.variance_pct,
             models.Result.p,
+            models.Gene.name,
         )\
-        .filter(models.Outcome.id==models.Result.outcome_id)\
+        .filter(models.Outcome.id == models.Result.outcome_id)\
+        .filter(models.Result.gene == models.Gene.ensembl_id)\
         .filter_by(outcome_id=id)\
         .all()
 
@@ -164,7 +166,7 @@ def get_gene_results(ensg):
 
     # Find all results.
     fields = ("id", "gene", "analysis", "outcome_id", "outcome_label",
-              "variance_pct", "p")
+              "variance_pct", "p", "gene_name")
 
     results = Session\
         .query(
@@ -175,8 +177,10 @@ def get_gene_results(ensg):
             models.Outcome.label,
             models.Result.variance_pct,
             models.Result.p,
+            models.Gene.name,
         )\
-        .filter(models.Outcome.id==models.Result.outcome_id)\
+        .filter(models.Outcome.id == models.Result.outcome_id)\
+        .filter(models.Gene.ensembl_id == models.Result.gene)\
         .filter_by(gene=ensg)\
         .all()
 
