@@ -19,7 +19,7 @@ ANALYSIS_TYPES = [
 ]
 
 
-AnalysisEnum = Enum(*ANALYSIS_TYPES)
+AnalysisEnum = Enum(*ANALYSIS_TYPES, name="enum_analysis_type")
 
 
 Base = declarative_base()
@@ -38,6 +38,9 @@ class Outcome(Base):
 
     id = Column(String, primary_key=True)
     label = Column(String, nullable=False)
+
+    analysis_type = Column(AnalysisEnum, nullable=False)
+
     type = Column(String(20))
 
     __mapper_args__ = {
@@ -85,17 +88,16 @@ class Result(Base):
     # augmented model.
     variance_pct = Column(Integer, nullable=False)
 
-    analysis = Column(AnalysisEnum)
     outcome_id = Column(ForeignKey("outcomes.id"))
 
     __table_args__ = (
-        UniqueConstraint("gene", "analysis", "outcome_id", "variance_pct",
+        UniqueConstraint("gene", "outcome_id", "variance_pct",
                          name="result_key_uq"),
     )
 
     p = Column(Float)
 
-    type = Column(String(20))
+    type = Column(String(30))
 
     __mapper_args__ = {
         "polymorphic_on": type,

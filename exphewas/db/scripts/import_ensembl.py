@@ -14,6 +14,9 @@ def parse_line(line):
 
     ensembl_id = meta["gene_id"]
 
+    if len(chrom) > 2:
+        raise ValueError("Contig unsupported.")
+
     return Gene(
         ensembl_id=ensembl_id,
         name=meta.get("gene_name"),
@@ -51,7 +54,10 @@ def main(args):
     genes = []
     with reader(filename, "rt") as f:
         for line in f:
-            genes.append(parse_line(line))
+            try:
+                genes.append(parse_line(line))
+            except ValueError:
+                pass
 
     session = Session()
     session.add_all(genes)

@@ -12,7 +12,7 @@ from ..models import (
 def main(args):
     session = Session()
 
-    df = pd.read_csv(args.filename)
+    df = pd.read_csv(args.filename, dtype={"outcome_id": str})
 
     if "sum_of_sq" in df.columns:
         create_object = _process_continuous_result
@@ -30,6 +30,8 @@ def main(args):
     for i, row in df.iterrows():
         objects.append(create_object(row, args, session))
 
+    session.commit()
+
     session.add_all(objects)
     session.commit()
 
@@ -43,7 +45,8 @@ def _process_continuous_result(row, args, session):
     except sqlalchemy.orm.exc.NoResultFound:
         outcome = ContinuousOutcome(
             id = row.outcome_id,
-            label = row.outcome_label
+            label = row.outcome_label,
+            analysis_type = args.analysis,
         )
 
         session.add(outcome)
@@ -51,7 +54,6 @@ def _process_continuous_result(row, args, session):
     result = ContinuousVariableResult(
         gene = args.gene,
         variance_pct = args.pct_variance,
-        analysis = args.analysis,
         outcome_id = outcome.id,
         p = row.p,
 
@@ -74,6 +76,7 @@ def _process_binary_result(row, args, session):
         outcome = BinaryOutcome(
             id = row.outcome_id,
             label = row.outcome_label,
+            analysis_type = args.analysis,
             n_cases = row.n_cases,
             n_controls = row.n_controls,
             n_excluded_from_controls = row.n_excl_from_ctrls
@@ -84,7 +87,6 @@ def _process_binary_result(row, args, session):
     result = BinaryVariableResult(
         gene = args.gene,
         variance_pct = args.pct_variance,
-        analysis = args.analysis,
         outcome_id = outcome.id,
         p = row.p,
 

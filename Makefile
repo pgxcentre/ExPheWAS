@@ -1,11 +1,12 @@
+# export EXPHEWAS_DATABASE_URL to configure the database.
+# e.g. export EXPHEWAS_DATABASE_URL=postgresql+psycopg2://user:pwd@localhost/mydatabase
+
 .PHONY: database
-database: create ensembl uniprot_xref
+database: create ensembl uniprot_xref n_pcs
 
 
 .PHONY: create
 create:
-	# Drop first
-	rm -f gene_phewas.db
 	exphewas-db create
 
 

@@ -18,11 +18,13 @@ def delete_results():
     session.query(models.ContinuousVariableResult)\
         .delete(synchronize_session=False)
 
-    session.query(models.DiscreteVariableResult)\
+    session.query(models.BinaryVariableResult)\
         .delete(synchronize_session=False)
 
     session.query(models.Result)\
         .delete(synchronize_session=False)
+
+    session.commit()
 
 
 def main():
