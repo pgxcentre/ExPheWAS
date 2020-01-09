@@ -1,0 +1,87 @@
+{% extends "index.html" %}
+{% block body %}
+    <h1>Gene <a href="https://www.uniprot.org/uniprot/{{ uniprot_id }}">{{ name }}</a> (<a href="http://grch37.ensembl.org/Homo_sapiens/Gene/Summary?g={{ ensembl_id }}">{{ ensembl_id }}</a>)</h1>
+    <div id="app">
+
+      <div class="geneDescription">
+        chr{{ chrom }}:{{ '{:,d}'.format(start) }}-{{ '{:,d}'.format(end) }}
+      </div>
+
+      <div class="geneResults continuousVariable">
+        <h2>Continuous variables</h2>
+        <table id="geneResultsContinuous" class="display" style="width:100%">
+          <thead>
+            <tr>
+              <th>Outcome Id</th>
+              <th>Description</th>
+              <th>P-Value</th>
+              <th>Pct Variance Explained</th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+
+      <div class="geneResults cvEndpoints">
+        <h2>Cardiovascular Endpoints</h2>
+        <table id="geneResultsCVEndpoints" class="display" style="width:100%">
+          <thead>
+            <tr>
+              <th>Outcome Id</th>
+              <th>Description</th>
+              <th>P-Value</th>
+              <th>Pct Variance Explained</th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+
+      <div class="geneResults selfReported">
+        <h2>Self Reported</h2>
+        <table id="geneResultsSelfReported" class="display" style="width:100%">
+          <thead>
+            <tr>
+              <th>Outcome Id</th>
+              <th>Description</th>
+              <th>P-Value</th>
+              <th>Pct Variance Explained</th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+
+      <div class="geneResults icd10Block">
+        <h2>ICD10 Blocks</h2>
+        <table id="geneResultsICD10Block" class="display" style="width:100%">
+          <thead>
+            <tr>
+              <th>Outcome Id</th>
+              <th>Description</th>
+              <th>P-Value</th>
+              <th>Pct Variance Explained</th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+
+      <div class="geneResults icd103Char">
+        <h2>ICD10 (3 characters)</h2>
+        <table id="geneResultsICD103Char" class="display" style="width:100%">
+          <thead>
+            <tr>
+              <th>Outcome Id</th>
+              <th>Description</th>
+              <th>P-Value</th>
+              <th>Pct Variance Explained</th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+
+    </div>
+{% endblock %}
+
+{% block other_script %}
+    <script>
+      window.pages.mainGeneResults("{{ ensembl_id }}");
+    </script>
+{% endblock %}
