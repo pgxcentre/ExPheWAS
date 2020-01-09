@@ -52,6 +52,67 @@ async function mainOutcomeResults(id) {
       data: await api_call(`/outcome/${id}/results`),
       columns: [
         {data: 'gene'},
+        {data: 'gene_name'},
+        {data: 'p'},
+        {data: 'variance_pct'}
+      ]
+  });
+}
+
+
+async function mainGeneResults(id) {
+  let data = await api_call(`/gene/${id}/results`);
+
+  $('#app #geneResultsContinuous')
+    .DataTable({
+      data: data.filter(d => d.analysis === 'CONTINUOUS_VARIABLE'),
+      columns: [
+        {data: 'outcome_id'},
+        {data: 'outcome_label'},
+        {data: 'p'},
+        {data: 'variance_pct'}
+      ]
+  });
+
+  $('#app #geneResultsCVEndpoints')
+    .DataTable({
+      data: data.filter(d => d.analysis === 'CV_ENDPOINTS'),
+      columns: [
+        {data: 'outcome_id'},
+        {data: 'outcome_label'},
+        {data: 'p'},
+        {data: 'variance_pct'}
+      ]
+  });
+
+  $('#app #geneResultsSelfReported')
+    .DataTable({
+      data: data.filter(d => d.analysis === 'SELF_REPORTED'),
+      columns: [
+        {data: 'outcome_id'},
+        {data: 'outcome_label'},
+        {data: 'p'},
+        {data: 'variance_pct'}
+      ]
+  });
+
+  $('#app #geneResultsICD10Block')
+    .DataTable({
+      data: data.filter(d => d.analysis === 'ICD10_BLOCK'),
+      columns: [
+        {data: 'outcome_id'},
+        {data: 'outcome_label'},
+        {data: 'p'},
+        {data: 'variance_pct'}
+      ]
+  });
+
+  $('#app #geneResultsICD103Char')
+    .DataTable({
+      data: data.filter(d => d.analysis === 'ICD10_3CHAR'),
+      columns: [
+        {data: 'outcome_id'},
+        {data: 'outcome_label'},
         {data: 'p'},
         {data: 'variance_pct'}
       ]
@@ -61,5 +122,6 @@ async function mainOutcomeResults(id) {
 
 window.pages = {
   mainOutcomeList,
-  mainOutcomeResults
+  mainOutcomeResults,
+  mainGeneResults
 }
