@@ -2,11 +2,10 @@
 Flask-based REST API for the results of the ExPheWAS analysis.
 """
 
-import json
 import functools
 
 from sqlalchemy.orm.exc import NoResultFound
-from flask import Blueprint, jsonify, abort
+from flask import Blueprint, jsonify
 
 from ..db import models
 from ..db.engine import Session
@@ -67,7 +66,7 @@ def get_outcome(id):
     try:
         outcome = Session.query(models.Outcome).filter_by(id=id).one()
     except NoResultFound:
-        return resource_not_found(f"Could not find outcome '{id}'.")
+        raise RessourceNotFoundError(f"Could not find outcome '{id}'.")
 
     # Extract shared fields.
     d = {
@@ -97,9 +96,7 @@ def get_outcome_results(id):
     try:
         gene = Session.query(models.Outcome).filter_by(id=id).one()
     except NoResultFound:
-        return resource_not_found(
-            f"Could not find outcome '{id}'."
-        )
+        raise RessourceNotFoundError(f"Could not find outcome '{id}'.")
 
     # Find all results.
     fields = ("id", "gene", "analysis", "outcome_id", "outcome_label",
@@ -129,7 +126,9 @@ def get_gene_by_name(name):
     try:
         gene = Session.query(models.Gene).filter_by(name=name).one()
     except NoResultFound:
-        return resource_not_found(f"Could not find gene (by name) '{name}'.")
+        raise RessourceNotFoundError(
+            f"Could not find gene (by name) '{name}'."
+        )
 
     # Add the Uniprot xref.
     d = mod_to_dict(gene)
@@ -143,7 +142,7 @@ def get_gene_by_ensembl_id(ensg):
     try:
         gene = Session.query(models.Gene).filter_by(ensembl_id=ensg).one()
     except NoResultFound:
-        return resource_not_found(
+        raise RessourceNotFoundError(
             f"Could not find gene (by Ensembl ID) '{ensg}'."
         )
 
