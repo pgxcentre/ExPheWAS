@@ -51,7 +51,6 @@ async function mainOutcomeResults(id) {
     .DataTable({
       data: await api_call(`/outcome/${id}/results`),
       columns: [
-        {data: 'analysis'},
         {data: 'gene'},
         {data: 'p'},
         {data: 'variance_pct'}

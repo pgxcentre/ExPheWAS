@@ -3,13 +3,28 @@
     <h1>Outcome '{{ label }}' ({{ id }})</h1>
     <div id="app">
 
-      Trying to write the label here {{ label }}.
+      <div class="outcomeDescription">
+        <dl>
+          <dt>Trait:</dt>
+          <dd>{{ type }}</dd>
+          {%- if type == 'binary' %}
+          <dt>Cases:</dt>
+          <dd>{{ '{:,d}'.format(n_cases) }}<dd>
+          <dt>Controls:</dt>
+          <dd>{{ '{:,d}'.format(n_controls) }}</dd>
+          <dt>Excluded from controls:</dt>
+          <dd>{{ '{:,d}'.format(n_excluded_from_controls) }}</dd>
+          {%- elif type == 'continuous' %}
+          <dt>Samples:</dt>
+          <dd>{{ '{:,d}'.format(n) if n is not none else '?' }}</dt>
+          {%- endif %}
+        </dl>
+      </div>
 
       <div class="outcomeResults">
         <table id="outcomeResults" class="display" style="width:100%">
           <thead>
             <tr>
-              <th>Analysis</th>
               <th>Gene</th>
               <th>P-Value</th>
               <th>Pct Variance Explained</th>
