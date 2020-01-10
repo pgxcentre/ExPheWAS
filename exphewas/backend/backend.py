@@ -24,6 +24,11 @@ def get_outcome(id):
     return render_template("outcome.html", **outcome_data)
 
 
+@backend.route("/gene")
+def get_genes():
+    return render_template("gene_list.html")
+
+
 @backend.route("/gene/<ensg>")
 def get_gene(ensg):
     try:

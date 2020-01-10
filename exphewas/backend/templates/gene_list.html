@@ -1,0 +1,29 @@
+{% extends "index.html" %}
+{% block body %}
+    <h1>Gene List</h1>
+
+    <div id="app">
+
+      <table id="genes" class="display" style="width:100%">
+        <thead>
+          <tr>
+            <th>Ensembl Id</th>
+            <th>Symbol</th>
+            <th>Uniprot</th>
+            <th>Chromosome</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Strand</th>
+          </tr>
+        </thead>
+      </table>
+
+    </div>
+
+{% endblock %}
+
+{% block other_script %}
+    <script type="text/javascript">
+      window.pages.mainGeneList();
+    </script>
+{% endblock %}

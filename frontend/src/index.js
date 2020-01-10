@@ -126,8 +126,45 @@ async function mainGeneResults(id) {
 }
 
 
+async function mainGeneList() {
+  let data = await api_call('/gene');
+
+  console.log(data[0]);
+  data = data.map((d) => {
+    let out = d;
+    out.strand = out.positive_strand? '+': '-';
+    out.uniprot_ids = out.uniprot_ids.join(', ');
+
+    return out;
+  });
+
+  $('#app #genes')
+    .DataTable({
+      data: data,
+      columns: [
+        {data: 'ensembl_id'},
+        {data: 'name'},
+        {data: 'uniprot_ids'},
+        {data: 'chrom'},
+        {data: 'start'},
+        {data: 'end'},
+        {data: 'strand'}
+      ],
+      columnDefs: [
+        {
+          targets: 0,
+          render: function(data, type, row, meta) {
+            return `<a href="http://grch37.ensembl.org/Homo_sapiens/Gene/Summary?g=${data}">${data}</a>`;
+          }
+        }
+      ]
+  });
+}
+
+
 window.pages = {
   mainOutcomeList,
   mainOutcomeResults,
-  mainGeneResults
+  mainGeneResults,
+  mainGeneList
 }

@@ -2,7 +2,9 @@
 Flask-based REST API for the results of the ExPheWAS analysis.
 """
 
+import json
 import functools
+from os import path
 
 from sqlalchemy.orm.exc import NoResultFound
 from flask import Blueprint, jsonify
@@ -127,6 +129,15 @@ def get_outcome_results(id):
     results = [dict(zip(fields, i)) for i in results]
 
     return results
+
+
+@make_api("/gene")
+def get_genes():
+    json_fn = path.join(path.dirname(__file__), "static", "genes.json")
+    with open(json_fn) as genes:
+        res = json.loads(genes.read())
+
+    return res
 
 
 @make_api("/gene/name/<name>")

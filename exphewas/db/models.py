@@ -10,7 +10,7 @@ from sqlalchemy import (
     Boolean, Sequence, UniqueConstraint, ForeignKeyConstraint, create_engine
 )
 
-from .engine import ENGINE
+from .engine import ENGINE, Session
 
 
 ANALYSIS_TYPES = [
@@ -130,10 +130,14 @@ class Gene(Base):
 
     # An alternative to this is to use a regular property and to 
     # use object_session(self) to execute arbitrary queries.
-    uniprot_ids = column_property(
-        select([ensembl_uniprot.c.uniprot_id])\
-            .where(ensembl_uniprot.c.ensembl_id == ensembl_id)
-    )
+    @property
+    def uniprot_ids(self):
+        res = Session.object_session(self).execute(
+            select([ensembl_uniprot.c.uniprot_id])
+                .where(ensembl_uniprot.c.ensembl_id == self.ensembl_id)
+        ).fetchall()
+
+        return [i[0] for i in res]
 
     def __repr__(self):
         return "<Gene: {} - {}:{}-{} ({})>".format(
