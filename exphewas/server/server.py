@@ -22,3 +22,12 @@ def get_outcome(id):
     except api.RessourceNotFoundError as exception:
         abort(404)
     return render_template("outcome.html", **outcome_data)
+
+
+@server.route("/gene/<ensg>")
+def get_gene(ensg):
+    try:
+        gene_info = api.get_gene_by_ensembl_id(ensg)
+    except api.RessourceNotFoundError as exception:
+        abort(404)
+    return render_template("gene.html", **gene_info)

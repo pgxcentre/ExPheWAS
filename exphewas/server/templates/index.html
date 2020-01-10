@@ -12,9 +12,17 @@
   </head>
 
   <body>
+
+  <nav class="navbar">
+    <ul>
+      <li><a href="{{ url_for("server_blueprint.get_outcomes") }}">Outcomes</a></li>
+    </ul>
+  </nav>
+
   {% block body %}{% endblock %}
 
     <script type="text/javascript" src="{{ url_for('static', filename='main.js') }}"></script>
     {% block other_script %}{% endblock %}
+
   </body>
 </html>
