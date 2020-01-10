@@ -3,11 +3,11 @@
 
 from os import path
 
-from flask import Flask, jsonify
+from flask import Flask
 from flask_cors import CORS
 
 from .api import api as api_blueprint
-from .server import server as server_blueprint
+from .backend import backend as backend_blueprint
 
 from ..db.engine import Session
 
@@ -23,7 +23,7 @@ CORS(app)
 
 # Adding the blueprints
 app.register_blueprint(api_blueprint)
-app.register_blueprint(server_blueprint)
+app.register_blueprint(backend_blueprint)
 
 
 @app.teardown_appcontext

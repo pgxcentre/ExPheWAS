@@ -7,15 +7,15 @@ from flask import Blueprint, render_template, abort
 from . import api
 
 
-server = Blueprint("server_blueprint", __name__)
+backend = Blueprint("backend_blueprint", __name__)
 
 
-@server.route("/outcome")
+@backend.route("/outcome")
 def get_outcomes():
     return render_template("outcome_list.html")
 
 
-@server.route("/outcome/<id>")
+@backend.route("/outcome/<id>")
 def get_outcome(id):
     try:
         outcome_data = api.get_outcome(id)
@@ -24,7 +24,7 @@ def get_outcome(id):
     return render_template("outcome.html", **outcome_data)
 
 
-@server.route("/gene/<ensg>")
+@backend.route("/gene/<ensg>")
 def get_gene(ensg):
     try:
         gene_info = api.get_gene_by_ensembl_id(ensg)
