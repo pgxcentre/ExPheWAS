@@ -55,7 +55,8 @@ async function mainOutcomeResults(id) {
         {data: 'gene_name'},
         {data: 'p'},
         {data: 'variance_pct'}
-      ]
+      ],
+      order: [[2, 'asc']]
   });
 }
 
@@ -65,57 +66,62 @@ async function mainGeneResults(id) {
 
   $('#app #geneResultsContinuous')
     .DataTable({
-      data: data.filter(d => d.analysis === 'CONTINUOUS_VARIABLE'),
+      data: data.filter(d => d.analysis_type === 'CONTINUOUS_VARIABLE'),
       columns: [
         {data: 'outcome_id'},
         {data: 'outcome_label'},
         {data: 'p'},
         {data: 'variance_pct'}
-      ]
+      ],
+      order: [[2, 'asc']]
   });
 
   $('#app #geneResultsCVEndpoints')
     .DataTable({
-      data: data.filter(d => d.analysis === 'CV_ENDPOINTS'),
+      data: data.filter(d => d.analysis_type === 'CV_ENDPOINTS'),
       columns: [
         {data: 'outcome_id'},
         {data: 'outcome_label'},
         {data: 'p'},
         {data: 'variance_pct'}
-      ]
+      ],
+      order: [[2, 'asc']]
   });
 
   $('#app #geneResultsSelfReported')
     .DataTable({
-      data: data.filter(d => d.analysis === 'SELF_REPORTED'),
+      data: data.filter(d => d.analysis_type === 'SELF_REPORTED'),
       columns: [
         {data: 'outcome_id'},
         {data: 'outcome_label'},
         {data: 'p'},
         {data: 'variance_pct'}
-      ]
+      ],
+      order: [[2, 'asc']]
   });
 
   $('#app #geneResultsICD10Block')
     .DataTable({
-      data: data.filter(d => d.analysis === 'ICD10_BLOCK'),
+      data: data.filter(d => d.analysis_type === 'ICD10_BLOCK'),
       columns: [
         {data: 'outcome_id'},
         {data: 'outcome_label'},
         {data: 'p'},
         {data: 'variance_pct'}
-      ]
+      ],
+      order: [[2, 'asc']]
   });
 
   $('#app #geneResultsICD103Char')
     .DataTable({
-      data: data.filter(d => d.analysis === 'ICD10_3CHAR'),
+      data: data.filter(d => d.analysis_type === 'ICD10_3CHAR'),
       columns: [
         {data: 'outcome_id'},
         {data: 'outcome_label'},
         {data: 'p'},
         {data: 'variance_pct'}
-      ]
+      ],
+      order: [[2, 'asc']]
   });
 }
 

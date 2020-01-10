@@ -71,7 +71,8 @@ def get_outcome(id):
     # Extract shared fields.
     d = {
         "id": outcome.id,
-        "label": outcome.label
+        "label": outcome.label,
+        "analysis_type": outcome.analysis_type,
     }
 
     if isinstance(outcome, models.BinaryOutcome):
@@ -99,7 +100,7 @@ def get_outcome_results(id):
         raise RessourceNotFoundError(f"Could not find outcome '{id}'.")
 
     # Find all results.
-    fields = ("gene", "analysis", "outcome_id", "outcome_label",
+    fields = ("gene", "analysis_type", "outcome_id", "outcome_label",
               "variance_pct", "p", "gene_name")
 
     Result = None
@@ -170,7 +171,7 @@ def get_gene_results(ensg):
         )
 
     # Find all results.
-    fields = ("gene", "analysis", "outcome_id", "outcome_label",
+    fields = ("gene", "analysis_type", "outcome_id", "outcome_label",
               "variance_pct", "p", "gene_name")
 
     result_models = (
@@ -179,19 +180,18 @@ def get_gene_results(ensg):
     )
 
     binary_results, continuous_results = [
-        Session\
-            .query(
-                Result.gene,
-                models.Outcome.analysis_type,
-                Result.outcome_id,
-                models.Outcome.label,
-                Result.variance_pct,
-                Result.p,
-                models.Gene.name,
-            )\
-            .filter(models.Outcome.id == Result.outcome_id)\
-            .filter(models.Gene.ensembl_id == Result.gene)\
-            .filter_by(gene=ensg)
+        Session.query(
+            Result.gene,
+            models.Outcome.analysis_type,
+            Result.outcome_id,
+            models.Outcome.label,
+            Result.variance_pct,
+            Result.p,
+            models.Gene.name,
+        )
+        .filter(models.Outcome.id == Result.outcome_id)
+        .filter(models.Gene.ensembl_id == Result.gene)
+        .filter_by(gene=ensg)
         for Result in result_models
     ]
 

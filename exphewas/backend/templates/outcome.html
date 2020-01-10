@@ -7,6 +7,8 @@
         <dl>
           <dt>Trait:</dt>
           <dd>{{ type }}</dd>
+          <dt>Analysis Type:</dt>
+          <dd>{{ analysis_type }}</dd>
           {%- if type == 'binary' %}
           <dt>Cases:</dt>
           <dd>{{ '{:,d}'.format(n_cases) }}<dd>
