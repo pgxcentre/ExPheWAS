@@ -7,7 +7,7 @@ from sqlalchemy.sql import select
 from sqlalchemy.orm import column_property
 from sqlalchemy import (
     Table, Column, Integer, String, MetaData, ForeignKey, Enum, Float,
-    Boolean, Sequence, UniqueConstraint, create_engine
+    Boolean, Sequence, UniqueConstraint, ForeignKeyConstraint, create_engine
 )
 
 from .engine import ENGINE
@@ -75,63 +75,31 @@ class ContinuousOutcome(Outcome):
     }
 
 
-class Result(Base):
-    __tablename__ = "results"
+class ContinuousVariableResult(Base):
+    __tablename__ = "results_continuous_variables"
 
-    id = Column(Integer, Sequence("result_id_seq"), primary_key=True)
+    gene = Column(String, primary_key=True)
+    variance_pct = Column(Integer, primary_key=True)
+    outcome_id = Column(String, primary_key=True)
 
-    # Ensembl ID, e.g. ENSG000...
-    gene = Column(String, ForeignKey("genes.ensembl_id"))
-
-    # Variance explained for the analysis, e.g. 95
-    # This determines the number of principal components included in the
-    # augmented model.
-    variance_pct = Column(Integer, nullable=False)
-
-    outcome_id = Column(ForeignKey("outcomes.id"))
-
-    __table_args__ = (
-        UniqueConstraint("gene", "outcome_id", "variance_pct",
-                         name="result_key_uq"),
-    )
-
-    p = Column(Float)
-
-    type = Column(String(30))
-
-    __mapper_args__ = {
-        "polymorphic_on": type,
-        "polymorphic_identity": "results"
-    }
-
-
-class ContinuousVariableResult(Result):
-    __tablename__ = "continuous_variables_results"
-
-    id = Column(Integer, ForeignKey("results.id"), primary_key=True)
-
+    p = Column(Float, nullable=False)
     rss_base = Column(Float)
     rss_augmented = Column(Float)
     sum_of_sq = Column(Float)
     F_stat = Column(Float)
 
-    __mapper_args__ = {
-        "polymorphic_identity": "continuous_variables_results"
-    }
 
+class BinaryVariableResult(Base):
+    __tablename__ = "results_binary_variables"
 
-class BinaryVariableResult(Result):
-    __tablename__ = "binary_variables_results"
+    gene = Column(String, primary_key=True)
+    variance_pct = Column(Integer, primary_key=True)
+    outcome_id = Column(String, primary_key=True)
 
-    id = Column(Integer, ForeignKey("results.id"), primary_key=True)
-
+    p = Column(Float, nullable=False)
     resid_deviance_base = Column(Float)
     resid_deviance_augmented = Column(Float)
     deviance = Column(Float)
-
-    __mapper_args__ = {
-        "polymorphic_identity": "binary_variables_results"
-    }
 
 
 class GeneVariance(Base):

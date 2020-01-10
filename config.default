@@ -1,0 +1,1 @@
+export EXPHEWAS_DATABASE_URL=sqlite:///gene_phewas.db

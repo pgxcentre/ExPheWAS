@@ -106,7 +106,7 @@ def get_outcome_results(id):
         .query(
             models.Result.id,
             models.Result.gene,
-            models.Result.analysis,
+            models.Outcome.analysis_type,
             models.Result.outcome_id,
             models.Outcome.label,
             models.Result.variance_pct,

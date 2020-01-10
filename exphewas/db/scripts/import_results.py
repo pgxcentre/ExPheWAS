@@ -16,9 +16,11 @@ def main(args):
 
     if "sum_of_sq" in df.columns:
         create_object = _process_continuous_result
+        result_class = ContinuousVariableResult
 
     elif "deviance" in  df.columns:
         create_object = _process_binary_result
+        result_class = BinaryVariableResult
 
     else:
         raise ValueError("Could not infer analysis type.")
@@ -32,7 +34,15 @@ def main(args):
 
     session.commit()
 
-    session.add_all(objects)
+    # Bulk insert.
+    n = len(objects)
+    chunk_size = 10000
+    for chunk in range(0, n, chunk_size):
+        session.bulk_insert_mappings(
+            result_class,
+            objects[chunk:chunk+chunk_size]
+        )
+
     session.commit()
 
 
@@ -51,7 +61,7 @@ def _process_continuous_result(row, args, session):
 
         session.add(outcome)
 
-    result = ContinuousVariableResult(
+    return dict(
         gene = args.gene,
         variance_pct = args.pct_variance,
         outcome_id = outcome.id,
@@ -62,8 +72,6 @@ def _process_continuous_result(row, args, session):
         sum_of_sq = row.sum_of_sq,
         F_stat = row.F_stat
     )
-
-    return result
 
 
 def _process_binary_result(row, args, session):
@@ -84,7 +92,7 @@ def _process_binary_result(row, args, session):
 
         session.add(outcome)
 
-    result = BinaryVariableResult(
+    return dict(
         gene = args.gene,
         variance_pct = args.pct_variance,
         outcome_id = outcome.id,
@@ -94,5 +102,3 @@ def _process_binary_result(row, args, session):
         resid_deviance_augmented = row.resid_deviance_augmented,
         deviance = row.deviance
     )
-
-    return result

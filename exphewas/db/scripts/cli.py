@@ -21,9 +21,6 @@ def delete_results():
     session.query(models.BinaryVariableResult)\
         .delete(synchronize_session=False)
 
-    session.query(models.Result)\
-        .delete(synchronize_session=False)
-
     session.commit()
 
 
