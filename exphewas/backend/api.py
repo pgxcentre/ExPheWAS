@@ -94,27 +94,32 @@ def get_outcome(id):
 @make_api("/outcome/<id>/results")
 def get_outcome_results(id):
     try:
-        Session.query(models.Outcome).filter_by(id=id).one()
+        outcome = Session.query(models.Outcome).filter_by(id=id).one()
     except NoResultFound:
         raise RessourceNotFoundError(f"Could not find outcome '{id}'.")
 
     # Find all results.
-    fields = ("id", "gene", "analysis", "outcome_id", "outcome_label",
+    fields = ("gene", "analysis", "outcome_id", "outcome_label",
               "variance_pct", "p", "gene_name")
+
+    Result = None
+    if isinstance(outcome, models.BinaryOutcome):
+        Result = models.BinaryVariableResult
+    elif isinstance(outcome, models.ContinuousOutcome):
+        Result = models.ContinuousVariableResult
 
     results = Session\
         .query(
-            models.Result.id,
-            models.Result.gene,
+            Result.gene,
             models.Outcome.analysis_type,
-            models.Result.outcome_id,
+            Result.outcome_id,
             models.Outcome.label,
-            models.Result.variance_pct,
-            models.Result.p,
+            Result.variance_pct,
+            Result.p,
             models.Gene.name,
         )\
-        .filter(models.Outcome.id == models.Result.outcome_id)\
-        .filter(models.Result.gene == models.Gene.ensembl_id)\
+        .filter(models.Outcome.id == Result.outcome_id)\
+        .filter(Result.gene == models.Gene.ensembl_id)\
         .filter_by(outcome_id=id)\
         .all()
 
@@ -165,24 +170,32 @@ def get_gene_results(ensg):
         )
 
     # Find all results.
-    fields = ("id", "gene", "analysis", "outcome_id", "outcome_label",
+    fields = ("gene", "analysis", "outcome_id", "outcome_label",
               "variance_pct", "p", "gene_name")
 
-    results = Session\
-        .query(
-            models.Result.id,
-            models.Result.gene,
-            models.Result.analysis,
-            models.Result.outcome_id,
-            models.Outcome.label,
-            models.Result.variance_pct,
-            models.Result.p,
-            models.Gene.name,
-        )\
-        .filter(models.Outcome.id == models.Result.outcome_id)\
-        .filter(models.Gene.ensembl_id == models.Result.gene)\
-        .filter_by(gene=ensg)\
-        .all()
+    result_models = (
+        models.BinaryVariableResult,
+        models.ContinuousVariableResult,
+    )
+
+    binary_results, continuous_results = [
+        Session\
+            .query(
+                Result.gene,
+                models.Outcome.analysis_type,
+                Result.outcome_id,
+                models.Outcome.label,
+                Result.variance_pct,
+                Result.p,
+                models.Gene.name,
+            )\
+            .filter(models.Outcome.id == Result.outcome_id)\
+            .filter(models.Gene.ensembl_id == Result.gene)\
+            .filter_by(gene=ensg)
+        for Result in result_models
+    ]
+
+    results = binary_results.union(continuous_results).all()
 
     results = [dict(zip(fields, i)) for i in results]
 
