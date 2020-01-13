@@ -31,14 +31,8 @@ async function mainOutcomeList() {
       columnDefs: [
         {
           targets: 0,
-          render: function(data, type, row, meta) {
-            return `<a href="/outcome/${data}">${data}</a>`;
-          }
-        },
-        {
-          targets: 1,
-          render: function (data, type, row, meta) {
-            return `<a href="/outcome/${row.id}">${data}</a>`;
+          render: function(outcome, type, row, meta) {
+            return `<a href="/outcome/${outcome}">${outcome}</a>`;
           }
         }
       ]
@@ -55,6 +49,14 @@ async function mainOutcomeResults(id) {
         {data: 'gene_name'},
         {data: 'p'},
         {data: 'variance_pct'}
+      ],
+      columnDefs: [
+        {
+          targets: 0,
+          render: function(ensg, type, row, meta) {
+            return `<a href="/gene/${ensg}">${ensg}</a>`;
+          }
+        }
       ],
       order: [[2, 'asc']]
   });
@@ -73,6 +75,14 @@ async function mainGeneResults(id) {
         {data: 'p'},
         {data: 'variance_pct'}
       ],
+      columnDefs: [
+        {
+          targets: 0,
+          render: function(outcome, type, row, meta) {
+            return `<a href="/outcome/${outcome}">${outcome}</a>`;
+          }
+        }
+      ],
       order: [[2, 'asc']]
   });
 
@@ -84,6 +94,14 @@ async function mainGeneResults(id) {
         {data: 'outcome_label'},
         {data: 'p'},
         {data: 'variance_pct'}
+      ],
+      columnDefs: [
+        {
+          targets: 0,
+          render: function(outcome, type, row, meta) {
+            return `<a href="/outcome/${outcome}">${outcome}</a>`;
+          }
+        }
       ],
       order: [[2, 'asc']]
   });
@@ -97,6 +115,14 @@ async function mainGeneResults(id) {
         {data: 'p'},
         {data: 'variance_pct'}
       ],
+      columnDefs: [
+        {
+          targets: 0,
+          render: function(outcome, type, row, meta) {
+            return `<a href="/outcome/${outcome}">${outcome}</a>`;
+          }
+        }
+      ],
       order: [[2, 'asc']]
   });
 
@@ -108,6 +134,14 @@ async function mainGeneResults(id) {
         {data: 'outcome_label'},
         {data: 'p'},
         {data: 'variance_pct'}
+      ],
+      columnDefs: [
+        {
+          targets: 0,
+          render: function(outcome, type, row, meta) {
+            return `<a href="/outcome/${outcome}">${outcome}</a>`;
+          }
+        }
       ],
       order: [[2, 'asc']]
   });
@@ -121,6 +155,14 @@ async function mainGeneResults(id) {
         {data: 'p'},
         {data: 'variance_pct'}
       ],
+      columnDefs: [
+        {
+          targets: 0,
+          render: function(outcome, type, row, meta) {
+            return `<a href="/outcome/${outcome}">${outcome}</a>`;
+          }
+        }
+      ],
       order: [[2, 'asc']]
   });
 }
@@ -129,7 +171,6 @@ async function mainGeneResults(id) {
 async function mainGeneList() {
   let data = await api_call('/gene');
 
-  console.log(data[0]);
   data = data.map((d) => {
     let out = d;
     out.strand = out.positive_strand? '+': '-';
@@ -153,8 +194,8 @@ async function mainGeneList() {
       columnDefs: [
         {
           targets: 0,
-          render: function(data, type, row, meta) {
-            return `<a href="http://grch37.ensembl.org/Homo_sapiens/Gene/Summary?g=${data}">${data}</a>`;
+          render: function(ensg, type, row, meta) {
+            return `<a href="/gene/${ensg}">${ensg}</a>`;
           }
         }
       ]
