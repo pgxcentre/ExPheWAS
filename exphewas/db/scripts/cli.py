@@ -48,6 +48,10 @@ def find_missing_results():
 
         # Get all genes except ones with results or the ones that were not
         # analyzed.
+        # We query GeneVariance instead of Gene to limit ourselves to the
+        # genes that were not excluded.
+        # The genes that were excluded had no common variants to derive the
+        # principal components.
         missing_genes[analysis_type] = {i[0] for i in 
             session.query(models.GeneVariance.ensembl_id)\
                 .except_(genes_with_results)\
@@ -72,7 +76,6 @@ def find_missing_results():
             row.append(sum(row[1:]))
 
             writer.writerow(row)
-
 
 
 def main():
