@@ -183,27 +183,34 @@ def get_gene_results(ensg):
 
     # Find all results.
     fields = ("gene", "analysis_type", "outcome_id", "outcome_label",
-              "variance_pct", "p", "gene_name")
+              "variance_pct", "p", "statistic", "gene_name")
 
     result_models = (
-        models.BinaryVariableResult,
-        models.ContinuousVariableResult,
+        {
+            "model": models.BinaryVariableResult,
+            "statistic": models.BinaryVariableResult.deviance,
+        },
+        {
+            "model": models.ContinuousVariableResult,
+            "statistic": models.ContinuousVariableResult.sum_of_sq,
+        },
     )
 
     binary_results, continuous_results = [
         Session.query(
-            Result.gene,
+            result_info["model"].gene,
             models.Outcome.analysis_type,
-            Result.outcome_id,
+            result_info["model"].outcome_id,
             models.Outcome.label,
-            Result.variance_pct,
-            Result.p,
+            result_info["model"].variance_pct,
+            result_info["model"].p,
+            result_info["statistic"],
             models.Gene.name,
         )
-        .filter(models.Outcome.id == Result.outcome_id)
-        .filter(models.Gene.ensembl_id == Result.gene)
+        .filter(models.Outcome.id == result_info["model"].outcome_id)
+        .filter(models.Gene.ensembl_id == result_info["model"].gene)
         .filter_by(gene=ensg)
-        for Result in result_models
+        for result_info in result_models
     ]
 
     results = binary_results.union(continuous_results).all()
