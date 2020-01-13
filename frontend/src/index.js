@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 import * as dt from 'datatables.net';
 
 
-import { API_URL, ICD10_URL } from "./config";
+import { API_URL, ICD10_URL, UNIPROT_URL } from "./config";
 
 
 async function api_call(endpoint) {
@@ -145,8 +145,7 @@ async function mainGeneResults(id) {
         {
           targets: 1,
           render: function(description, type, row, meta) {
-            let icd10Code = row.outcome_id.split("-")[0];
-            return `<a href="${ICD10_URL}/${icd10Code}">${description}</a>`;
+            return `<a href="${ICD10_URL}/${row.id}">${description}</a>`;
           }
         }
       ],
@@ -188,7 +187,7 @@ async function mainGeneList() {
   data = data.map((d) => {
     let out = d;
     out.strand = out.positive_strand? '+': '-';
-    out.uniprot_ids = out.uniprot_ids.join(', ');
+    out.uniprot_ids = out.uniprot_ids.map(id => `<a href="${UNIPROT_URL}/${id}">${id}</a>`).join(', ');
 
     return out;
   });
