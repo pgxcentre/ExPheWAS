@@ -1,6 +1,16 @@
 {% extends "index.html" %}
 {% block body %}
-    <h1>Outcome '{{ label }}' ({{ id }})</h1>
+    <h1>
+      Outcome '{{ label }}'
+      {%- if analysis_type == 'ICD10_3CHAR' %}
+      (<a href="https://icd.who.int/browse10/2016/en#/{{ id }}">{{ id }}</a>)
+      {%- elif analysis_type == 'ICD10_BLOCK' %}
+      (<a href="https://icd.who.int/browse10/2016/en#/{{ id.split('-')[0] }}">{{ id }}</a>)
+      {%- else %}
+      ({{ id }})
+      {%- endif %}
+    </h1>
+
     <div id="app">
 
       <div class="outcomeDescription">
