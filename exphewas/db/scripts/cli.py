@@ -1,4 +1,6 @@
 import argparse
+import csv
+import functools
 
 
 from ..engine import ENGINE, Session
@@ -24,6 +26,55 @@ def delete_results():
     session.commit()
 
 
+def find_missing_results():
+    session = Session()
+
+    missing_genes = {}
+
+    for analysis_type in ANALYSIS_TYPES:
+        # Get all outcomes for this analysis.
+        outcomes = session.query(models.Outcome.id)\
+            .filter_by(analysis_type=analysis_type)\
+            .subquery()
+
+        # Get genes with results.
+        if analysis_type == "CONTINUOUS_VARIABLE":
+            Result = models.ContinuousVariableResult
+        else:
+            Result = models.BinaryVariableResult
+
+        genes_with_results = session.query(Result.gene)\
+            .filter(Result.outcome_id.in_(outcomes))
+
+        # Get all genes except ones with results or the ones that were not
+        # analyzed.
+        missing_genes[analysis_type] = {i[0] for i in 
+            session.query(models.GeneVariance.ensembl_id)\
+                .except_(genes_with_results)\
+                .all()
+        }
+
+    all_genes = functools.reduce(
+        lambda x, y: x | y, missing_genes.values(), set()
+    )
+
+    with open("missing_results.csv", "w") as f:
+        writer = csv.writer(f)
+
+        writer.writerow(["gene"] + ANALYSIS_TYPES + ["n_missing_analyses"])
+
+        for gene in all_genes:
+            row = [gene, ]
+
+            for analysis_type in ANALYSIS_TYPES:
+                row.append(int(gene in missing_genes[analysis_type]))
+
+            row.append(sum(row[1:]))
+
+            writer.writerow(row)
+
+
+
 def main():
     parser = argparse.ArgumentParser()
 
@@ -31,10 +82,10 @@ def main():
     subparsers.required = True
 
     # Command to create the database.
-    parser_create = subparsers.add_parser("create")
+    subparsers.add_parser("create")
 
     # Command to delete all results.
-    parser_delete_results = subparsers.add_parser("delete-results")
+    subparsers.add_parser("delete-results")
 
     # Command to import ensembl data (from a GTF).
     parser_import_ensembl = subparsers.add_parser("import-ensembl")
@@ -81,6 +132,9 @@ def main():
         default=95
     )
 
+    # Command to list the missing analyses per gene.
+    subparsers.add_parser("find-missing-results")
+
     # Dispatch the command.
     args = parser.parse_args()
     if args.command == "create":
@@ -88,6 +142,9 @@ def main():
 
     elif args.command == "delete-results":
         return delete_results()
+
+    elif args.command == "find-missing-results":
+        return find_missing_results()
 
     elif args.command == "import-ensembl":
         return import_ensembl.main(args)
