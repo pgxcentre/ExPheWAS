@@ -1,10 +1,15 @@
 {% extends "index.html" %}
 {% block body %}
-    <h1>Gene <a href="https://www.uniprot.org/uniprot/{{ uniprot_id }}">{{ name }}</a> (<a href="http://grch37.ensembl.org/Homo_sapiens/Gene/Summary?g={{ ensembl_id }}">{{ ensembl_id }}</a>)</h1>
+    <h1>Gene {{ name }} (<a href="http://grch37.ensembl.org/Homo_sapiens/Gene/Summary?g={{ ensembl_id }}">{{ ensembl_id }}</a>)</h1>
     <div id="app">
 
       <div class="geneDescription">
-        chr{{ chrom }}:{{ '{:,d}'.format(start) }}-{{ '{:,d}'.format(end) }}
+        <div class="location">
+          chr{{ chrom }}:{{ '{:,d}'.format(start) }}-{{ '{:,d}'.format(end) }}
+        </div>
+        <div class="uniprotID">
+          Uniprot: {% for id in uniprot_ids%}<a href="https://www.uniprot.org/uniprot/{{ id }}">{{ id }}</a>{{ ", " if not loop.last }}{% endfor %}
+        </div>
       </div>
 
       <div class="geneResults continuousVariable">

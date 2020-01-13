@@ -167,7 +167,7 @@ def get_gene_by_ensembl_id(ensg):
 
     # Add the Uniprot xref.
     d = mod_to_dict(gene)
-    d.update({"uniprot_id": gene.uniprot_ids})
+    d.update({"uniprot_ids": gene.uniprot_ids})
 
     return d
 
