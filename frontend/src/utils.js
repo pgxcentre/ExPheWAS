@@ -1,5 +1,5 @@
 export function formatP(p) {
-  return p < 0.001? p.toExponential(1): p.toFixed(3);
+  return (p < 0.001) && (p != 0)? p.toExponential(1): p.toFixed(3);
 }
 
 export function formatNumber(num) {
