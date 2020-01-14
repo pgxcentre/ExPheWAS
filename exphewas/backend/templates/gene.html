@@ -4,12 +4,14 @@
     <div id="app">
 
       <div class="geneDescription">
-        <div class="location">
-          chr{{ chrom }}:{{ '{:,d}'.format(start) }}-{{ '{:,d}'.format(end) }}
-        </div>
-        <div class="uniprotID">
-          Uniprot: {% for id in uniprot_ids%}<a href="https://www.uniprot.org/uniprot/{{ id }}">{{ id }}</a>{{ ", " if not loop.last }}{% endfor %}
-        </div>
+        <dl>
+          <dt>Location:</dt>
+          <dd>chr{{ chrom }}:{{ '{:,d}'.format(start) }}-{{ '{:,d}'.format(end) }}</dd>
+          <dt>Variance explained with {{ n_components }} components:</dt>
+          <dd>{{ 95 }}%</dd>
+          <dt>Uniprot:</dt>
+          <dd>{% for id in uniprot_ids%}<a href="https://www.uniprot.org/uniprot/{{ id }}">{{ id }}</a>{{ ", " if not loop.last }}{% endfor %}</dd>
+        </dl>
       </div>
 
       <div class="geneResults continuousVariable">
@@ -21,7 +23,6 @@
               <th>Description</th>
               <th>P-Value</th>
               <th>Sum of Square</th>
-              <th>Pct Variance Explained</th>
             </tr>
           </thead>
         </table>
@@ -36,7 +37,6 @@
               <th>Description</th>
               <th>P-Value</th>
               <th>Deviance</th>
-              <th>Pct Variance Explained</th>
             </tr>
           </thead>
         </table>
@@ -51,7 +51,6 @@
               <th>Description</th>
               <th>P-Value</th>
               <th>Deviance</th>
-              <th>Pct Variance Explained</th>
             </tr>
           </thead>
         </table>
@@ -66,7 +65,6 @@
               <th>Description</th>
               <th>P-Value</th>
               <th>Deviance</th>
-              <th>Pct Variance Explained</th>
             </tr>
           </thead>
         </table>
@@ -81,7 +79,6 @@
               <th>Description</th>
               <th>P-Value</th>
               <th>Deviance</th>
-              <th>Pct Variance Explained</th>
             </tr>
           </thead>
         </table>

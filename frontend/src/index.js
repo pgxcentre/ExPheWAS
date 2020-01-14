@@ -84,8 +84,7 @@ async function mainGeneResults(id) {
         {data: 'outcome_id'},
         {data: 'outcome_label'},
         {data: 'p'},
-        {data: 'statistic'},
-        {data: 'variance_pct'}
+        {data: 'statistic'}
       ],
       columnDefs: [
         {
@@ -107,7 +106,7 @@ async function mainGeneResults(id) {
           }
         },
         {
-          targets: [2, 3, 4],
+          targets: [2, 3],
           className: 'dt-body-right'
         }
       ],
@@ -121,8 +120,7 @@ async function mainGeneResults(id) {
         {data: 'outcome_id'},
         {data: 'outcome_label'},
         {data: 'p'},
-        {data: 'statistic'},
-        {data: 'variance_pct'}
+        {data: 'statistic'}
       ],
       columnDefs: [
         {
@@ -144,7 +142,7 @@ async function mainGeneResults(id) {
           }
         },
         {
-          targets: [2, 3, 4],
+          targets: [2, 3],
           className: 'dt-body-right'
         }
       ],
@@ -158,8 +156,7 @@ async function mainGeneResults(id) {
         {data: 'outcome_id'},
         {data: 'outcome_label'},
         {data: 'p'},
-        {data: 'statistic'},
-        {data: 'variance_pct'}
+        {data: 'statistic'}
       ],
       columnDefs: [
         {
@@ -181,7 +178,7 @@ async function mainGeneResults(id) {
           }
         },
         {
-          targets: [2, 3, 4],
+          targets: [2, 3],
           className: 'dt-body-right'
         }
       ],
@@ -195,8 +192,7 @@ async function mainGeneResults(id) {
         {data: 'outcome_id'},
         {data: 'outcome_label'},
         {data: 'p'},
-        {data: 'statistic'},
-        {data: 'variance_pct'}
+        {data: 'statistic'}
       ],
       columnDefs: [
         {
@@ -224,7 +220,7 @@ async function mainGeneResults(id) {
           }
         },
         {
-          targets: [2, 3, 4],
+          targets: [2, 3],
           className: 'dt-body-right'
         }
       ],
@@ -238,8 +234,7 @@ async function mainGeneResults(id) {
         {data: 'outcome_id'},
         {data: 'outcome_label'},
         {data: 'p'},
-        {data: 'statistic'},
-        {data: 'variance_pct'}
+        {data: 'statistic'}
       ],
       columnDefs: [
         {
@@ -268,7 +263,7 @@ async function mainGeneResults(id) {
           }
         },
         {
-          targets: [2, 3, 4],
+          targets: [2, 3],
           className: 'dt-body-right'
         }
       ],
