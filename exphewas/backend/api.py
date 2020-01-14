@@ -197,16 +197,16 @@ def get_gene_results(ensg):
 
     # Find all results.
     fields = ("gene", "analysis_type", "outcome_id", "outcome_label",
-              "variance_pct", "p", "statistic", "gene_name", "n_components")
+              "variance_pct", "p", "gof_meas", "gene_name", "n_components")
 
     result_models = (
         {
             "model": models.BinaryVariableResult,
-            "statistic": models.BinaryVariableResult.deviance,
+            "gof_meas": models.BinaryVariableResult.deviance,
         },
         {
             "model": models.ContinuousVariableResult,
-            "statistic": models.ContinuousVariableResult.sum_of_sq,
+            "gof_meas": models.ContinuousVariableResult.sum_of_sq,
         },
     )
 
@@ -218,7 +218,7 @@ def get_gene_results(ensg):
             models.Outcome.label,
             result_info["model"].variance_pct,
             result_info["model"].p,
-            result_info["statistic"],
+            result_info["gof_meas"],
             models.Gene.name,
             models.GeneVariance.n_components,
         )

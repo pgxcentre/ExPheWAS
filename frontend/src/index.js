@@ -93,14 +93,25 @@ async function mainGeneResults(id) {
 
   let data = await api_call(`/gene/${id}/results${urlParam}`);
 
+  // Total number of results
+  let n_results = data.length;
+
+  // Calculate the bonferonni corrected p (TODO: the q-value / FDR).
+  data = data.map(d => {
+    d.bonf = d.p * n_results;
+    return d;
+  });
+
+
   $('#app #geneResultsContinuous')
     .DataTable({
       data: data.filter(d => d.analysis_type === 'CONTINUOUS_VARIABLE'),
       columns: [
-        {data: 'outcome_id'},
-        {data: 'outcome_label'},
-        {data: 'p'},
-        {data: 'statistic'}
+        {data: 'outcome_id'},     // 0
+        {data: 'outcome_label'},  // 1
+        {data: 'p'},              // 2
+        {data: 'bonf'},           // 3
+        {data: 'gof_meas'},       // 4
       ],
       columnDefs: [
         {
@@ -117,12 +128,18 @@ async function mainGeneResults(id) {
         },
         {
           targets: 3,
-          render: function(statistic, type, row, meta) {
-            return statistic.toFixed(1);
+          render: function(p, type, row, meta) {
+            return formatP(p);
           }
         },
         {
-          targets: [2, 3],
+          targets: 4,
+          render: function(gof_meas, type, row, meta) {
+            return gof_meas.toFixed(1);
+          }
+        },
+        {
+          targets: [2, 3, 4],
           className: 'dt-body-right'
         }
       ],
@@ -133,10 +150,11 @@ async function mainGeneResults(id) {
     .DataTable({
       data: data.filter(d => d.analysis_type === 'CV_ENDPOINTS'),
       columns: [
-        {data: 'outcome_id'},
-        {data: 'outcome_label'},
-        {data: 'p'},
-        {data: 'statistic'}
+        {data: 'outcome_id'},     // 0
+        {data: 'outcome_label'},  // 1
+        {data: 'p'},              // 2
+        {data: 'bonf'},           // 3
+        {data: 'gof_meas'}        // 4
       ],
       columnDefs: [
         {
@@ -153,12 +171,18 @@ async function mainGeneResults(id) {
         },
         {
           targets: 3,
-          render: function(statistic, type, row, meta) {
-            return statistic.toFixed(1);
+          render: function(p, type, row, meta) {
+            return formatP(p);
           }
         },
         {
-          targets: [2, 3],
+          targets: 4,
+          render: function(gof_meas, type, row, meta) {
+            return gof_meas.toFixed(1);
+          }
+        },
+        {
+          targets: [2, 3, 4],
           className: 'dt-body-right'
         }
       ],
@@ -169,10 +193,11 @@ async function mainGeneResults(id) {
     .DataTable({
       data: data.filter(d => d.analysis_type === 'SELF_REPORTED'),
       columns: [
-        {data: 'outcome_id'},
-        {data: 'outcome_label'},
-        {data: 'p'},
-        {data: 'statistic'}
+        {data: 'outcome_id'},     // 0
+        {data: 'outcome_label'},  // 1
+        {data: 'p'},              // 2
+        {data: 'bonf'},           // 3
+        {data: 'gof_meas'}        // 4
       ],
       columnDefs: [
         {
@@ -189,12 +214,18 @@ async function mainGeneResults(id) {
         },
         {
           targets: 3,
-          render: function(statistic, type, row, meta) {
-            return statistic.toFixed(1);
+          render: function(p, type, row, meta) {
+            return formatP(p);
           }
         },
         {
-          targets: [2, 3],
+          targets: 4,
+          render: function(gof_meas, type, row, meta) {
+            return gof_meas.toFixed(1);
+          }
+        },
+        {
+          targets: [2, 3, 4],
           className: 'dt-body-right'
         }
       ],
@@ -205,10 +236,11 @@ async function mainGeneResults(id) {
     .DataTable({
       data: data.filter(d => d.analysis_type === 'ICD10_BLOCK'),
       columns: [
-        {data: 'outcome_id'},
-        {data: 'outcome_label'},
-        {data: 'p'},
-        {data: 'statistic'}
+        {data: 'outcome_id'},     // 0
+        {data: 'outcome_label'},  // 1
+        {data: 'p'},              // 2
+        {data: 'bonf'},           // 3
+        {data: 'gof_meas'}        // 4
       ],
       columnDefs: [
         {
@@ -231,12 +263,18 @@ async function mainGeneResults(id) {
         },
         {
           targets: 3,
-          render: function(statistic, type, row, meta) {
-            return statistic.toFixed(1);
+          render: function(p, type, row, meta) {
+            return formatP(p);
           }
         },
         {
-          targets: [2, 3],
+          targets: 4,
+          render: function(gof_meas, type, row, meta) {
+            return gof_meas.toFixed(1);
+          }
+        },
+        {
+          targets: [2, 3, 4],
           className: 'dt-body-right'
         }
       ],
@@ -250,7 +288,8 @@ async function mainGeneResults(id) {
         {data: 'outcome_id'},
         {data: 'outcome_label'},
         {data: 'p'},
-        {data: 'statistic'}
+        {data: 'bonf'},
+        {data: 'gof_meas'}
       ],
       columnDefs: [
         {
@@ -274,12 +313,18 @@ async function mainGeneResults(id) {
         },
         {
           targets: 3,
-          render: function(statistic, type, row, meta) {
-            return statistic.toFixed(1);
+          render: function(p, type, row, meta) {
+            return formatP(p);
           }
         },
         {
-          targets: [2, 3],
+          targets: 4,
+          render: function(gof_meas, type, row, meta) {
+            return gof_meas.toFixed(1);
+          }
+        },
+        {
+          targets: [2, 3, 4],
           className: 'dt-body-right'
         }
       ],

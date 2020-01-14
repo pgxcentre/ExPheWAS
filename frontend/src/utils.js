@@ -1,4 +1,7 @@
 export function formatP(p) {
+  if (p > 1) {
+    return 1;
+  }
   return (p < 0.001) && (p != 0)? p.toExponential(1): p.toFixed(3);
 }
 
