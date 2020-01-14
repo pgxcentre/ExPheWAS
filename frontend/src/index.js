@@ -43,10 +43,12 @@ async function mainOutcomeList() {
 
 async function mainOutcomeResults(id) {
   let variance_pct = getUrlParam("variance_pct", 95);
+  let urlParam = variance_pct != 95? `?variance_pct=${variance_pct}`: '';
+  console.log(`urlParam='${urlParam}'`);
 
   $('#app #outcomeResults')
     .DataTable({
-      data: await api_call(`/outcome/${id}/results?variance_pct=${variance_pct}`),
+      data: await api_call(`/outcome/${id}/results${urlParam}`),
       columns: [
         {data: 'gene'},
         {data: 'gene_name'},
@@ -58,7 +60,7 @@ async function mainOutcomeResults(id) {
         {
           targets: 0,
           render: function(ensg, type, row, meta) {
-            return `<a href="/gene/${ensg}">${ensg}</a>`;
+            return `<a href="/gene/${ensg}${urlParam}">${ensg}</a>`;
           }
         },
         {
@@ -79,7 +81,9 @@ async function mainOutcomeResults(id) {
 
 async function mainGeneResults(id) {
   let variance_pct = getUrlParam("variance_pct", 95);
-  let data = await api_call(`/gene/${id}/results?variance_pct=${variance_pct}`);
+  let urlParam = variance_pct != 95? `?variance_pct=${variance_pct}`: '';
+
+  let data = await api_call(`/gene/${id}/results${urlParam}`);
 
   $('#app #geneResultsContinuous')
     .DataTable({
@@ -94,7 +98,7 @@ async function mainGeneResults(id) {
         {
           targets: 0,
           render: function(outcome, type, row, meta) {
-            return `<a href="/outcome/${outcome}">${outcome}</a>`;
+            return `<a href="/outcome/${outcome}${urlParam}">${outcome}</a>`;
           }
         },
         {
@@ -130,7 +134,7 @@ async function mainGeneResults(id) {
         {
           targets: 0,
           render: function(outcome, type, row, meta) {
-            return `<a href="/outcome/${outcome}">${outcome}</a>`;
+            return `<a href="/outcome/${outcome}${urlParam}">${outcome}</a>`;
           }
         },
         {
@@ -166,7 +170,7 @@ async function mainGeneResults(id) {
         {
           targets: 0,
           render: function(outcome, type, row, meta) {
-            return `<a href="/outcome/${outcome}">${outcome}</a>`;
+            return `<a href="/outcome/${outcome}${urlParam}">${outcome}</a>`;
           }
         },
         {
@@ -202,7 +206,7 @@ async function mainGeneResults(id) {
         {
           targets: 0,
           render: function(outcome, type, row, meta) {
-            return `<a href="/outcome/${outcome}">${outcome}</a>`;
+            return `<a href="/outcome/${outcome}${urlParam}">${outcome}</a>`;
           }
         },
         {
@@ -244,7 +248,7 @@ async function mainGeneResults(id) {
         {
           targets: 0,
           render: function(outcome, type, row, meta) {
-            return `<a href="/outcome/${outcome}">${outcome}</a>`;
+            return `<a href="/outcome/${outcome}${urlParam}">${outcome}</a>`;
           }
         },
         {
