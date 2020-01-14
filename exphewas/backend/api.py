@@ -7,6 +7,7 @@ import functools
 from os import path
 
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm import joinedload
 from flask import Blueprint, jsonify, request
 
 from ..db import models
@@ -103,10 +104,6 @@ def get_outcome_results(id):
 
     variance_pct = request.args.get("variance_pct", 95)
 
-    # Find all results.
-    fields = ("gene", "analysis_type", "outcome_id", "outcome_label",
-              "variance_pct", "p", "gene_name", "n_components")
-
     Result = None
     if isinstance(outcome, models.BinaryOutcome):
         Result = models.BinaryVariableResult
@@ -114,27 +111,26 @@ def get_outcome_results(id):
         Result = models.ContinuousVariableResult
 
     results = Session\
-        .query(
-            Result.gene,
-            models.Outcome.analysis_type,
-            Result.outcome_id,
-            models.Outcome.label,
-            Result.variance_pct,
-            Result.p,
-            models.Gene.name,
-            models.GeneVariance.n_components,
-        )\
-        .filter(models.Outcome.id == Result.outcome_id)\
-        .filter(Result.gene == models.Gene.ensembl_id)\
-        .filter(models.GeneVariance.ensembl_id == models.Gene.ensembl_id)\
-        .filter(models.GeneVariance.variance_pct == Result.variance_pct)\
-        .filter(models.GeneVariance == variance_pct)\
-        .filter_by(outcome_id=id)\
+        .query(Result)\
+        .filter_by(outcome_id=id, variance_pct=variance_pct)\
+        .options(joinedload("gene_obj"))\
+        .options(joinedload("outcome_obj"))\
+        .options(joinedload("gene_variance_obj"))\
         .all()
 
-    results = [dict(zip(fields, i)) for i in results]
-
-    return results
+    return [
+        {
+            "gene": r.gene,
+            "analysis_type": r.outcome_obj.analysis_type,
+            "outcome_id": r.outcome_id,
+            "outcome_label": r.outcome_obj.label,
+            "variance_pct": r.variance_pct,
+            "p": r.p,
+            "gene_name": r.gene_obj.name,
+            "n_components": r.gene_variance_obj.n_components
+        }
+        for r in results
+    ]
 
 
 @make_api("/gene")

@@ -109,22 +109,22 @@ class ResultMixin(object):
         return Column(String, ForeignKey("outcomes.id"), primary_key=True)
 
     @declared_attr
-    def n_components(cls):
-        return column_property(
-            select([GeneVariance.n_components])\
-                .where(and_(
-                    GeneVariance.ensembl_id == cls.gene,
-                    GeneVariance.variance_pct == cls.variance_pct
-                ))
-        )
-
-    @declared_attr
     def gene_obj(cls):
         return relationship("Gene")
 
     @declared_attr
     def outcome_obj(cls):
         return relationship("Outcome")
+
+    @declared_attr
+    def gene_variance_obj(cls):
+        return relationship(
+            "GeneVariance",
+            primaryjoin="and_({model}.gene==GeneVariance.ensembl_id,"
+                        "{model}.variance_pct==GeneVariance.variance_pct)"
+                        "".format(model=cls.__name__),
+            uselist=False
+        )
 
 
 class ContinuousVariableResult(Base, ResultMixin):
@@ -144,6 +144,7 @@ class BinaryVariableResult(Base, ResultMixin):
     resid_deviance_base = Column(Float)
     resid_deviance_augmented = Column(Float)
     deviance = Column(Float)
+
 
 
 class Gene(Base):
