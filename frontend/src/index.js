@@ -42,9 +42,11 @@ async function mainOutcomeList() {
 
 
 async function mainOutcomeResults(id) {
+  let variance_pct = getUrlParam("variance_pct", 95);
+
   $('#app #outcomeResults')
     .DataTable({
-      data: await api_call(`/outcome/${id}/results`),
+      data: await api_call(`/outcome/${id}/results?variance_pct=${variance_pct}`),
       columns: [
         {data: 'gene'},
         {data: 'gene_name'},
