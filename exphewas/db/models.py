@@ -2,12 +2,13 @@
 Database models to store the results of exPheWAS analysis.
 """
 
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.sql import select
-from sqlalchemy.orm import column_property
+from sqlalchemy.orm import column_property, relationship
 from sqlalchemy import (
     Table, Column, Integer, String, MetaData, ForeignKey, Enum, Float,
-    Boolean, Sequence, UniqueConstraint, ForeignKeyConstraint, create_engine
+    Boolean, Sequence, UniqueConstraint, ForeignKeyConstraint, create_engine,
+    and_
 )
 
 from .engine import ENGINE, Session
@@ -75,33 +76,6 @@ class ContinuousOutcome(Outcome):
     }
 
 
-class ContinuousVariableResult(Base):
-    __tablename__ = "results_continuous_variables"
-
-    gene = Column(String, primary_key=True)
-    variance_pct = Column(Integer, primary_key=True)
-    outcome_id = Column(String, primary_key=True)
-
-    p = Column(Float, nullable=False)
-    rss_base = Column(Float)
-    rss_augmented = Column(Float)
-    sum_of_sq = Column(Float)
-    F_stat = Column(Float)
-
-
-class BinaryVariableResult(Base):
-    __tablename__ = "results_binary_variables"
-
-    gene = Column(String, primary_key=True)
-    variance_pct = Column(Integer, primary_key=True)
-    outcome_id = Column(String, primary_key=True)
-
-    p = Column(Float, nullable=False)
-    resid_deviance_base = Column(Float)
-    resid_deviance_augmented = Column(Float)
-    deviance = Column(Float)
-
-
 class GeneVariance(Base):
     __tablename__ = "gene_variance"
 
@@ -115,6 +89,61 @@ class GeneVariance(Base):
         self.ensembl_id = ensg
         self.variance_pct = variance_pct
         self.n_components = n_components
+
+
+class ResultMixin(object):
+    @declared_attr
+    def gene(cls):
+        return Column(String, ForeignKey("genes.ensembl_id"), primary_key=True)
+
+    @declared_attr
+    def variance_pct(cls):
+        return Column(
+            Integer,
+            ForeignKey("gene_variance.variance_pct"),
+            primary_key=True
+        )
+
+    @declared_attr
+    def outcome_id(cls):
+        return Column(String, ForeignKey("outcomes.id"), primary_key=True)
+
+    @declared_attr
+    def n_components(cls):
+        return column_property(
+            select([GeneVariance.n_components])\
+                .where(and_(
+                    GeneVariance.ensembl_id == cls.gene,
+                    GeneVariance.variance_pct == cls.variance_pct
+                ))
+        )
+
+    @declared_attr
+    def gene_obj(cls):
+        return relationship("Gene")
+
+    @declared_attr
+    def outcome_obj(cls):
+        return relationship("Outcome")
+
+
+class ContinuousVariableResult(Base, ResultMixin):
+    __tablename__ = "results_continuous_variables"
+
+    p = Column(Float, nullable=False)
+    rss_base = Column(Float)
+    rss_augmented = Column(Float)
+    sum_of_sq = Column(Float)
+    F_stat = Column(Float)
+
+
+class BinaryVariableResult(Base, ResultMixin):
+    __tablename__ = "results_binary_variables"
+
+    p = Column(Float, nullable=False)
+    resid_deviance_base = Column(Float)
+    resid_deviance_augmented = Column(Float)
+    deviance = Column(Float)
 
 
 class Gene(Base):
