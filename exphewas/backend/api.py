@@ -191,6 +191,8 @@ def get_gene_results(ensg):
             f"Could not find gene (by Ensembl ID) '{ensg}'."
         )
 
+    variance_pct = request.args.get("variance_pct", 95)
+
     # Find all results.
     fields = ("gene", "analysis_type", "outcome_id", "outcome_label",
               "variance_pct", "p", "statistic", "gene_name", "n_components")
@@ -222,6 +224,7 @@ def get_gene_results(ensg):
         .filter(models.Gene.ensembl_id == result_info["model"].gene)
         .filter(models.GeneVariance.ensembl_id == models.Gene.ensembl_id)
         .filter(models.GeneVariance.variance_pct == result_info["model"].variance_pct)
+        .filter(result_info["model"].variance_pct == variance_pct)
         .filter_by(gene=ensg)
         for result_info in result_models
     ]
