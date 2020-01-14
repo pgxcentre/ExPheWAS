@@ -91,6 +91,6 @@
 
 {% block other_script %}
     <script>
-      window.pages.mainGeneResults("{{ ensembl_id }}");
+      window.pages.mainGeneResults("{{ ensembl_id }}", {{ variance_pct }});
     </script>
 {% endblock %}

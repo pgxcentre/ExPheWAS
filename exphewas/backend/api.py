@@ -128,6 +128,7 @@ def get_outcome_results(id):
         .filter(Result.gene == models.Gene.ensembl_id)\
         .filter(models.GeneVariance.ensembl_id == models.Gene.ensembl_id)\
         .filter(models.GeneVariance.variance_pct == Result.variance_pct)\
+        .filter(models.GeneVariance == variance_pct)\
         .filter_by(outcome_id=id)\
         .all()
 

@@ -4,7 +4,7 @@ import * as dt from 'datatables.net';
 
 
 import { API_URL, ICD10_URL, UNIPROT_URL } from "./config";
-import { formatP, formatNumber } from "./utils";
+import { formatP, formatNumber, getUrlParam } from "./utils";
 
 
 async function api_call(endpoint) {
@@ -76,7 +76,8 @@ async function mainOutcomeResults(id) {
 
 
 async function mainGeneResults(id) {
-  let data = await api_call(`/gene/${id}/results`);
+  let variance_pct = getUrlParam("variance_pct", 95);
+  let data = await api_call(`/gene/${id}/results?variance_pct=${variance_pct}`);
 
   $('#app #geneResultsContinuous')
     .DataTable({
