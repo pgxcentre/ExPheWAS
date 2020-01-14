@@ -21,10 +21,14 @@ async function api_call(endpoint) {
 }
 
 
-async function mainOutcomeList() {
+function mainOutcomeList() {
   $('#app #outcomes')
     .DataTable({
-      data: await api_call('/outcome'),
+      ajax: {
+        url: `${API_URL}/outcome`,
+        dataSrc: ""
+      },
+      processing: true,
       columns: [
         {data: 'id'},
         {data: 'label'}
@@ -41,14 +45,18 @@ async function mainOutcomeList() {
 }
 
 
-async function mainOutcomeResults(id) {
+function mainOutcomeResults(id) {
   let variance_pct = getUrlParam("variance_pct", 95);
   let urlParam = variance_pct != 95? `?variance_pct=${variance_pct}`: '';
   console.log(`urlParam='${urlParam}'`);
 
   $('#app #outcomeResults')
     .DataTable({
-      data: await api_call(`/outcome/${id}/results${urlParam}`),
+      ajax: {
+        url: `${API_URL}/outcome/${id}/results${urlParam}`,
+        dataSrc: ""
+      },
+      processing: true,
       columns: [
         {data: 'gene'},
         {data: 'gene_name'},
@@ -280,20 +288,22 @@ async function mainGeneResults(id) {
 }
 
 
-async function mainGeneList() {
-  let data = await api_call('/gene');
-
-  data = data.map((d) => {
-    let out = d;
-    out.strand = out.positive_strand? '+': '-';
-    out.uniprot_ids = out.uniprot_ids.map(id => `<a href="${UNIPROT_URL}/${id}">${id}</a>`).join(', ');
-
-    return out;
-  });
-
+function mainGeneList() {
   $('#app #genes')
     .DataTable({
-      data: data,
+      ajax: {
+        url: `${API_URL}/gene`,
+        dataSrc: data => {
+          let out = data.map((d) => {
+            d.strand = d.positive_strand? '+': '-';
+            d.uniprot_ids = d.uniprot_ids.map(id => `<a href="${UNIPROT_URL}/${id}">${id}</a>`).join(', ');
+            return d;
+          });
+
+          return out;
+        }
+      },
+      processing: true,
       columns: [
         {data: 'ensembl_id'},
         {data: 'name'},
