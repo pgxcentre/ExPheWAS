@@ -7,8 +7,10 @@
         <dl>
           <dt>Location:</dt>
           <dd>chr{{ chrom }}:{{ '{:,d}'.format(start) }}-{{ '{:,d}'.format(end) }}</dd>
-          <dt>Variance explained with {{ n_components }} components:</dt>
-          <dd>{{ 95 }}%</dd>
+          <dt>Variance explained:</dt>
+          <dd>{{ variance_pct }}%</dd>
+          <dt>Nb components</dt>
+          <dd>{{ n_components }}</dd>
           <dt>Uniprot:</dt>
           <dd>{% for id in uniprot_ids%}<a href="https://www.uniprot.org/uniprot/{{ id }}">{{ id }}</a>{{ ", " if not loop.last }}{% endfor %}</dd>
         </dl>
