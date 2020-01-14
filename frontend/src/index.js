@@ -49,6 +49,7 @@ async function mainOutcomeResults(id) {
         {data: 'gene'},
         {data: 'gene_name'},
         {data: 'p'},
+        {data: 'n_components'},
         {data: 'variance_pct'}
       ],
       columnDefs: [
@@ -65,7 +66,7 @@ async function mainOutcomeResults(id) {
           }
         },
         {
-          targets: [2, 3],
+          targets: [2, 3, 4],
           className: 'dt-body-right'
         }
       ],

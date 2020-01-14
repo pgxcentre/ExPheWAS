@@ -101,9 +101,11 @@ def get_outcome_results(id):
     except NoResultFound:
         raise RessourceNotFoundError(f"Could not find outcome '{id}'.")
 
+    variance_pct = request.args.get("variance_pct", 95)
+
     # Find all results.
     fields = ("gene", "analysis_type", "outcome_id", "outcome_label",
-              "variance_pct", "p", "gene_name")
+              "variance_pct", "p", "gene_name", "n_components")
 
     Result = None
     if isinstance(outcome, models.BinaryOutcome):
@@ -120,9 +122,12 @@ def get_outcome_results(id):
             Result.variance_pct,
             Result.p,
             models.Gene.name,
+            models.GeneVariance.n_components,
         )\
         .filter(models.Outcome.id == Result.outcome_id)\
         .filter(Result.gene == models.Gene.ensembl_id)\
+        .filter(models.GeneVariance.ensembl_id == models.Gene.ensembl_id)\
+        .filter(models.GeneVariance.variance_pct == Result.variance_pct)\
         .filter_by(outcome_id=id)\
         .all()
 
