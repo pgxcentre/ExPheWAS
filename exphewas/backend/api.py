@@ -7,7 +7,7 @@ import functools
 from os import path
 
 from sqlalchemy.orm.exc import NoResultFound
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 
 from ..db import models
 from ..db.engine import Session
@@ -101,9 +101,11 @@ def get_outcome_results(id):
     except NoResultFound:
         raise RessourceNotFoundError(f"Could not find outcome '{id}'.")
 
+    variance_pct = request.args.get("variance_pct", 95)
+
     # Find all results.
     fields = ("gene", "analysis_type", "outcome_id", "outcome_label",
-              "variance_pct", "p", "gene_name")
+              "variance_pct", "p", "gene_name", "n_components")
 
     Result = None
     if isinstance(outcome, models.BinaryOutcome):
@@ -120,9 +122,13 @@ def get_outcome_results(id):
             Result.variance_pct,
             Result.p,
             models.Gene.name,
+            models.GeneVariance.n_components,
         )\
         .filter(models.Outcome.id == Result.outcome_id)\
         .filter(Result.gene == models.Gene.ensembl_id)\
+        .filter(models.GeneVariance.ensembl_id == models.Gene.ensembl_id)\
+        .filter(models.GeneVariance.variance_pct == Result.variance_pct)\
+        .filter(models.GeneVariance == variance_pct)\
         .filter_by(outcome_id=id)\
         .all()
 
@@ -158,18 +164,28 @@ def get_gene_by_name(name):
 
 @make_api("/gene/ensembl/<ensg>")
 def get_gene_by_ensembl_id(ensg):
+    variance_pct = request.args.get("variance_pct", 95)
+
     try:
-        gene = Session.query(models.Gene).filter_by(ensembl_id=ensg).one()
+        gene, gene_variance = Session.query(
+            models.Gene,
+            models.GeneVariance,
+        )\
+        .filter(models.Gene.ensembl_id == ensg)\
+        .filter(models.Gene.ensembl_id == models.GeneVariance.ensembl_id)\
+        .filter(models.GeneVariance.variance_pct == variance_pct)\
+        .one()
     except NoResultFound:
         raise RessourceNotFoundError(
             f"Could not find gene (by Ensembl ID) '{ensg}'."
         )
 
     # Add the Uniprot xref.
-    d = mod_to_dict(gene)
-    d.update({"uniprot_ids": gene.uniprot_ids})
+    results = mod_to_dict(gene)
+    results.update(mod_to_dict(gene_variance))
+    results.update({"uniprot_ids": gene.uniprot_ids})
 
-    return d
+    return results
 
 
 @make_api("/gene/<ensg>/results")
@@ -181,29 +197,42 @@ def get_gene_results(ensg):
             f"Could not find gene (by Ensembl ID) '{ensg}'."
         )
 
+    variance_pct = request.args.get("variance_pct", 95)
+
     # Find all results.
     fields = ("gene", "analysis_type", "outcome_id", "outcome_label",
-              "variance_pct", "p", "gene_name")
+              "variance_pct", "p", "statistic", "gene_name", "n_components")
 
     result_models = (
-        models.BinaryVariableResult,
-        models.ContinuousVariableResult,
+        {
+            "model": models.BinaryVariableResult,
+            "statistic": models.BinaryVariableResult.deviance,
+        },
+        {
+            "model": models.ContinuousVariableResult,
+            "statistic": models.ContinuousVariableResult.sum_of_sq,
+        },
     )
 
     binary_results, continuous_results = [
         Session.query(
-            Result.gene,
+            result_info["model"].gene,
             models.Outcome.analysis_type,
-            Result.outcome_id,
+            result_info["model"].outcome_id,
             models.Outcome.label,
-            Result.variance_pct,
-            Result.p,
+            result_info["model"].variance_pct,
+            result_info["model"].p,
+            result_info["statistic"],
             models.Gene.name,
+            models.GeneVariance.n_components,
         )
-        .filter(models.Outcome.id == Result.outcome_id)
-        .filter(models.Gene.ensembl_id == Result.gene)
+        .filter(models.Outcome.id == result_info["model"].outcome_id)
+        .filter(models.Gene.ensembl_id == result_info["model"].gene)
+        .filter(models.GeneVariance.ensembl_id == models.Gene.ensembl_id)
+        .filter(models.GeneVariance.variance_pct == result_info["model"].variance_pct)
+        .filter(result_info["model"].variance_pct == variance_pct)
         .filter_by(gene=ensg)
-        for Result in result_models
+        for result_info in result_models
     ]
 
     results = binary_results.union(continuous_results).all()

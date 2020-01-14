@@ -4,6 +4,7 @@ import * as dt from 'datatables.net';
 
 
 import { API_URL, ICD10_URL, UNIPROT_URL } from "./config";
+import { formatP, formatNumber, getUrlParam } from "./utils";
 
 
 async function api_call(endpoint) {
@@ -41,21 +42,36 @@ async function mainOutcomeList() {
 
 
 async function mainOutcomeResults(id) {
+  let variance_pct = getUrlParam("variance_pct", 95);
+  let urlParam = variance_pct != 95? `?variance_pct=${variance_pct}`: '';
+  console.log(`urlParam='${urlParam}'`);
+
   $('#app #outcomeResults')
     .DataTable({
-      data: await api_call(`/outcome/${id}/results`),
+      data: await api_call(`/outcome/${id}/results${urlParam}`),
       columns: [
         {data: 'gene'},
         {data: 'gene_name'},
         {data: 'p'},
+        {data: 'n_components'},
         {data: 'variance_pct'}
       ],
       columnDefs: [
         {
           targets: 0,
           render: function(ensg, type, row, meta) {
-            return `<a href="/gene/${ensg}">${ensg}</a>`;
+            return `<a href="/gene/${ensg}${urlParam}">${ensg}</a>`;
           }
+        },
+        {
+          targets: 2,
+          render: function(p, type, row, meta) {
+            return formatP(p);
+          }
+        },
+        {
+          targets: [2, 3, 4],
+          className: 'dt-body-right'
         }
       ],
       order: [[2, 'asc']]
@@ -64,7 +80,10 @@ async function mainOutcomeResults(id) {
 
 
 async function mainGeneResults(id) {
-  let data = await api_call(`/gene/${id}/results`);
+  let variance_pct = getUrlParam("variance_pct", 95);
+  let urlParam = variance_pct != 95? `?variance_pct=${variance_pct}`: '';
+
+  let data = await api_call(`/gene/${id}/results${urlParam}`);
 
   $('#app #geneResultsContinuous')
     .DataTable({
@@ -73,14 +92,30 @@ async function mainGeneResults(id) {
         {data: 'outcome_id'},
         {data: 'outcome_label'},
         {data: 'p'},
-        {data: 'variance_pct'}
+        {data: 'statistic'}
       ],
       columnDefs: [
         {
           targets: 0,
           render: function(outcome, type, row, meta) {
-            return `<a href="/outcome/${outcome}">${outcome}</a>`;
+            return `<a href="/outcome/${outcome}${urlParam}">${outcome}</a>`;
           }
+        },
+        {
+          targets: 2,
+          render: function(p, type, row, meta) {
+            return formatP(p);
+          }
+        },
+        {
+          targets: 3,
+          render: function(statistic, type, row, meta) {
+            return statistic.toFixed(1);
+          }
+        },
+        {
+          targets: [2, 3],
+          className: 'dt-body-right'
         }
       ],
       order: [[2, 'asc']]
@@ -93,14 +128,30 @@ async function mainGeneResults(id) {
         {data: 'outcome_id'},
         {data: 'outcome_label'},
         {data: 'p'},
-        {data: 'variance_pct'}
+        {data: 'statistic'}
       ],
       columnDefs: [
         {
           targets: 0,
           render: function(outcome, type, row, meta) {
-            return `<a href="/outcome/${outcome}">${outcome}</a>`;
+            return `<a href="/outcome/${outcome}${urlParam}">${outcome}</a>`;
           }
+        },
+        {
+          targets: 2,
+          render: function(p, type, row, meta) {
+            return formatP(p);
+          }
+        },
+        {
+          targets: 3,
+          render: function(statistic, type, row, meta) {
+            return statistic.toFixed(1);
+          }
+        },
+        {
+          targets: [2, 3],
+          className: 'dt-body-right'
         }
       ],
       order: [[2, 'asc']]
@@ -113,14 +164,30 @@ async function mainGeneResults(id) {
         {data: 'outcome_id'},
         {data: 'outcome_label'},
         {data: 'p'},
-        {data: 'variance_pct'}
+        {data: 'statistic'}
       ],
       columnDefs: [
         {
           targets: 0,
           render: function(outcome, type, row, meta) {
-            return `<a href="/outcome/${outcome}">${outcome}</a>`;
+            return `<a href="/outcome/${outcome}${urlParam}">${outcome}</a>`;
           }
+        },
+        {
+          targets: 2,
+          render: function(p, type, row, meta) {
+            return formatP(p);
+          }
+        },
+        {
+          targets: 3,
+          render: function(statistic, type, row, meta) {
+            return statistic.toFixed(1);
+          }
+        },
+        {
+          targets: [2, 3],
+          className: 'dt-body-right'
         }
       ],
       order: [[2, 'asc']]
@@ -133,13 +200,13 @@ async function mainGeneResults(id) {
         {data: 'outcome_id'},
         {data: 'outcome_label'},
         {data: 'p'},
-        {data: 'variance_pct'}
+        {data: 'statistic'}
       ],
       columnDefs: [
         {
           targets: 0,
           render: function(outcome, type, row, meta) {
-            return `<a href="/outcome/${outcome}">${outcome}</a>`;
+            return `<a href="/outcome/${outcome}${urlParam}">${outcome}</a>`;
           }
         },
         {
@@ -147,6 +214,22 @@ async function mainGeneResults(id) {
           render: function(description, type, row, meta) {
             return `<a href="${ICD10_URL}/${row.id}">${description}</a>`;
           }
+        },
+        {
+          targets: 2,
+          render: function(p, type, row, meta) {
+            return formatP(p);
+          }
+        },
+        {
+          targets: 3,
+          render: function(statistic, type, row, meta) {
+            return statistic.toFixed(1);
+          }
+        },
+        {
+          targets: [2, 3],
+          className: 'dt-body-right'
         }
       ],
       order: [[2, 'asc']]
@@ -159,13 +242,13 @@ async function mainGeneResults(id) {
         {data: 'outcome_id'},
         {data: 'outcome_label'},
         {data: 'p'},
-        {data: 'variance_pct'}
+        {data: 'statistic'}
       ],
       columnDefs: [
         {
           targets: 0,
           render: function(outcome, type, row, meta) {
-            return `<a href="/outcome/${outcome}">${outcome}</a>`;
+            return `<a href="/outcome/${outcome}${urlParam}">${outcome}</a>`;
           }
         },
         {
@@ -174,6 +257,22 @@ async function mainGeneResults(id) {
             let icd10Code = description.split(" ")[0];
             return `<a href="${ICD10_URL}/${icd10Code}">${description}</a>`;
           }
+        },
+        {
+          targets: 2,
+          render: function(p, type, row, meta) {
+            return formatP(p);
+          }
+        },
+        {
+          targets: 3,
+          render: function(statistic, type, row, meta) {
+            return statistic.toFixed(1);
+          }
+        },
+        {
+          targets: [2, 3],
+          className: 'dt-body-right'
         }
       ],
       order: [[2, 'asc']]
@@ -210,6 +309,16 @@ async function mainGeneList() {
           render: function(ensg, type, row, meta) {
             return `<a href="/gene/${ensg}">${ensg}</a>`;
           }
+        },
+        {
+          targets: [4, 5],
+          render: function(position, type, row, meta) {
+            return formatNumber(position);
+          }
+        },
+        {
+          targets: [3, 4, 5],
+          className: 'dt-body-right'
         }
       ]
   });

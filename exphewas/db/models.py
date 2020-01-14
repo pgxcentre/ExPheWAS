@@ -157,7 +157,7 @@ class Gene(Base):
     end = Column(Integer)
     positive_strand = Column(Boolean)
 
-    # An alternative to this is to use a regular property and to 
+    # An alternative to this is to use a regular property and to
     # use object_session(self) to execute arbitrary queries.
     @property
     def uniprot_ids(self):

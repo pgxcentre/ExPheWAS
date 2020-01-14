@@ -4,12 +4,16 @@
     <div id="app">
 
       <div class="geneDescription">
-        <div class="location">
-          chr{{ chrom }}:{{ '{:,d}'.format(start) }}-{{ '{:,d}'.format(end) }}
-        </div>
-        <div class="uniprotID">
-          Uniprot: {% for id in uniprot_ids%}<a href="https://www.uniprot.org/uniprot/{{ id }}">{{ id }}</a>{{ ", " if not loop.last }}{% endfor %}
-        </div>
+        <dl>
+          <dt>Location:</dt>
+          <dd>chr{{ chrom }}:{{ '{:,d}'.format(start) }}-{{ '{:,d}'.format(end) }}</dd>
+          <dt>Variance explained:</dt>
+          <dd>{{ variance_pct }}%</dd>
+          <dt>Nb components</dt>
+          <dd>{{ n_components }}</dd>
+          <dt>Uniprot:</dt>
+          <dd>{% for id in uniprot_ids%}<a href="https://www.uniprot.org/uniprot/{{ id }}">{{ id }}</a>{{ ", " if not loop.last }}{% endfor %}</dd>
+        </dl>
       </div>
 
       <div class="geneResults continuousVariable">
@@ -20,7 +24,7 @@
               <th>Outcome Id</th>
               <th>Description</th>
               <th>P-Value</th>
-              <th>Pct Variance Explained</th>
+              <th>Sum of Square</th>
             </tr>
           </thead>
         </table>
@@ -34,7 +38,7 @@
               <th>Outcome Id</th>
               <th>Description</th>
               <th>P-Value</th>
-              <th>Pct Variance Explained</th>
+              <th>Deviance</th>
             </tr>
           </thead>
         </table>
@@ -48,7 +52,7 @@
               <th>Outcome Id</th>
               <th>Description</th>
               <th>P-Value</th>
-              <th>Pct Variance Explained</th>
+              <th>Deviance</th>
             </tr>
           </thead>
         </table>
@@ -62,7 +66,7 @@
               <th>Outcome Id</th>
               <th>Description</th>
               <th>P-Value</th>
-              <th>Pct Variance Explained</th>
+              <th>Deviance</th>
             </tr>
           </thead>
         </table>
@@ -76,7 +80,7 @@
               <th>Outcome Id</th>
               <th>Description</th>
               <th>P-Value</th>
-              <th>Pct Variance Explained</th>
+              <th>Deviance</th>
             </tr>
           </thead>
         </table>
