@@ -95,6 +95,7 @@ async function mainGeneResults(id) {
 
   // Total number of results
   let n_results = data.length;
+  console.log(n_results);
 
   // Calculate the bonferonni corrected p (TODO: the q-value / FDR).
   data = data.map(d => {
@@ -340,9 +341,14 @@ function mainGeneList() {
         url: `${API_URL}/gene`,
         dataSrc: data => {
           let out = data.map((d) => {
+
             d.strand = d.positive_strand? '+': '-';
-            d.uniprot_ids = d.uniprot_ids.map(id => `<a href="${UNIPROT_URL}/${id}">${id}</a>`).join(', ');
+            d.uniprot_ids = d.uniprot_ids.map(id => {
+              return `<a href="${UNIPROT_URL}/${id}">${id}</a>`).join(', ');
+            })
+
             return d;
+
           });
 
           return out;

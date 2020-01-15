@@ -96,13 +96,7 @@ class ResultMixin(object):
     def gene(cls):
         return Column(String, ForeignKey("genes.ensembl_id"), primary_key=True)
 
-    @declared_attr
-    def variance_pct(cls):
-        return Column(
-            Integer,
-            ForeignKey("gene_variance.variance_pct"),
-            primary_key=True
-        )
+    variance_pct = Column(Integer, primary_key=True)
 
     @declared_attr
     def outcome_id(cls):
@@ -111,6 +105,15 @@ class ResultMixin(object):
     @declared_attr
     def gene_obj(cls):
         return relationship("Gene")
+
+    @declared_attr
+    def __table_args__(cls):
+        return (
+            ForeignKeyConstraint(
+                [cls.gene, cls.variance_pct],
+                ["gene_variance.ensembl_id", "gene_variance.variance_pct"]
+            ),
+        )
 
     @declared_attr
     def outcome_obj(cls):
@@ -123,7 +126,8 @@ class ResultMixin(object):
             primaryjoin="and_({model}.gene==GeneVariance.ensembl_id,"
                         "{model}.variance_pct==GeneVariance.variance_pct)"
                         "".format(model=cls.__name__),
-            uselist=False
+            uselist=False,
+            viewonly=True
         )
 
 
