@@ -24,6 +24,7 @@ async function api_call(endpoint) {
 function mainOutcomeList() {
   $('#app #outcomes')
     .DataTable({
+      deferRender: true,
       ajax: {
         url: `${API_URL}/outcome`,
         dataSrc: ""
@@ -52,6 +53,7 @@ function mainOutcomeResults(id) {
 
   $('#app #outcomeResults')
     .DataTable({
+      deferRender: true,
       ajax: {
         url: `${API_URL}/outcome/${id}/results${urlParam}`,
         dataSrc: ""
@@ -106,6 +108,7 @@ async function mainGeneResults(id) {
 
   $('#app #geneResultsContinuous')
     .DataTable({
+      deferRender: true,
       data: data.filter(d => d.analysis_type === 'CONTINUOUS_VARIABLE'),
       columns: [
         {data: 'outcome_id'},     // 0
@@ -149,6 +152,7 @@ async function mainGeneResults(id) {
 
   $('#app #geneResultsCVEndpoints')
     .DataTable({
+      deferRender: true,
       data: data.filter(d => d.analysis_type === 'CV_ENDPOINTS'),
       columns: [
         {data: 'outcome_id'},     // 0
@@ -192,6 +196,7 @@ async function mainGeneResults(id) {
 
   $('#app #geneResultsSelfReported')
     .DataTable({
+      deferRender: true,
       data: data.filter(d => d.analysis_type === 'SELF_REPORTED'),
       columns: [
         {data: 'outcome_id'},     // 0
@@ -235,6 +240,7 @@ async function mainGeneResults(id) {
 
   $('#app #geneResultsICD10Block')
     .DataTable({
+      deferRender: true,
       data: data.filter(d => d.analysis_type === 'ICD10_BLOCK'),
       columns: [
         {data: 'outcome_id'},     // 0
@@ -284,6 +290,7 @@ async function mainGeneResults(id) {
 
   $('#app #geneResultsICD103Char')
     .DataTable({
+      deferRender: true,
       data: data.filter(d => d.analysis_type === 'ICD10_3CHAR'),
       columns: [
         {data: 'outcome_id'},
@@ -356,6 +363,8 @@ function mainGeneList() {
           return out;
         }
       },
+      order: [],
+      deferRender: true,
       processing: true,
       columns: [
         {data: 'ensembl_id'},
