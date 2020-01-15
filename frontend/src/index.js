@@ -259,7 +259,8 @@ async function mainGeneResults(id) {
         {
           targets: 1,
           render: function(description, type, row, meta) {
-            return `<a href="${ICD10_URL}/${row.id}">${description}</a>`;
+            let icd10Code = row.outcome_id.split("-")[0];
+            return `${description} <small>[<a target="_blank" href="${ICD10_URL}/${icd10Code}">link</a>]</small>`;
           }
         },
         {
@@ -309,8 +310,7 @@ async function mainGeneResults(id) {
         {
           targets: 1,
           render: function(description, type, row, meta) {
-            let icd10Code = description.split(" ")[0];
-            return `<a href="${ICD10_URL}/${icd10Code}">${description}</a>`;
+            return `${description} <small>[<a target="_blank" href="${ICD10_URL}/${row.outcome_id}">link</a>]</small>`;
           }
         },
         {
