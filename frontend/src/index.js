@@ -343,9 +343,11 @@ function mainGeneList() {
           let out = data.map((d) => {
 
             d.strand = d.positive_strand? '+': '-';
-            d.uniprot_ids = d.uniprot_ids.map(id => {
-              return `<a href="${UNIPROT_URL}/${id}">${id}</a>`).join(', ');
-            })
+            d.uniprot_ids = d.uniprot_ids
+              .map(id => {
+                return `<a href="${UNIPROT_URL}/${id}">${id}</a>`;
+              })
+              .join(', ');
 
             return d;
 
