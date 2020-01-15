@@ -29,6 +29,9 @@ class R(object):
         self._r_qvalue = self._r_importr("qvalue")
 
     def qvalue(self, p_values):
-        self._import_qvalue()
+        if not hasattr(self._r, "qvalue"):
+            self._import_qvalue()
+
         q = self._r.qvalue(FloatVector(p_values))
+
         return list(q.rx2("qvalues"))

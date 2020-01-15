@@ -7,7 +7,7 @@ import 'datatables.net-dt/css/jquery.dataTables.css';
 
 import '../scss/custom.scss';
 import { API_URL, ICD10_URL, UNIPROT_URL } from './config';
-import { formatP, formatNumber, getUrlParam, p2q } from './utils';
+import { formatP, formatNumber, getUrlParam } from './utils';
 
 
 async function api_call(endpoint) {
@@ -57,18 +57,15 @@ async function mainOutcomeResults(id) {
 
   let data = await api_call(`/outcome/${id}/results${urlParam}`);
 
-  let p = data.map(d => d.p);
-  let q = await p2q(p);
-
   data = data.map((d, i) => {
     d.bonf = d.p * data.length;
-    d.q = q[i];
     return d;
   });
 
   $('#app #outcomeResults')
     .DataTable({
       data: data,
+      deferRender: true,
       columns: [
         {data: 'gene'},         // 0
         {data: 'gene_name'},    // 1
@@ -109,7 +106,6 @@ async function mainGeneResults(id) {
 
   // Total number of results
   let n_results = data.length;
-  console.log(n_results);
 
   // Calculate the bonferonni corrected p (TODO: the q-value / FDR).
   data = data.map(d => {
@@ -126,8 +122,9 @@ async function mainGeneResults(id) {
         {data: 'outcome_id'},     // 0
         {data: 'outcome_label'},  // 1
         {data: 'p'},              // 2
-        {data: 'bonf'},           // 3
-        {data: 'gof_meas'},       // 4
+        {data: 'q'},              // 3
+        {data: 'bonf'},           // 4
+        {data: 'gof_meas'},       // 5
       ],
       columnDefs: [
         {
@@ -137,19 +134,19 @@ async function mainGeneResults(id) {
           }
         },
         {
-          targets: [2, 3],
+          targets: [2, 3, 4],
           render: function(p, type, row, meta) {
             return formatP(p);
           }
         },
         {
-          targets: 4,
+          targets: 5,
           render: function(gof_meas, type, row, meta) {
             return gof_meas.toFixed(1);
           }
         },
         {
-          targets: [2, 3, 4],
+          targets: [2, 3, 4, 5],
           className: 'dt-body-right'
         }
       ],
@@ -164,8 +161,9 @@ async function mainGeneResults(id) {
         {data: 'outcome_id'},     // 0
         {data: 'outcome_label'},  // 1
         {data: 'p'},              // 2
-        {data: 'bonf'},           // 3
-        {data: 'gof_meas'}        // 4
+        {data: 'q'},              // 3
+        {data: 'bonf'},           // 4
+        {data: 'gof_meas'}        // 5
       ],
       columnDefs: [
         {
@@ -175,25 +173,19 @@ async function mainGeneResults(id) {
           }
         },
         {
-          targets: 2,
+          targets: [2, 3, 4],
           render: function(p, type, row, meta) {
             return formatP(p);
           }
         },
         {
-          targets: 3,
-          render: function(p, type, row, meta) {
-            return formatP(p);
-          }
-        },
-        {
-          targets: 4,
+          targets: 5,
           render: function(gof_meas, type, row, meta) {
             return gof_meas.toFixed(1);
           }
         },
         {
-          targets: [2, 3, 4],
+          targets: [2, 3, 4, 5],
           className: 'dt-body-right'
         }
       ],
@@ -208,8 +200,9 @@ async function mainGeneResults(id) {
         {data: 'outcome_id'},     // 0
         {data: 'outcome_label'},  // 1
         {data: 'p'},              // 2
-        {data: 'bonf'},           // 3
-        {data: 'gof_meas'}        // 4
+        {data: 'q'},              // 3
+        {data: 'bonf'},           // 4
+        {data: 'gof_meas'}        // 5
       ],
       columnDefs: [
         {
@@ -219,19 +212,19 @@ async function mainGeneResults(id) {
           }
         },
         {
-          targets: [2, 3],
+          targets: [2, 3, 4],
           render: function(p, type, row, meta) {
             return formatP(p);
           }
         },
         {
-          targets: 4,
+          targets: 5,
           render: function(gof_meas, type, row, meta) {
             return gof_meas.toFixed(1);
           }
         },
         {
-          targets: [2, 3, 4],
+          targets: [2, 3, 4, 5],
           className: 'dt-body-right'
         }
       ],
@@ -246,8 +239,9 @@ async function mainGeneResults(id) {
         {data: 'outcome_id'},     // 0
         {data: 'outcome_label'},  // 1
         {data: 'p'},              // 2
-        {data: 'bonf'},           // 3
-        {data: 'gof_meas'}        // 4
+        {data: 'q'},              // 3
+        {data: 'bonf'},           // 4
+        {data: 'gof_meas'}        // 5
       ],
       columnDefs: [
         {
@@ -264,25 +258,19 @@ async function mainGeneResults(id) {
           }
         },
         {
-          targets: 2,
+          targets: [2, 3, 4],
           render: function(p, type, row, meta) {
             return formatP(p);
           }
         },
         {
-          targets: 3,
-          render: function(p, type, row, meta) {
-            return formatP(p);
-          }
-        },
-        {
-          targets: 4,
+          targets: 5,
           render: function(gof_meas, type, row, meta) {
             return gof_meas.toFixed(1);
           }
         },
         {
-          targets: [2, 3, 4],
+          targets: [2, 3, 4, 5],
           className: 'dt-body-right'
         }
       ],
@@ -294,11 +282,12 @@ async function mainGeneResults(id) {
       deferRender: true,
       data: data.filter(d => d.analysis_type === 'ICD10_3CHAR'),
       columns: [
-        {data: 'outcome_id'},
-        {data: 'outcome_label'},
-        {data: 'p'},
-        {data: 'bonf'},
-        {data: 'gof_meas'}
+        {data: 'outcome_id'},    // 0
+        {data: 'outcome_label'}, // 1
+        {data: 'p'},             // 2
+        {data: 'q'},             // 3
+        {data: 'bonf'},          // 4
+        {data: 'gof_meas'}       // 5
       ],
       columnDefs: [
         {
@@ -314,19 +303,19 @@ async function mainGeneResults(id) {
           }
         },
         {
-          targets: [2, 3],
+          targets: [2, 3, 4],
           render: function(p, type, row, meta) {
             return formatP(p);
           }
         },
         {
-          targets: 4,
+          targets: 5,
           render: function(gof_meas, type, row, meta) {
             return gof_meas.toFixed(1);
           }
         },
         {
-          targets: [2, 3, 4],
+          targets: [2, 3, 4, 5],
           className: 'dt-body-right'
         }
       ],

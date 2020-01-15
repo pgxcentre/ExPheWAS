@@ -3,6 +3,7 @@ Flask-based REST API for the results of the ExPheWAS analysis.
 """
 
 import json
+import itertools
 import functools
 from os import path
 
@@ -15,6 +16,13 @@ from ..db.engine import Session
 from ..db.utils import mod_to_dict
 
 from .r_bindings import R
+
+
+try:
+    R_instance = R()
+
+except:
+    R_instance = None
 
 
 api = Blueprint("api_blueprint", __name__, url_prefix="/api")
@@ -120,6 +128,12 @@ def get_outcome_results(id):
         .options(joinedload("gene_variance_obj"))\
         .all()
 
+    # Get the corresponding Q-values.
+    if R_instance is not None:
+        qs = R_instance.qvalue([r.p for r in results])
+    else:
+        qs = itertools.cycle([None])
+
     return [
         {
             "gene": r.gene,
@@ -128,10 +142,11 @@ def get_outcome_results(id):
             "outcome_label": r.outcome_obj.label,
             "variance_pct": r.variance_pct,
             "p": r.p,
+            "q": q,
             "gene_name": r.gene_obj.name,
             "n_components": r.gene_variance_obj.n_components
         }
-        for r in results
+        for q, r in zip(qs, results)
     ]
 
 
@@ -237,19 +252,15 @@ def get_gene_results(ensg):
 
     results = [dict(zip(fields, i)) for i in results]
 
+    # Get the corresponding Q-values.
+    if R_instance is not None:
+        qs = R_instance.qvalue([r["p"] for r in results])
+    else:
+        qs = None
+
+    for i in range(len(results)):
+        results[i].update({
+            "q": None if qs is None else qs[i]
+        })
+
     return results
-
-
-@api.route("/qvalue", methods=["POST"])
-def qvalue():
-    try:
-        p = json.loads(request.data)
-    except Exception as e:
-        return jsonify({"error": str(e)})
-
-    # Load rpy2.
-    try:
-        r = R()
-        return jsonify(r.qvalue(p))
-    except Exception as e:
-        return jsonify({"error": str(e)})
