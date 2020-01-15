@@ -1,3 +1,6 @@
+import { API_URL } from './config';
+
+
 export function formatP(p) {
   if (p > 1) {
     return 1;
@@ -25,4 +28,26 @@ export function getUrlParam(parameter, defaultvalue) {
     urlparameter = getUrlVars()[parameter];
   }
   return urlparameter;
+}
+
+
+export async function p2q(p) {
+  // API call to get the q values.
+  let res = await fetch(
+    `${API_URL}/qvalue`, {
+      method: 'POST',
+      body: JSON.stringify(p)
+    }
+  );
+
+  let data = await res.json();
+
+  if (data.error === undefined) {
+    return data;
+  }
+  else {
+    console.log(data);
+    return null;
+  }
+
 }

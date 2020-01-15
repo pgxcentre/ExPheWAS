@@ -7,7 +7,7 @@ import 'datatables.net-dt/css/jquery.dataTables.css';
 
 import '../scss/custom.scss';
 import { API_URL, ICD10_URL, UNIPROT_URL } from './config';
-import { formatP, formatNumber, getUrlParam } from './utils';
+import { formatP, formatNumber, getUrlParam, p2q } from './utils';
 
 
 async function api_call(endpoint) {
@@ -51,32 +51,32 @@ function mainOutcomeList() {
 }
 
 
-function mainOutcomeResults(id) {
+async function mainOutcomeResults(id) {
   let variance_pct = getUrlParam("variance_pct", 95);
   let urlParam = variance_pct != 95? `?variance_pct=${variance_pct}`: '';
-  console.log(`urlParam='${urlParam}'`);
+
+  let data = await api_call(`/outcome/${id}/results${urlParam}`);
+
+  let p = data.map(d => d.p);
+  let q = await p2q(p);
+
+  data = data.map((d, i) => {
+    d.bonf = d.p * data.length;
+    d.q = q[i];
+    return d;
+  });
 
   $('#app #outcomeResults')
     .DataTable({
-      deferRender: true,
-      ajax: {
-        url: `${API_URL}/outcome/${id}/results${urlParam}`,
-        dataSrc: data => {
-          data = data.map(d => {
-            d.bonf = d.p * data.length;
-            return d;
-          });
-
-          return data;
-        },
-      },
+      data: data,
       columns: [
         {data: 'gene'},         // 0
         {data: 'gene_name'},    // 1
         {data: 'p'},            // 2
-        {data: 'bonf'},         // 3
-        {data: 'n_components'}, // 4
-        {data: 'variance_pct'}  // 5
+        {data: 'q'},            // 3
+        {data: 'bonf'},         // 4
+        {data: 'n_components'}, // 5
+        {data: 'variance_pct'}  // 6
       ],
       columnDefs: [
         {
@@ -86,13 +86,13 @@ function mainOutcomeResults(id) {
           }
         },
         {
-          targets: [2, 3],
+          targets: [2, 3, 4],
           render: function(p, type, row, meta) {
             return formatP(p);
           }
         },
         {
-          targets: [2, 3, 4, 5],
+          targets: [2, 3, 4, 5, 6],
           className: 'dt-body-right'
         }
       ],

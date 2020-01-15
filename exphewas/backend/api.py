@@ -14,6 +14,8 @@ from ..db import models
 from ..db.engine import Session
 from ..db.utils import mod_to_dict
 
+from .r_bindings import R
+
 
 api = Blueprint("api_blueprint", __name__, url_prefix="/api")
 
@@ -236,3 +238,18 @@ def get_gene_results(ensg):
     results = [dict(zip(fields, i)) for i in results]
 
     return results
+
+
+@api.route("/qvalue", methods=["POST"])
+def qvalue():
+    try:
+        p = json.loads(request.data)
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+    # Load rpy2.
+    try:
+        r = R()
+        return jsonify(r.qvalue(p))
+    except Exception as e:
+        return jsonify({"error": str(e)})
