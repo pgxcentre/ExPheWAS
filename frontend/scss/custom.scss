@@ -1,0 +1,14 @@
+@import "node_modules/bootstrap/scss/bootstrap";
+
+.navbar {
+  margin-bottom: 20px;
+}
+
+.dataTables_filter input[type="search"] {
+  border-radius: 4px;
+  border: 1px solid #cccccc;
+}
+
+.card.geneDescription .card.outcomeDescription {
+  margin: 20px 0;
+}

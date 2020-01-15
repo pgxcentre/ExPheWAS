@@ -1,10 +1,13 @@
-import "@babel/polyfill";
+import '@babel/polyfill';
 import * as d3 from 'd3';
-import * as dt from 'datatables.net';
+import 'bootstrap';
+import 'datatables.net';
 
+import 'datatables.net-dt/css/jquery.dataTables.css';
 
-import { API_URL, ICD10_URL, UNIPROT_URL } from "./config";
-import { formatP, formatNumber, getUrlParam } from "./utils";
+import '../scss/custom.scss';
+import { API_URL, ICD10_URL, UNIPROT_URL } from './config';
+import { formatP, formatNumber, getUrlParam } from './utils';
 
 
 async function api_call(endpoint) {
@@ -22,6 +25,9 @@ async function api_call(endpoint) {
 
 
 function mainOutcomeList() {
+  // Add active page styling.
+  $('.nav-item.outcomes').addClass('active');
+
   $('#app #outcomes')
     .DataTable({
       deferRender: true,
@@ -29,7 +35,6 @@ function mainOutcomeList() {
         url: `${API_URL}/outcome`,
         dataSrc: ""
       },
-      processing: true,
       columns: [
         {data: 'id'},
         {data: 'label'}
@@ -56,15 +61,22 @@ function mainOutcomeResults(id) {
       deferRender: true,
       ajax: {
         url: `${API_URL}/outcome/${id}/results${urlParam}`,
-        dataSrc: ""
+        dataSrc: data => {
+          data = data.map(d => {
+            d.bonf = d.p * data.length;
+            return d;
+          });
+
+          return data;
+        },
       },
-      processing: true,
       columns: [
-        {data: 'gene'},
-        {data: 'gene_name'},
-        {data: 'p'},
-        {data: 'n_components'},
-        {data: 'variance_pct'}
+        {data: 'gene'},         // 0
+        {data: 'gene_name'},    // 1
+        {data: 'p'},            // 2
+        {data: 'bonf'},         // 3
+        {data: 'n_components'}, // 4
+        {data: 'variance_pct'}  // 5
       ],
       columnDefs: [
         {
@@ -74,13 +86,13 @@ function mainOutcomeResults(id) {
           }
         },
         {
-          targets: 2,
+          targets: [2, 3],
           render: function(p, type, row, meta) {
             return formatP(p);
           }
         },
         {
-          targets: [2, 3, 4],
+          targets: [2, 3, 4, 5],
           className: 'dt-body-right'
         }
       ],
@@ -125,13 +137,7 @@ async function mainGeneResults(id) {
           }
         },
         {
-          targets: 2,
-          render: function(p, type, row, meta) {
-            return formatP(p);
-          }
-        },
-        {
-          targets: 3,
+          targets: [2, 3],
           render: function(p, type, row, meta) {
             return formatP(p);
           }
@@ -213,13 +219,7 @@ async function mainGeneResults(id) {
           }
         },
         {
-          targets: 2,
-          render: function(p, type, row, meta) {
-            return formatP(p);
-          }
-        },
-        {
-          targets: 3,
+          targets: [2, 3],
           render: function(p, type, row, meta) {
             return formatP(p);
           }
@@ -314,13 +314,7 @@ async function mainGeneResults(id) {
           }
         },
         {
-          targets: 2,
-          render: function(p, type, row, meta) {
-            return formatP(p);
-          }
-        },
-        {
-          targets: 3,
+          targets: [2, 3],
           render: function(p, type, row, meta) {
             return formatP(p);
           }
@@ -342,6 +336,9 @@ async function mainGeneResults(id) {
 
 
 function mainGeneList() {
+  // Add active page styling.
+  $('.nav-item.genes').addClass('active');
+
   $('#app #genes')
     .DataTable({
       ajax: {
@@ -365,7 +362,6 @@ function mainGeneList() {
       },
       order: [],
       deferRender: true,
-      processing: true,
       columns: [
         {data: 'ensembl_id'},
         {data: 'name'},

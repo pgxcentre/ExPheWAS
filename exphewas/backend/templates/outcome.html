@@ -13,24 +13,36 @@
 
     <div id="app">
 
-      <div class="outcomeDescription">
-        <dl>
-          <dt>Trait:</dt>
-          <dd>{{ type }}</dd>
-          <dt>Analysis Type:</dt>
-          <dd>{{ analysis_type }}</dd>
-          {%- if type == 'binary' %}
-          <dt>Cases:</dt>
-          <dd>{{ '{:,d}'.format(n_cases) }}<dd>
-          <dt>Controls:</dt>
-          <dd>{{ '{:,d}'.format(n_controls) }}</dd>
-          <dt>Excluded from controls:</dt>
-          <dd>{{ '{:,d}'.format(n_excluded_from_controls) }}</dd>
-          {%- elif type == 'continuous' %}
-          <dt>Samples:</dt>
-          <dd>{{ '{:,d}'.format(n) if n is not none else '?' }}</dt>
-          {%- endif %}
-        </dl>
+      <div class="row">
+        <div class="col-5">
+        <div class="card outcomeDescription">
+          <div class="card-body">
+            <dl class="row">
+              <dt class="col-5">Trait:</dt>
+              <dd class="col-7">{{ type }}</dd>
+
+              <dt class="col-5">Analysis Type:</dt>
+              <dd class="col-7">{{ analysis_type }}</dd>
+
+              {%- if type == 'binary' %}
+              <dt class="col-5">Cases:</dt>
+              <dd class="col-7">{{ '{:,d}'.format(n_cases) }}</dd>
+
+              <dt class="col-5">Controls:</dt>
+              <dd class="col-7">{{ '{:,d}'.format(n_controls) }}</dd>
+
+              <dt class="col-5">Excluded from controls:</dt>
+              <dd class="col-7">{{ '{:,d}'.format(n_excluded_from_controls) }}</dd>
+
+              {%- elif type == 'continuous' %}
+              <dt class="col-5">Samples:</dt>
+              <dd class="col-7">{{ '{:,d}'.format(n) if n is not none else '?' }}</dt>
+
+              {%- endif %}
+            </dl>
+          </div>
+        </div>
+        </div>
       </div>
 
       <div class="outcomeResults">
@@ -40,6 +52,7 @@
               <th>Gene</th>
               <th>Symbol</th>
               <th>P-Value</th>
+              <th>Bonferroni p</th>
               <th>Nb Components</th>
               <th>Variance Explained</th>
             </tr>
