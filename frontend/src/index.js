@@ -74,7 +74,7 @@ function mainOutcomeResults(id) {
         {data: 'gene'},         // 0
         {data: 'gene_name'},    // 1
         {data: 'p'},            // 2
-        {data: 'bonf'},         // 3
+        {data: 'bonf'},         // 3
         {data: 'n_components'}, // 4
         {data: 'variance_pct'}  // 5
       ],
@@ -111,7 +111,7 @@ async function mainGeneResults(id) {
   let n_results = data.length;
   console.log(n_results);
 
-  // Calculate the bonferonni corrected p (TODO: the q-value / FDR).
+  // Calculate the bonferonni corrected p (TODO: the q-value / FDR).
   data = data.map(d => {
     d.bonf = d.p * n_results;
     return d;
@@ -125,7 +125,7 @@ async function mainGeneResults(id) {
       columns: [
         {data: 'outcome_id'},     // 0
         {data: 'outcome_label'},  // 1
-        {data: 'p'},              // 2
+        {data: 'p'},              // 2
         {data: 'bonf'},           // 3
         {data: 'gof_meas'},       // 4
       ],
@@ -206,10 +206,10 @@ async function mainGeneResults(id) {
       data: data.filter(d => d.analysis_type === 'SELF_REPORTED'),
       columns: [
         {data: 'outcome_id'},     // 0
-        {data: 'outcome_label'},  // 1
+        {data: 'outcome_label'},  // 1
         {data: 'p'},              // 2
         {data: 'bonf'},           // 3
-        {data: 'gof_meas'}        // 4
+        {data: 'gof_meas'}        // 4
       ],
       columnDefs: [
         {
@@ -244,7 +244,7 @@ async function mainGeneResults(id) {
       data: data.filter(d => d.analysis_type === 'ICD10_BLOCK'),
       columns: [
         {data: 'outcome_id'},     // 0
-        {data: 'outcome_label'},  // 1
+        {data: 'outcome_label'},  // 1
         {data: 'p'},              // 2
         {data: 'bonf'},           // 3
         {data: 'gof_meas'}        // 4
