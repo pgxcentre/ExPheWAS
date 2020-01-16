@@ -39,6 +39,9 @@ module.exports = {
     jquery: 'jQuery'
   },
   plugins: [
-    new webpack.DefinePlugin({'process.env.ASSET_PATH': JSON.stringify(ASSET_PATH)})
-  ]
+    new webpack.DefinePlugin({'process.env.ASSET_PATH': JSON.stringify(ASSET_PATH)}),
+  ],
+  resolve: {
+    mainFields: ['modules', 'main', 'browser']
+  }
 }
