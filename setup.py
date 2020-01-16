@@ -27,7 +27,7 @@ def write_version_file(fn=None):
         )
 
     content = ("\n# THIS FILE WAS GENERATED AUTOMATICALLY\n"
-               'exphewas = "{version}"\n')
+               'exphewas_version = "{version}"\n')
 
     a = open(fn, "w")
     try:

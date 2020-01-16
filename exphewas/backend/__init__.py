@@ -10,6 +10,8 @@ from flask_cors import CORS
 
 from werkzeug.wsgi import DispatcherMiddleware
 
+from ..version import exphewas_version
+
 from .api import api as api_blueprint
 from .backend import backend as backend_blueprint
 
@@ -28,6 +30,7 @@ app = Flask(
 )
 
 app.config["SECRET_KEY"] = hexlify(os.urandom(24))
+app.config["EXPHEWAS_VERSION"] = exphewas_version
 
 CORS(app)
 
