@@ -25,7 +25,7 @@ except:
     R_instance = None
 
 
-api = Blueprint("api_blueprint", __name__, url_prefix="/api")
+api = Blueprint("api_blueprint", __name__)
 
 
 class make_api(object):

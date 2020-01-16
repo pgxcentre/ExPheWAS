@@ -1,3 +1,7 @@
+const webpack = require('webpack');
+
+const ASSET_PATH = process.env.EXPHEWAS_URL_ROOT || "/";
+
 module.exports = {
   module: {
     rules: [
@@ -28,10 +32,13 @@ module.exports = {
           }
         ]
       },
-      { test: /.png$/, loader: 'file-loader', options: { publicPath: '/dist' } }
+      { test: /.png$/, loader: 'file-loader', options: { publicPath: ASSET_PATH.replace(/\/$/, '') + "/dist" } }
     ]
   },
   externals: {
     jquery: 'jQuery'
-  }
+  },
+  plugins: [
+    new webpack.DefinePlugin({'process.env.ASSET_PATH': JSON.stringify(ASSET_PATH)})
+  ]
 }
