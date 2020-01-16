@@ -143,6 +143,7 @@ def get_outcome_results(id):
             "variance_pct": r.variance_pct,
             "p": r.p,
             "q": q,
+            "bonf": r.p * len(results),
             "gene_name": r.gene_obj.name,
             "n_components": r.gene_variance_obj.n_components
         }
@@ -259,8 +260,7 @@ def get_gene_results(ensg):
         qs = None
 
     for i in range(len(results)):
-        results[i].update({
-            "q": None if qs is None else qs[i]
-        })
+        results[i]["q"] = None if qs is None else qs[i]
+        results[i]["bonf"] = results[i]["p"] * len(results)
 
     return results

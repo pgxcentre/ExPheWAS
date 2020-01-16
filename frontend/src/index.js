@@ -57,11 +57,6 @@ async function mainOutcomeResults(id) {
 
   let data = await api_call(`/outcome/${id}/results${urlParam}`);
 
-  data = data.map((d, i) => {
-    d.bonf = d.p * data.length;
-    return d;
-  });
-
   $('#app #outcomeResults')
     .DataTable({
       data: data,
@@ -106,13 +101,6 @@ async function mainGeneResults(id) {
 
   // Total number of results
   let n_results = data.length;
-
-  // Calculate the bonferonni corrected p (TODO: the q-value / FDR).
-  data = data.map(d => {
-    d.bonf = d.p * n_results;
-    return d;
-  });
-
 
   $('#app #geneResultsContinuous')
     .DataTable({
