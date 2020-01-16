@@ -30,6 +30,11 @@ clear_results:
 	exphewas-db delete-results
 
 
-.PHONY: serve
+.PHONY: serve_dev
 serve:
 	FLASK_ENV=development FLASK_APP=exphewas.backend flask run --port 5001
+
+
+.PHONY: serve
+serve:
+	FLASK_APP=exphewas.backend flask run --port 5001
