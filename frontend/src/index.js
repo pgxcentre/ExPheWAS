@@ -6,7 +6,7 @@ import 'datatables.net';
 import 'datatables.net-dt/css/jquery.dataTables.css';
 
 import '../scss/custom.scss';
-import { API_URL, ICD10_URL, UNIPROT_URL } from './config';
+import { URL_PREFIX, API_URL, ICD10_URL, UNIPROT_URL } from './config';
 import { formatP, formatNumber, getUrlParam } from './utils';
 
 
@@ -43,7 +43,7 @@ function mainOutcomeList() {
         {
           targets: 0,
           render: function(outcome, type, row, meta) {
-            return `<a href="/outcome/${outcome}">${outcome}</a>`;
+            return `<a href="${URL_PREFIX}/outcome/${outcome}">${outcome}</a>`;
           }
         }
       ]
@@ -74,7 +74,7 @@ async function mainOutcomeResults(id) {
         {
           targets: 0,
           render: function(ensg, type, row, meta) {
-            return `<a href="/gene/${ensg}${urlParam}">${ensg}</a>`;
+            return `<a href="${URL_PREFIX}/gene/${ensg}${urlParam}">${ensg}</a>`;
           }
         },
         {
@@ -118,7 +118,7 @@ async function mainGeneResults(id) {
         {
           targets: 0,
           render: function(outcome, type, row, meta) {
-            return `<a href="/outcome/${outcome}${urlParam}">${outcome}</a>`;
+            return `<a href="${URL_PREFIX}/outcome/${outcome}${urlParam}">${outcome}</a>`;
           }
         },
         {
@@ -157,7 +157,7 @@ async function mainGeneResults(id) {
         {
           targets: 0,
           render: function(outcome, type, row, meta) {
-            return `<a href="/outcome/${outcome}${urlParam}">${outcome}</a>`;
+            return `<a href="${URL_PREFIX}/outcome/${outcome}${urlParam}">${outcome}</a>`;
           }
         },
         {
@@ -196,7 +196,7 @@ async function mainGeneResults(id) {
         {
           targets: 0,
           render: function(outcome, type, row, meta) {
-            return `<a href="/outcome/${outcome}${urlParam}">${outcome}</a>`;
+            return `<a href="${URL_PREFIX}/outcome/${outcome}${urlParam}">${outcome}</a>`;
           }
         },
         {
@@ -235,7 +235,7 @@ async function mainGeneResults(id) {
         {
           targets: 0,
           render: function(outcome, type, row, meta) {
-            return `<a href="/outcome/${outcome}${urlParam}">${outcome}</a>`;
+            return `<a href="${URL_PREFIX}/outcome/${outcome}${urlParam}">${outcome}</a>`;
           }
         },
         {
@@ -281,7 +281,7 @@ async function mainGeneResults(id) {
         {
           targets: 0,
           render: function(outcome, type, row, meta) {
-            return `<a href="/outcome/${outcome}${urlParam}">${outcome}</a>`;
+            return `<a href="${URL_PREFIX}/outcome/${outcome}${urlParam}">${outcome}</a>`;
           }
         },
         {
@@ -352,7 +352,7 @@ function mainGeneList() {
         {
           targets: 0,
           render: function(ensg, type, row, meta) {
-            return `<a href="/gene/${ensg}">${ensg}</a>`;
+            return `<a href="${URL_PREFIX}/gene/${ensg}">${ensg}</a>`;
           }
         },
         {
