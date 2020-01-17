@@ -9,3 +9,4 @@ frontend/dist/*
 config
 exphewas/version.py
 pyvenv
+dist
