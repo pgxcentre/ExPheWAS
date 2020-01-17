@@ -32,8 +32,8 @@ build:frontend:ukbiobank:
   script:
     - npm run build
   after_script:
-    - cd frontend/dist
-    - tar -zcvf frontend_ukbiobank.tar.gz ukbiobank
+    - cd frontend/dist/ukbiobank
+    - tar -zcvf ../frontend_ukbiobank.tar.gz *
   artifacts:
     paths:
       - frontend/dist/frontend_ukbiobank.tar.gz
