@@ -50,6 +50,13 @@ class Outcome(Base):
     }
 
 
+class OutcomeHierarchy(Base):
+    __tablename__ = "outcome_hierarchy"
+
+    id = Column(String, ForeignKey("outcomes.id"), primary_key=True)
+    parent = Column(String, ForeignKey("outcomes.id"), nullable=True)
+
+
 class BinaryOutcome(Outcome):
     __tablename__ = "binary_outcomes"
 

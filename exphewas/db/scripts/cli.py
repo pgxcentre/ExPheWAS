@@ -1,6 +1,7 @@
 import argparse
 import csv
 import functools
+from collections import defaultdict
 
 
 from ..engine import ENGINE, Session
@@ -52,7 +53,7 @@ def find_missing_results():
         # genes that were not excluded.
         # The genes that were excluded had no common variants to derive the
         # principal components.
-        missing_genes[analysis_type] = {i[0] for i in 
+        missing_genes[analysis_type] = {i[0] for i in
             session.query(models.GeneVariance.ensembl_id)\
                 .except_(genes_with_results)\
                 .all()
@@ -78,6 +79,82 @@ def find_missing_results():
             writer.writerow(row)
 
 
+def create_icd10_hierarchy():
+    session = Session()
+
+    # Getting the ICD10 blocks
+    icd10_blocks = _generate_icd10_blocks([
+        result[0] for result in
+        session.query(models.Outcome.id)
+            .filter_by(analysis_type="ICD10_BLOCK").all()
+    ])
+
+    # Creating the chapters
+    chapters = defaultdict(list)
+    for block in icd10_blocks:
+        chapters[block.chapter].append(block)
+
+    # Getting the ICD10 3 character codes
+    icd10_3char = [
+        result[0] for result in
+        session.query(models.Outcome.id)
+            .filter_by(analysis_type="ICD10_3CHAR").all()
+    ]
+
+    # Generating what will be added
+    hierarchy = [
+        models.OutcomeHierarchy(id=str(icd10_block), parent=None)
+        for icd10_block in icd10_blocks
+    ]
+
+    # Adding the 3 character codes
+    for code in icd10_3char:
+        parent = _get_icd10_parent(code, chapters)
+        if parent is not None:
+            parent = str(parent)
+        hierarchy.append(models.OutcomeHierarchy(id=code, parent=parent))
+
+    session.add_all(hierarchy)
+    session.commit()
+
+
+def _get_icd10_parent(code, chapters):
+    chapter = code[0]
+    blocks = chapters[chapter]
+    for block in blocks:
+        if code in block:
+            return block
+
+
+def _generate_icd10_blocks(blocks):
+    class ICD10Block(object):
+        def __init__(self, block):
+            self.chapter = block[0]
+            start, stop = block.split("-")
+            self.start = int(start[1:])
+            self.stop = int(stop[1:])
+
+        def __repr__(self):
+            return "<ICD10BLock: {}>".format(self.__str__())
+
+        def __str__(self):
+            return "{chapter}{start:02d}-{chapter}{stop:02d}".format(
+                chapter=self.chapter, start=self.start, stop=self.stop,
+            )
+
+        def __contains__(self, icd10_3char):
+            """Checks if an ICD10 3 character code is in the block."""
+            chapter = icd10_3char[0]
+            section = int(icd10_3char[1:])
+
+            return (
+                (chapter == self.chapter) and
+                (self.start <= section <= self.stop)
+            )
+
+    return [ICD10Block(block) for block in blocks]
+
+
 def main():
     parser = argparse.ArgumentParser()
 
@@ -89,6 +166,9 @@ def main():
 
     # Command to delete all results.
     subparsers.add_parser("delete-results")
+
+    # Command to create the outcome hierarchy
+    subparsers.add_parser("create-icd10-hierarchy")
 
     # Command to import ensembl data (from a GTF).
     parser_import_ensembl = subparsers.add_parser("import-ensembl")
@@ -160,3 +240,6 @@ def main():
 
     elif args.command == "import-results":
         return import_results.main(args)
+
+    elif args.command == "create-icd10-hierarchy":
+        return create_icd10_hierarchy()
