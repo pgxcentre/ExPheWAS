@@ -8,7 +8,6 @@
 
 
 import os
-import sys
 
 from setuptools import setup, find_packages
 
@@ -49,6 +48,9 @@ def setup_package():
         zip_safe=False,
         install_requires=["sqlalchemy >= 1.3.10"],
         packages=find_packages(),
+        package_data={
+            "exphewas.backend": ["templates/*", "static/*"],
+        },
         classifiers=["Development Status :: 4 - Beta",
                      "Intended Audience :: Science/Research",
                      "License :: MIT",
