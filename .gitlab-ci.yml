@@ -1,0 +1,74 @@
+stages:
+  - build
+  - deploy
+
+
+build:backend:
+  stage: build
+  image: python:3.7
+  tags:
+    - deploy
+  script:
+    - python setup.py sdist --format gztar
+  artifacts:
+    paths:
+      - dist/exphewas-*.tar.gz
+    expire_in: 1 day
+  dependencies: []
+  only:
+    - deploy
+
+
+build:frontend:ukbiobank:
+  stage: build
+  image: node:latest
+  tags:
+    - deploy
+  before_script:
+    - cd frontend
+    - npm install
+    - export EXPHEWAS_URL_ROOT=/exphewas/ukbiobank
+    - export WEBPACK_OUTPUT_PATH=dist/ukbiobank
+  script:
+    - npm run build
+  after_script:
+    - cd frontend/dist
+    - tar -zcvf frontend_ukbiobank.tar.gz ukbiobank
+  artifacts:
+    paths:
+      - frontend/dist/frontend_ukbiobank.tar.gz
+    expire_in: 1 day
+  dependencies: []
+  only:
+    - deploy
+
+
+deploy:ukbiobank:
+  stage: deploy
+  image: centos:latest
+  tags:
+    - deploy
+  before_script:
+    - yum install -y which openssh-clients
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+    - chmod 600 ~/.ssh/known_hosts
+  script:
+    - ssh flask@wkipl-sg-005.statgen.local "rm -rf /var/www/exphewas/ukbiobank/files/*"
+    - scp dist/exphewas-*.tar.gz frontend/dist/frontend_ukbiobank.tar.gz flask@wkipl-sg-005.statgen.local:/var/www/exphewas/ukbiobank/files
+    - ssh flask@wkipl-sg-005.statgen.local "sudo /usr/bin/systemctl stop exphewas_ukbiobank.service"
+    - ssh flask@wkipl-sg-005.statgen.local "rm -fr /var/www/exphewas/ukbiobank/frontend/dist/*"
+    - ssh flask@wkipl-sg-005.statgen.local ". /var/www/exphewas/ukbiobank/pyvenv/bin/activate && pip uninstall -y exphewas && pip install /var/www/exphewas/ukbiobank/files/exphewas-*.tar.gz"
+    - ssh flask@wkipl-sg-005.statgen.local "tar -C /var/www/exphewas/ukbiobank/frontend/dist -zxvf /var/www/exphewas/ukbiobank/files/frontend_ukbiobank.tar.gz"
+    - ssh flask@wkipl-sg-005.statgen.local "sudo /usr/bin/systemctl start exphewas_ukbiobank.service"
+  dependencies:
+    - build:backend
+    - build:frontend:ukbiobank
+  needs:
+    - build:backend
+    - build:frontend:ukbiobank
+  only:
+    - deploy
