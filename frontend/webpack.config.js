@@ -1,6 +1,8 @@
 const webpack = require('webpack');
+const path = require('path');
 
 const ASSET_PATH = process.env.EXPHEWAS_URL_ROOT || "/";
+const OUTPUT_PATH = process.env.WEBPACK_OUTPUT_PATH || "dist";
 
 module.exports = {
   module: {
@@ -43,5 +45,8 @@ module.exports = {
   ],
   resolve: {
     mainFields: ['modules', 'main', 'browser']
+  },
+  output: {
+    path: path.resolve(__dirname, OUTPUT_PATH)
   }
 }
