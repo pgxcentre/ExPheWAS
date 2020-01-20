@@ -1,7 +1,7 @@
 import gzip
 
 from ..engine import ENGINE, Session
-from ..models import GeneVariance, ensembl_uniprot
+from ..models import GeneVariance
 
 
 def parse_line(line):

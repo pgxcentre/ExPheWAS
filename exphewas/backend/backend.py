@@ -15,9 +15,10 @@ EXTERNAL_DB_URL = {
     "WikiGene": "https://www.wikigenes.org/e/gene/e/{id}.html",
     "MIM_GENE": "https://omim.org/entry/{id}",
     "MIM_MORBID": "https://omim.org/entry/{id}",
+    "our_uniprot": "https://www.uniprot.org/uniprot/{id}"
 }
 
-EXTERNAL_DB_TO_SHOW = ("WikiGene", "MIM_GENE", "MIM_MORBID")
+EXTERNAL_DB_TO_SHOW = ("WikiGene", "MIM_GENE", "MIM_MORBID", "our_uniprot")
 
 
 @backend.route("/outcome")

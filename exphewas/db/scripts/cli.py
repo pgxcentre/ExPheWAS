@@ -175,12 +175,6 @@ def main():
     parser_import_ensembl.add_argument("filename",
                                        help="Path to the Ensembl GTF file.")
 
-    # Command to import the Ensembl to Uniprot cross-references.
-    parser_import_uniprot_xref = subparsers.add_parser("import-uniprot-xref")
-    parser_import_uniprot_xref.add_argument(
-        "filename", help="Path to the Ensembl to Uniprot xref file."
-    )
-
     # Command to import the number of PCs for a gene.
     parser_import_n_pcs = subparsers.add_parser("import-n-pcs")
     parser_import_n_pcs.add_argument(
@@ -239,9 +233,6 @@ def main():
 
     elif args.command == "import-ensembl":
         return import_ensembl.main(args)
-
-    elif args.command == "import-uniprot-xref":
-        return import_ensembl.import_uniprot_xref(args)
 
     elif args.command == "import-n-pcs":
         return import_n_pcs.main(args)

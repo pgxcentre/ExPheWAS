@@ -74,7 +74,7 @@ def import_xrefs(fn):
 
 def main(args):
     # Pushing the external databases
-    # import_external_databases(args.external_db)
+    import_external_databases(args.external_db)
 
     # Pushing the actual cross references
     import_xrefs(args.xrefs)

@@ -176,11 +176,7 @@ def get_gene_by_name(name):
             f"Could not find gene (by name) '{name}'."
         )
 
-    # Add the Uniprot xref.
-    d = mod_to_dict(gene)
-    d.update({"uniprot_id": gene.uniprot_ids})
-
-    return d
+    return mod_to_dict(gene)
 
 
 @make_api("/gene/ensembl/<ensg>")
@@ -201,10 +197,9 @@ def get_gene_by_ensembl_id(ensg):
             f"Could not find gene (by Ensembl ID) '{ensg}'."
         )
 
-    # Add the Uniprot xref.
+    # Creating the final results.
     results = mod_to_dict(gene)
     results.update(mod_to_dict(gene_variance))
-    results.update({"uniprot_ids": gene.uniprot_ids})
 
     return results
 

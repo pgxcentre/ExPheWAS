@@ -1,7 +1,7 @@
 import gzip
 
 from ..engine import ENGINE, Session
-from ..models import Gene, ensembl_uniprot
+from ..models import Gene
 
 
 def parse_line(line):
@@ -25,21 +25,6 @@ def parse_line(line):
         end = int(end),
         positive_strand = (strand == "+")
     )
-
-
-def import_uniprot_xref(args):
-    """Import the mappings of uniprot to ensembl IDs."""
-    filename = args.filename
-    mappings = []
-    with gzip.open(filename, "rt") as f:
-        for line in f:
-            line = line.strip()
-
-            uniprot, _, ensembl = line.split()
-            mappings.append({"ensembl_id": ensembl, "uniprot_id": uniprot})
-
-    con = ENGINE.connect()
-    con.execute(ensembl_uniprot.insert(), mappings)
 
 
 def main(args):

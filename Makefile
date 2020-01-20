@@ -17,7 +17,7 @@ ensembl:
 
 .PHONY: uniprot_xref
 uniprot_xref:
-	exphewas-db import-uniprot-xref data/uniprot/uniprot_ensembl_human_mapping.txt.gz
+	exphewas-db import-external --external-db data/uniprot/external_db.our.csv.gz --xrefs data/uniprot/ensembl_xrefs.our.csv.gz
 
 
 .PHONY: n_pcs

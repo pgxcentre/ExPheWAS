@@ -26,14 +26,6 @@ AnalysisEnum = Enum(*ANALYSIS_TYPES, name="enum_analysis_type")
 Base = declarative_base()
 
 
-# Unmapped tables
-ensembl_uniprot = Table(
-    "ensembl_uniprot", Base.metadata,
-    Column("ensembl_id", ForeignKey("genes.ensembl_id"), primary_key=True),
-    Column("uniprot_id", String, primary_key=True)
-)
-
-
 class Outcome(Base):
     __tablename__ = "outcomes"
 
@@ -167,17 +159,6 @@ class Gene(Base):
     start = Column(Integer)
     end = Column(Integer)
     positive_strand = Column(Boolean)
-
-    # An alternative to this is to use a regular property and to
-    # use object_session(self) to execute arbitrary queries.
-    @property
-    def uniprot_ids(self):
-        res = Session.object_session(self).execute(
-            select([ensembl_uniprot.c.uniprot_id])
-                .where(ensembl_uniprot.c.ensembl_id == self.ensembl_id)
-        ).fetchall()
-
-        return [i[0] for i in res]
 
     def __repr__(self):
         return "<Gene: {} - {}:{}-{} ({})>".format(
