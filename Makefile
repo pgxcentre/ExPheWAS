@@ -30,6 +30,11 @@ hierarchy:
 	exphewas-db create-icd10-hierarchy
 
 
+.PHONY: external_db
+external_db:
+	exphewas-db import-external --external-db data/ensembl/external_db.csv.gz --xrefs data/ensembl/ensembl_xrefs.csv.gz
+
+
 .PHONY: clear_results
 clear_results:
 	exphewas-db delete-results

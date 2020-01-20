@@ -157,7 +157,6 @@ class BinaryVariableResult(Base, ResultMixin):
     deviance = Column(Float)
 
 
-
 class Gene(Base):
     __tablename__ = "genes"
 
@@ -186,3 +185,21 @@ class Gene(Base):
             self.chrom, self.start, self.end,
             "+" if self.positive_strand else "-"
         )
+
+
+class ExternalDB(Base):
+    __tablename__ = "external_db"
+
+    id = Column(Integer, primary_key=True)
+    db_name = Column(String, nullable=False)
+    db_display_name = Column(String, nullable=False)
+
+
+class XRefs(Base):
+    __tablename__ = "xrefs"
+
+    ensembl_id = Column(String, ForeignKey("genes.ensembl_id"),
+                        primary_key=True)
+    external_db_id = Column(Integer, ForeignKey("external_db.id"),
+                            primary_key=True)
+    external_id = Column(String, nullable=False, primary_key=True)

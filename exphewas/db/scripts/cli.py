@@ -8,7 +8,7 @@ from ..engine import ENGINE, Session
 from ..models import Base, ANALYSIS_TYPES
 from .. import models
 
-from . import import_ensembl, import_results, import_n_pcs
+from . import import_ensembl, import_results, import_n_pcs, import_external
 
 
 def create():
@@ -215,6 +215,14 @@ def main():
         default=95
     )
 
+    parser_import_external = subparsers.add_parser("import-external")
+    parser_import_external.add_argument(
+        "--external-db", help="The external databases", required=True,
+    )
+    parser_import_external.add_argument(
+        "--xrefs", help="The external references", required=True,
+    )
+
     # Command to list the missing analyses per gene.
     subparsers.add_parser("find-missing-results")
 
@@ -243,3 +251,6 @@ def main():
 
     elif args.command == "create-icd10-hierarchy":
         return create_icd10_hierarchy()
+
+    elif args.command == "import-external":
+        return import_external.main(args)
