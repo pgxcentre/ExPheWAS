@@ -324,12 +324,6 @@ function mainGeneList() {
           let out = data.map((d) => {
 
             d.strand = d.positive_strand? '+': '-';
-            d.uniprot_ids = d.uniprot_ids
-              .map(id => {
-                return `<a href="${UNIPROT_URL}/${id}">${id}</a>`;
-              })
-              .join(', ');
-
             return d;
 
           });
@@ -340,13 +334,12 @@ function mainGeneList() {
       order: [],
       deferRender: true,
       columns: [
-        {data: 'ensembl_id'},
-        {data: 'name'},
-        {data: 'uniprot_ids'},
-        {data: 'chrom'},
-        {data: 'start'},
-        {data: 'end'},
-        {data: 'strand'}
+        {data: 'ensembl_id'},   // 0
+        {data: 'name'},         // 1
+        {data: 'chrom'},        // 2
+        {data: 'start'},        // 3
+        {data: 'end'},          // 4
+        {data: 'strand'}        // 5
       ],
       columnDefs: [
         {
@@ -356,13 +349,13 @@ function mainGeneList() {
           }
         },
         {
-          targets: [4, 5],
+          targets: [3, 4],
           render: function(position, type, row, meta) {
             return formatNumber(position);
           }
         },
         {
-          targets: [3, 4, 5],
+          targets: [2, 3, 4],
           className: 'dt-body-right'
         }
       ]
