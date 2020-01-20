@@ -8,7 +8,7 @@
         <div class="card geneDescription">
           <div class="card-body">
             <dl class="row">
-              <dt class="col-5">Location:</dt>
+              <dt class="col-5">Location (GRCh37):</dt>
               <dd class="col-7">chr{{ chrom }}:{{ '{:,d}'.format(start) }}-{{ '{:,d}'.format(end) }}</dd>
 
               <dt class="col-5">Variance explained:</dt>
@@ -24,7 +24,7 @@
               <dd class="col-7">{% for id in uniprot_ids %}<a target="_blank" href="https://www.uniprot.org/uniprot/{{ id }}">{{ id }}</a>{{ ", " if not loop.last }}{% endfor %}</dd>
 
               {% for db_name in external_dbs|sort %}
-              <dt class="col-5">{{ db_names[db_name] }}</dt>
+              <dt class="col-5">{{ db_full_names[db_name] }}</dt>
               <dd class="col-7">{% for id in xrefs[db_name] %}{% if db_name in db_urls %}<a target="_blank" href="{{ db_urls[db_name].format(id=id) }}">{% endif %}{{ id }}{% if db_name in db_urls %}</a>{% endif %}{{ ", " if not loop.last }}{% endfor %}</dd>
               {% endfor %}
             </dl>

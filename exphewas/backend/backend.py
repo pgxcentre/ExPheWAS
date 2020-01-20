@@ -54,5 +54,5 @@ def get_gene(ensg):
         xrefs[xref["db_id"]].append(xref["external_id"])
 
     return render_template("gene.html", **gene_info, xrefs=xrefs,
-                           db_names=db_names, db_urls=EXTERNAL_DB_URL,
+                           db_full_names=db_names, db_urls=EXTERNAL_DB_URL,
                            external_dbs=EXTERNAL_DB_TO_SHOW)
