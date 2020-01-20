@@ -264,3 +264,21 @@ def get_gene_results(ensg):
         results[i]["bonf"] = results[i]["p"] * len(results)
 
     return results
+
+
+@make_api("/gene/<ensg>/xrefs")
+def get_gene_xrefs(ensg):
+    results = Session.query(models.XRefs, models.ExternalDB)\
+        .filter(models.XRefs.external_db_id == models.ExternalDB.id)\
+        .filter_by(ensembl_id=ensg)\
+        .all()
+
+    return [
+        {
+            "gene": xref.ensembl_id,
+            "db_id": external_db.db_name,
+            "db_description": external_db.db_display_name,
+            "external_id": xref.external_id,
+        }
+        for xref, external_db in results
+    ]
