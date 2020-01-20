@@ -23,10 +23,10 @@
               <dt class="col-5">Uniprot:</dt>
               <dd class="col-7">{% for id in uniprot_ids %}<a target="_blank" href="https://www.uniprot.org/uniprot/{{ id }}">{{ id }}</a>{{ ", " if not loop.last }}{% endfor %}</dd>
 
-              {% for db_name in external_dbs|sort %}
+              {% for db_name in external_dbs|sort %}{% if db_name in xrefs %}
               <dt class="col-5">{{ db_full_names[db_name] }}</dt>
               <dd class="col-7">{% for id in xrefs[db_name] %}{% if db_name in db_urls %}<a target="_blank" href="{{ db_urls[db_name].format(id=id) }}">{% endif %}{{ id }}{% if db_name in db_urls %}</a>{% endif %}{{ ", " if not loop.last }}{% endfor %}</dd>
-              {% endfor %}
+              {% endif %}{% endfor %}
             </dl>
           </div>
         </div>
