@@ -94,6 +94,25 @@ async function mainOutcomeResults(id) {
 
 
 async function mainGeneResults(id) {
+  // Add smooth scrolling to the page.
+  // Adapted from https://stackoverflow.com/questions/7717527/smooth-scrolling-when-clicking-an-anchor-link/18795112#18795112
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    // Check that it's not an empty anchor.
+    if (anchor.getAttribute('href') === '#') {
+      return;
+    }
+
+    anchor.addEventListener('click', function (e) {
+
+      e.preventDefault();
+
+      document.querySelector(this.getAttribute('href')).scrollIntoView({
+        behavior: 'smooth'
+      });
+
+    });
+  });
+
   let variance_pct = getUrlParam("variance_pct", 95);
   let urlParam = variance_pct != 95? `?variance_pct=${variance_pct}`: '';
 
