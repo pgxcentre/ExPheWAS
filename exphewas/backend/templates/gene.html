@@ -1,6 +1,6 @@
 {% extends "index.html" %}
 {% block body %}
-    <h3>Gene {{ name }} (<a href="http://grch37.ensembl.org/Homo_sapiens/Gene/Summary?g={{ ensembl_id }}">{{ ensembl_id }}</a>)</h3>
+    <h3>Gene {{ name }}</h3>
     <div id="app">
 
       <div class="row">
@@ -17,8 +17,11 @@
               <dt class="col-5">Nb components:</dt>
               <dd class="col-7">{{ n_components }}</dd>
 
-              <dt class="col-5">Uniprot IDs:</dt>
-              <dd class="col-7">{% for id in uniprot_ids%}<a href="https://www.uniprot.org/uniprot/{{ id }}">{{ id }}</a>{{ ", " if not loop.last }}{% endfor %}</dd>
+              <dt class="col-5">Ensembl:</dt>
+              <dd class="col-7"><a target="_blank" href="http://grch37.ensembl.org/Homo_sapiens/Gene/Summary?g={{ ensembl_id }}">{{ ensembl_id }}</a></dd>
+
+              <dt class="col-5">Uniprot:</dt>
+              <dd class="col-7">{% for id in uniprot_ids%}<a target="_blank" href="https://www.uniprot.org/uniprot/{{ id }}">{{ id }}</a>{{ ", " if not loop.last }}{% endfor %}</dd>
             </dl>
           </div>
         </div>
