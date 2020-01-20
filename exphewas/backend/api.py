@@ -153,9 +153,16 @@ def get_outcome_results(id):
 
 @make_api("/gene")
 def get_genes():
-    json_fn = path.join(path.dirname(__file__), "static", "genes.json")
-    with open(json_fn) as genes:
-        res = json.loads(genes.read())
+    from_db = request.args.get("from_db", False)
+
+    if not from_db:
+        json_fn = path.join(path.dirname(__file__), "static", "genes.json")
+        with open(json_fn) as genes:
+            res = json.loads(genes.read())
+
+    else:
+        genes = Session.query(models.Gene).all()
+        res = [mod_to_dict(gene) for gene in genes]
 
     return res
 
