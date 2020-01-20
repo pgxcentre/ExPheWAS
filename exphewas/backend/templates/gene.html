@@ -28,8 +28,22 @@
         </div>
       </div>
 
+      <div class="dropdown analyisType">
+        <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+          Analysis Type
+        </a>
+
+        <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+          <a class="dropdown-item" href="#continuous-results-section">Continuous variables</a>
+          <a class="dropdown-item" href="#cardio-endpoints-results-section">Cardiovascular Endpoints</a>
+          <a class="dropdown-item" href="#self-reported-results-section">Self Reported</a>
+          <a class="dropdown-item" href="#icd10-blocks-results-section">ICD10 Blocks</a>
+          <a class="dropdown-item" href="#icd10-3char-results-section">ICD10 (3 characters)</a>
+        </div>
+      </div>
+
       <div class="geneResults continuousVariable">
-        <h4>Continuous variables</h4>
+        <h4 id="continuous-results-section">Continuous variables</h4>
         <table id="geneResultsContinuous" class="display" style="width:100%">
           <thead>
             <tr>
@@ -45,7 +59,7 @@
       </div>
 
       <div class="geneResults cvEndpoints">
-        <h4>Cardiovascular Endpoints</h4>
+        <h4 id="cardio-endpoints-results-section">Cardiovascular Endpoints</h4>
         <table id="geneResultsCVEndpoints" class="display" style="width:100%">
           <thead>
             <tr>
@@ -61,7 +75,7 @@
       </div>
 
       <div class="geneResults selfReported">
-        <h4>Self Reported</h4>
+        <h4 id="self-reported-results-section">Self Reported</h4>
         <table id="geneResultsSelfReported" class="display" style="width:100%">
           <thead>
             <tr>
@@ -77,7 +91,7 @@
       </div>
 
       <div class="geneResults icd10Block">
-        <h4>ICD10 Blocks</h4>
+        <h4 id="icd10-blocks-results-section">ICD10 Blocks</h4>
         <table id="geneResultsICD10Block" class="display" style="width:100%">
           <thead>
             <tr>
@@ -93,7 +107,7 @@
       </div>
 
       <div class="geneResults icd103Char">
-        <h4>ICD10 (3 characters)</h4>
+        <h4 id="icd10-3char-results-section">ICD10 (3 characters)</h4>
         <table id="geneResultsICD103Char" class="display" style="width:100%">
           <thead>
             <tr>
