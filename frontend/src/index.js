@@ -342,29 +342,9 @@ function mainGeneList() {
 
   $('#app #genes')
     .DataTable({
-      ajax: {
-        url: `${API_URL}/gene`,
-        dataSrc: data => {
-          let out = data.map((d) => {
-
-            d.strand = d.positive_strand? '+': '-';
-            return d;
-
-          });
-
-          return out;
-        }
-      },
-      order: [],
-      deferRender: true,
-      columns: [
-        {data: 'ensembl_id'},   // 0
-        {data: 'name'},         // 1
-        {data: 'chrom'},        // 2
-        {data: 'start'},        // 3
-        {data: 'end'},          // 4
-        {data: 'strand'}        // 5
-      ],
+      processing: true,
+      serverSide: true,
+      ajax: `${API_URL}/dt-gene`,
       columnDefs: [
         {
           targets: 0,
@@ -381,8 +361,13 @@ function mainGeneList() {
         {
           targets: [2, 3, 4],
           className: 'dt-body-right'
+        },
+        {
+          targets: 5,
+          render: (pstrand, type, row, meta) => pstrand? '+': '-'
         }
-      ]
+      ],
+      order: [[2, 'asc'], [3, 'asc']]
   });
 }
 
