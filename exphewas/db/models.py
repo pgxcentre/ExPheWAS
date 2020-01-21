@@ -168,6 +168,14 @@ class Gene(Base):
         )
 
 
+class AvailableGeneResult(Base):
+    __tablename__ = "available_gene_results"
+
+    ensembl_id = Column(String, ForeignKey("genes.ensembl_id"),
+                        primary_key=True)
+    variance_pct = Column(Integer, primary_key=True)
+
+
 class ExternalDB(Base):
     __tablename__ = "external_db"
 

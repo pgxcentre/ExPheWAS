@@ -2,7 +2,7 @@
 # e.g. export EXPHEWAS_DATABASE_URL=postgresql+psycopg2://user:pwd@localhost/mydatabase
 
 .PHONY: database
-database: create ensembl uniprot_xref n_pcs hierarchy external_db
+database: create ensembl uniprot_xref n_pcs hierarchy external_db populate_available_results
 
 
 .PHONY: create
@@ -33,6 +33,11 @@ hierarchy:
 .PHONY: external_db
 external_db:
 	exphewas-db import-external --external-db data/ensembl/external_db.csv.gz --xrefs data/ensembl/ensembl_xrefs.csv.gz
+
+
+.PHONY: populate_available_results
+populate_available_results:
+	exphewas-db populate-available-results
 
 
 .PHONY: clear_results

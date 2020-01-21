@@ -347,27 +347,32 @@ function mainGeneList() {
       ajax: `${DT_API_URL}/gene`,
       columnDefs: [
         {
-          targets: 0,
-          render: function(ensg, type, row, meta) {
-            return `<a href="${URL_PREFIX}/gene/${ensg}">${ensg}</a>`;
+          targets: 1,
+          orderable: false,
+          searchable: false,
+          render: (variances, type, row, meta) => {
+            if (variances === null)
+              return '<span class="badge badge-warning">No results</span>';
+
+            return variances.map(d => `<a href="${URL_PREFIX}/gene/${row['0']}?variance_pct=${d}" class="badge badge-primary">${d}%</a>`).join(' ');
           }
         },
         {
-          targets: [3, 4],
-          render: function(position, type, row, meta) {
-            return formatNumber(position);
-          }
+          targets: [4, 5],
+          render: (position, type, row, meta) => formatNumber(position)
         },
         {
-          targets: [2, 3, 4],
+          targets: [3, 4, 5],
+          searchable: false,
           className: 'dt-body-right'
         },
         {
-          targets: 5,
+          targets: 6,
+          searchable: false,
           render: (pstrand, type, row, meta) => pstrand? '+': '-'
         }
       ],
-      order: [[2, 'asc'], [3, 'asc']]
+      order: [[3, 'asc'], [4, 'asc']]
   });
 }
 

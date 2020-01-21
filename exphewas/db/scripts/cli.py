@@ -79,6 +79,38 @@ def find_missing_results():
             writer.writerow(row)
 
 
+def populate_available_results():
+    # First, we get the distinct gene/variance values
+    session = Session()
+
+    # Getting the variance
+    results_binary = session.query(
+        models.BinaryVariableResult.gene,
+        models.BinaryVariableResult.variance_pct,
+    ).distinct()
+
+    results_continuous = session.query(
+        models.ContinuousVariableResult.gene,
+        models.ContinuousVariableResult.variance_pct,
+    ).distinct()
+
+    # Deleting the current content
+    session.query(models.AvailableGeneResult).delete(synchronize_session=False)
+
+    # Pushing data to the database
+    entries = []
+    for ensembl_id, variance in results_binary.union(results_continuous).all():
+        entries.append(models.AvailableGeneResult(
+            ensembl_id=ensembl_id, variance_pct=variance,
+        ))
+
+    session = Session()
+    session.add_all(entries)
+
+    session.commit()
+    print("Added {} available results.".format(len(entries)))
+
+
 def create_icd10_hierarchy():
     session = Session()
 
@@ -167,6 +199,9 @@ def main():
     # Command to delete all results.
     subparsers.add_parser("delete-results")
 
+    # Command to populate the available results for each gene
+    subparsers.add_parser("populate-available-results")
+
     # Command to create the outcome hierarchy
     subparsers.add_parser("create-icd10-hierarchy")
 
@@ -230,6 +265,9 @@ def main():
 
     elif args.command == "find-missing-results":
         return find_missing_results()
+
+    elif args.command == "populate-available-results":
+        return populate_available_results()
 
     elif args.command == "import-ensembl":
         return import_ensembl.main(args)
