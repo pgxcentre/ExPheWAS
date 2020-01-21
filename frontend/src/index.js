@@ -106,7 +106,12 @@ async function mainGeneResults(id) {
 
       e.preventDefault();
 
-      document.querySelector(this.getAttribute('href')).scrollIntoView({
+      // Fix the URL.
+      let href = this.getAttribute('href');
+
+      window.history.pushState({}, '', href);
+
+      document.querySelector(href).scrollIntoView({
         behavior: 'smooth'
       });
 
