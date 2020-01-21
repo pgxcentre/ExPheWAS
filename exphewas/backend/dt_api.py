@@ -20,13 +20,13 @@ dt_api = Blueprint("dt_api_blueprint", __name__)
 @dt_api.route("/gene")
 def dt_gene():
     columns = [
-        ColumnDT(models.Gene.ensembl_id),                           # 0
-        ColumnDT("available_variances", global_search=False),       # 1
-        ColumnDT(models.Gene.name),                                 # 2
-        ColumnDT(models.Gene.chrom, global_search=False),           # 3
-        ColumnDT(models.Gene.start, global_search=False),           # 4
-        ColumnDT(models.Gene.end, global_search=False),             # 5
-        ColumnDT(models.Gene.positive_strand, global_search=False), # 6
+        ColumnDT(models.Gene.ensembl_id),                               # 0
+        ColumnDT("available_variances", global_search=False),           # 1
+        ColumnDT(models.Gene.name),                                     # 2
+        ColumnDT(models.Gene.chrom, global_search=False),               # 3
+        ColumnDT(models.Gene.start, global_search=False),               # 4
+        ColumnDT(models.Gene.end, global_search=False),                 # 5
+        ColumnDT(models.Gene.positive_strand, global_search=False),     # 6
     ]
 
     subquery = Session.query(
@@ -41,7 +41,5 @@ def dt_gene():
 
     params = request.args.to_dict()
     row_table = DataTables(params, query, columns)
-    print("\n#################")
-    print(row_table.output_result())
 
     return jsonify(row_table.output_result())
