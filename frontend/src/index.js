@@ -6,7 +6,7 @@ import 'datatables.net';
 import 'datatables.net-dt/css/jquery.dataTables.css';
 
 import '../scss/custom.scss';
-import { URL_PREFIX, API_URL, ICD10_URL, UNIPROT_URL } from './config';
+import { URL_PREFIX, API_URL, DT_API_URL, ICD10_URL, UNIPROT_URL } from './config';
 import { formatP, formatNumber, getUrlParam } from './utils';
 
 
@@ -344,7 +344,7 @@ function mainGeneList() {
     .DataTable({
       processing: true,
       serverSide: true,
-      ajax: `${API_URL}/dt-gene`,
+      ajax: `${DT_API_URL}/gene`,
       columnDefs: [
         {
           targets: 0,

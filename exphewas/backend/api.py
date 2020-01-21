@@ -7,12 +7,9 @@ import itertools
 import functools
 from os import path
 
-from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
 from flask import Blueprint, jsonify, request
-
-from datatables import ColumnDT, DataTables
 
 from ..db import models
 from ..db.engine import Session
@@ -287,24 +284,3 @@ def get_gene_xrefs(ensg):
         }
         for xref, external_db in results
     ]
-
-
-# Datatables serverprocessing endpoints.
-@api.route("/dt-gene")
-def dt_gene():
-    columns = [
-        ColumnDT(models.Gene.ensembl_id),
-        ColumnDT(models.Gene.name),
-        ColumnDT(models.Gene.chrom),
-        ColumnDT(models.Gene.start),
-        ColumnDT(models.Gene.end),
-        ColumnDT(models.Gene.positive_strand),
-    ]
-
-    query = Session.query()\
-        .select_from(models.Gene)
-
-    params = request.args.to_dict()
-    row_table = DataTables(params, query, columns)
-
-    return jsonify(row_table.output_result())

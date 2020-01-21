@@ -2,18 +2,16 @@
 
 
 import os
-from os import path
 from binascii import hexlify
 
 from flask import Flask
 from flask_cors import CORS
 
-from werkzeug.wsgi import DispatcherMiddleware
-
 from .. import __version__
 
 from .api import api as api_blueprint
 from .backend import backend as backend_blueprint
+from .dt_api import dt_api as dt_api_blueprint
 
 from ..db.engine import Session
 
@@ -41,6 +39,8 @@ CORS(app)
 # Adding the blueprints
 app.register_blueprint(api_blueprint, url_prefix=URL_ROOT.rstrip("/") + "/api")
 app.register_blueprint(backend_blueprint, url_prefix=URL_ROOT)
+app.register_blueprint(dt_api_blueprint,
+                       url_prefix=URL_ROOT.rstrip("/") + "/dt")
 
 
 @app.teardown_appcontext
