@@ -137,6 +137,7 @@ async function mainGeneResults(id) {
         {data: 'q'},              // 3
         {data: 'bonf'},           // 4
         {data: 'gof_meas'},       // 5
+        {data: 'test_statistic'}, // 6
       ],
       columnDefs: [
         {
@@ -152,13 +153,13 @@ async function mainGeneResults(id) {
           }
         },
         {
-          targets: 5,
-          render: function(gof_meas, type, row, meta) {
-            return gof_meas.toFixed(1);
+          targets: [5, 6],
+          render: function(numeric_value, type, row, meta) {
+            return numeric_value.toFixed(1);
           }
         },
         {
-          targets: [2, 3, 4, 5],
+          targets: [2, 3, 4, 5, 6],
           className: 'dt-body-right'
         }
       ],

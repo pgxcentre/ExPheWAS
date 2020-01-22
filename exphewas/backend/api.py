@@ -9,7 +9,7 @@ from os import path
 
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
-from sqlalchemy.sql.expression import func
+from sqlalchemy.sql.expression import func, null
 
 from flask import Blueprint, jsonify, request
 
@@ -219,16 +219,19 @@ def get_gene_results(ensg):
 
     # Find all results.
     fields = ("gene", "analysis_type", "outcome_id", "outcome_label",
-              "variance_pct", "p", "gof_meas", "gene_name", "n_components")
+              "variance_pct", "p", "gof_meas", "gene_name", "n_components",
+              "test_statistic")
 
     result_models = (
         {
             "model": models.BinaryVariableResult,
             "gof_meas": models.BinaryVariableResult.deviance,
+            "test_statistic": null(),
         },
         {
             "model": models.ContinuousVariableResult,
             "gof_meas": models.ContinuousVariableResult.sum_of_sq,
+            "test_statistic": models.ContinuousVariableResult.F_stat,
         },
     )
 
@@ -243,6 +246,7 @@ def get_gene_results(ensg):
             result_info["gof_meas"],
             models.Gene.name,
             models.GeneVariance.n_components,
+            result_info["test_statistic"],
         )
         .filter(models.Outcome.id == result_info["model"].outcome_id)
         .filter(models.Gene.ensembl_id == result_info["model"].gene)
