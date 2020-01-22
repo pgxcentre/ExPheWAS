@@ -15,10 +15,11 @@ EXTERNAL_DB_URL = {
     "WikiGene": "https://www.wikigenes.org/e/gene/e/{id}.html",
     "MIM_GENE": "https://omim.org/entry/{id}",
     "MIM_MORBID": "https://omim.org/entry/{id}",
-    "our_uniprot": "https://www.uniprot.org/uniprot/{id}"
+    "our_uniprot": "https://www.uniprot.org/uniprot/{id}",
+    "HGNC": "https://www.genenames.org/data/gene-symbol-report/#!/hgnc_id/HGNC:{id}",
 }
 
-EXTERNAL_DB_TO_SHOW = ("WikiGene", "MIM_GENE", "MIM_MORBID", "our_uniprot")
+EXTERNAL_DB_TO_SHOW = ("HGNC", "WikiGene", "MIM_GENE", "MIM_MORBID", "our_uniprot")
 
 
 @backend.route("/outcome")
