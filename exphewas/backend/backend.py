@@ -23,7 +23,7 @@ EXTERNAL_DB_TO_SHOW = ("WikiGene", "MIM_GENE", "MIM_MORBID", "our_uniprot")
 
 @backend.route("/outcome")
 def get_outcomes():
-    return render_template("outcome_list.html")
+    return render_template("outcome_list.html", page_title="outcomes")
 
 
 @backend.route("/outcome/<id>")
@@ -32,12 +32,16 @@ def get_outcome(id):
         outcome_data = api.get_outcome(id)
     except api.RessourceNotFoundError as exception:
         abort(404)
-    return render_template("outcome.html", **outcome_data)
+    return render_template(
+        "outcome.html",
+        page_title=f"outcome {id}",
+        **outcome_data,
+    )
 
 
 @backend.route("/gene")
 def get_genes():
-    return render_template("gene_list.html")
+    return render_template("gene_list.html", page_title="genes")
 
 
 @backend.route("/gene/<ensg>")
@@ -54,6 +58,17 @@ def get_gene(ensg):
         db_names[xref["db_id"]] = xref["db_description"]
         xrefs[xref["db_id"]].append(xref["external_id"])
 
-    return render_template("gene.html", **gene_info, xrefs=xrefs,
-                           db_full_names=db_names, db_urls=EXTERNAL_DB_URL,
-                           external_dbs=EXTERNAL_DB_TO_SHOW)
+    # Adding the available variance results
+    available_variance = api.get_gene_available_variance(ensg)
+    available_variance = available_variance["available_variance"]
+
+    return render_template(
+        "gene.html",
+        page_title=f"{ensg} | {gene_info['variance_pct']}%",
+        **gene_info,
+        available_variance=available_variance,
+        xrefs=xrefs,
+        db_full_names=db_names,
+        db_urls=EXTERNAL_DB_URL,
+        external_dbs=EXTERNAL_DB_TO_SHOW,
+    )

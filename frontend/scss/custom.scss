@@ -21,3 +21,15 @@
   border-top: 1px solid #cccccc;
   margin: 30px 0px 20px 0px;
 }
+
+.geneHeader h3, .geneHeader a {
+  display: inline;
+}
+
+.geneHeader a {
+  margin-left: 5px;
+}
+
+.geneHeader a.selected {
+  border: 1px solid #cccccc;
+}

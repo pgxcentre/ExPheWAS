@@ -9,6 +9,8 @@ from os import path
 
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
+from sqlalchemy.sql.expression import func
+
 from flask import Blueprint, jsonify, request
 
 from ..db import models
@@ -284,3 +286,15 @@ def get_gene_xrefs(ensg):
         }
         for xref, external_db in results
     ]
+
+
+@make_api("/gene/<ensg>/available_variance")
+def get_gene_available_variance(ensg):
+    results = Session.query(
+        models.AvailableGeneResult.ensembl_id,
+        func.array_agg(models.AvailableGeneResult.variance_pct)
+            .label("available_variances"),
+    ).filter_by(ensembl_id=ensg)\
+        .group_by(models.AvailableGeneResult.ensembl_id).one()
+
+    return {"ensembl_id": results[0], "available_variance": results[1]}
