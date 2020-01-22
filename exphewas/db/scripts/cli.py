@@ -161,26 +161,30 @@ def _get_icd10_parent(code, chapters):
 def _generate_icd10_blocks(blocks):
     class ICD10Block(object):
         def __init__(self, block):
-            self.chapter = block[0]
-            start, stop = block.split("-")
+            start, stop = block.upper().split("-")
+
+            self.chapter_start = start[0]
             self.start = int(start[1:])
+
+            self.chapter_stop = stop[0]
             self.stop = int(stop[1:])
 
         def __repr__(self):
             return "<ICD10BLock: {}>".format(self.__str__())
 
         def __str__(self):
-            return "{chapter}{start:02d}-{chapter}{stop:02d}".format(
-                chapter=self.chapter, start=self.start, stop=self.stop,
+            return (
+                f"{self.chapter_start}{self.start:02d}-"
+                f"{self.chapter_stop}{self.stop:02d}"
             )
 
         def __contains__(self, icd10_3char):
             """Checks if an ICD10 3 character code is in the block."""
-            chapter = icd10_3char[0]
+            chapter = icd10_3char[0].upper()
             section = int(icd10_3char[1:])
 
             return (
-                (chapter == self.chapter) and
+                (self.chapter_start <= chapter <= self.chapter_stop) and
                 (self.start <= section <= self.stop)
             )
 
