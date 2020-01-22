@@ -17,6 +17,11 @@
               <dt class="col-5">Location (GRCh37):</dt>
               <dd class="col-7">chr{{ chrom }}:{{ '{:,d}'.format(start) }}-{{ '{:,d}'.format(end) }}</dd>
 
+              {% if description is not none -%}
+              <dt class="col-5">Description:</dt>
+              <dd class="col-7">{{ description }}</dd>
+              {%- endif %}
+
               <dt class="col-5">Variance explained:</dt>
               <dd class="col-7">{{ variance_pct }}%</dd>
 

@@ -159,6 +159,7 @@ class Gene(Base):
     start = Column(Integer)
     end = Column(Integer)
     positive_strand = Column(Boolean)
+    description = Column(String)
 
     def __repr__(self):
         return "<Gene: {} - {}:{}-{} ({})>".format(

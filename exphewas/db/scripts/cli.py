@@ -207,8 +207,12 @@ def main():
 
     # Command to import ensembl data (from a GTF).
     parser_import_ensembl = subparsers.add_parser("import-ensembl")
-    parser_import_ensembl.add_argument("filename",
-                                       help="Path to the Ensembl GTF file.")
+    parser_import_ensembl.add_argument(
+        "filename", help="Path to the Ensembl GTF file.",
+    )
+    parser_import_ensembl.add_argument(
+        "--description", help="Optional description for each gene (CSV)",
+    )
 
     # Command to import the number of PCs for a gene.
     parser_import_n_pcs = subparsers.add_parser("import-n-pcs")

@@ -12,7 +12,7 @@ create:
 
 .PHONY: ensembl
 ensembl:
-	exphewas-db import-ensembl data/ensembl/human_protein_coding_genes.gtf.gz
+	exphewas-db import-ensembl data/ensembl/human_protein_coding_genes.gtf.gz --description data/ensembl/gene_descrtiption.csv.gz
 
 
 .PHONY: uniprot_xref

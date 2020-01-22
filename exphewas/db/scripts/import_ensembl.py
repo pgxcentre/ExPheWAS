@@ -1,13 +1,14 @@
+import csv
 import gzip
 
-from ..engine import ENGINE, Session
+from ..engine import Session
 from ..models import Gene
 
 
 def parse_line(line):
     """Parse a GTF line into a Gene instance."""
     line = line.strip().split("\t")
-    chrom, source, type_, start, end, _, strand, _, meta = line
+    chrom, _, _, start, end, _, strand, _, meta = line
 
     meta = meta.strip(";").split(";")
     meta = dict([i.strip().replace('"', "").split(" ") for i in meta])
@@ -20,32 +21,67 @@ def parse_line(line):
     return Gene(
         ensembl_id=ensembl_id,
         name=meta.get("gene_name"),
-        chrom = chrom,
-        start = int(start),
-        end = int(end),
-        positive_strand = (strand == "+")
+        chrom=chrom,
+        start=int(start),
+        end=int(end),
+        positive_strand=(strand == "+")
     )
 
 
-def main(args):
-    filename = args.filename
-
-    if filename.endswith(".gz"):
+def add_description(fn):
+    if fn.endswith(".gz"):
         reader = gzip.open
-
     else:
         reader = open
 
-    genes = []
-    with reader(filename, "rt") as f:
-        for line in f:
-            try:
-                genes.append(parse_line(line))
-            except ValueError:
-                pass
-
     session = Session()
-    session.add_all(genes)
+
+    with reader(fn, "rt") as f:
+        csv_reader = csv.reader(f)
+
+        header = None
+        for row in csv_reader:
+            if header is None:
+                header = {name: i for i, name in enumerate(row)}
+                continue
+
+            ensembl_id = row[header["ensembl_id"]]
+            description = row[header["description"]]
+
+            if description == "":
+                description = None
+
+            # Updating the entries
+            session.query(Gene)\
+                .filter(Gene.ensembl_id == ensembl_id)\
+                .update({"description": description})
 
     session.commit()
-    print("Added {} genes to the database.".format(len(genes)))
+
+
+def main(args):
+#    filename = args.filename
+#
+#    if filename.endswith(".gz"):
+#        reader = gzip.open
+#
+#    else:
+#        reader = open
+#
+#    genes = []
+#    with reader(filename, "rt") as f:
+#        for line in f:
+#            try:
+#                genes.append(parse_line(line))
+#            except ValueError:
+#                pass
+#
+#    session = Session()
+#    session.add_all(genes)
+#
+#    session.commit()
+#    print("Added {} genes to the database.".format(len(genes)))
+
+    # Checking if we have a description
+    if args.description is not None:
+        add_description(args.description)
