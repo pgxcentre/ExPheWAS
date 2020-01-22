@@ -354,7 +354,7 @@ function mainGeneList() {
             if (variances === null)
               return '<span class="badge badge-warning">No results</span>';
 
-            return variances.map(d => `<a href="${URL_PREFIX}/gene/${row['0']}?variance_pct=${d}" class="badge badge-primary">${d}%</a>`).join(' ');
+            return variances.sort().map(d => `<a href="${URL_PREFIX}/gene/${row['0']}?variance_pct=${d}" class="badge badge-primary">${d}%</a>`).join(' ');
           }
         },
         {
