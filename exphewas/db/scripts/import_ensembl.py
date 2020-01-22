@@ -60,27 +60,27 @@ def add_description(fn):
 
 
 def main(args):
-#    filename = args.filename
-#
-#    if filename.endswith(".gz"):
-#        reader = gzip.open
-#
-#    else:
-#        reader = open
-#
-#    genes = []
-#    with reader(filename, "rt") as f:
-#        for line in f:
-#            try:
-#                genes.append(parse_line(line))
-#            except ValueError:
-#                pass
-#
-#    session = Session()
-#    session.add_all(genes)
-#
-#    session.commit()
-#    print("Added {} genes to the database.".format(len(genes)))
+    filename = args.filename
+
+    if filename.endswith(".gz"):
+        reader = gzip.open
+
+    else:
+        reader = open
+
+    genes = []
+    with reader(filename, "rt") as f:
+        for line in f:
+            try:
+                genes.append(parse_line(line))
+            except ValueError:
+                pass
+
+    session = Session()
+    session.add_all(genes)
+
+    session.commit()
+    print("Added {} genes to the database.".format(len(genes)))
 
     # Checking if we have a description
     if args.description is not None:
