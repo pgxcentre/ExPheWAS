@@ -349,6 +349,18 @@ function mainGeneList() {
       ajax: `${DT_API_URL}/gene`,
       columnDefs: [
         {
+          targets: 0,
+          render: (ensembl_id, type, row, meta) => {
+            let available_variances = row['1'];
+
+            if (available_variances === null)
+              return ensembl_id;
+
+            let max_variance = Math.max.apply(Math, available_variances);
+            return `<a href="${URL_PREFIX}/gene/${ensembl_id}?variance_pct=${max_variance}">${ensembl_id}</a>`;
+          }
+        },
+        {
           targets: 1,
           orderable: false,
           searchable: false,
