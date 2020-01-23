@@ -73,7 +73,10 @@ def resource_not_found(e):
 def get_outcomes():
     res = Session.query(models.Outcome).all()
 
-    return [{"id": i.id, "label": i.label} for i in res]
+    return [
+        {"id": i.id, "label": i.label, "analysis_type": i.analysis_type}
+        for i in res
+    ]
 
 
 @make_api("/outcome/<id>")
@@ -302,3 +305,15 @@ def get_gene_available_variance(ensg):
         .group_by(models.AvailableGeneResult.ensembl_id).one()
 
     return {"ensembl_id": results[0], "available_variance": results[1]}
+
+
+@make_api("/outcome/<id>/available_variance")
+def get_outcome_available_variance(id):
+    results = Session.query(
+        models.AvailableOutcomeResult.outcome_id,
+        func.array_agg(models.AvailableOutcomeResult.variance_pct)
+            .label("available_variances"),
+    ).filter_by(outcome_id=id)\
+        .group_by(models.AvailableOutcomeResult.outcome_id).one()
+
+    return {"outcome_id": results[0], "available_variance": results[1]}

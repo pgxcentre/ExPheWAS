@@ -37,6 +37,7 @@ function mainOutcomeList() {
       },
       columns: [
         {data: 'id'},
+        {data: 'analysis_type'},
         {data: 'label'}
       ],
       columnDefs: [
