@@ -71,11 +71,22 @@ def resource_not_found(e):
 
 @make_api("/outcome")
 def get_outcomes():
-    res = Session.query(models.Outcome).all()
+    subquery = Session.query(
+        models.AvailableOutcomeResult.outcome_id,
+        func.array_agg(models.AvailableOutcomeResult.variance_pct)\
+            .label("available_variances"),
+    ).group_by(models.AvailableOutcomeResult.outcome_id).subquery()
+
+    results = Session.query(models.Outcome, subquery)\
+        .join(subquery, isouter=True).all()
 
     return [
-        {"id": i.id, "label": i.label, "analysis_type": i.analysis_type}
-        for i in res
+        {
+            "id": outcome.id,
+            "label": outcome.label,
+            "analysis_type": outcome.analysis_type,
+            "available_variances": available_variances,
+        } for outcome, outcome_id, available_variances in results
     ]
 
 

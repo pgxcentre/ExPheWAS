@@ -36,15 +36,27 @@ function mainOutcomeList() {
         dataSrc: ""
       },
       columns: [
-        {data: 'id'},
-        {data: 'analysis_type'},
-        {data: 'label'}
+        {data: 'id'},                   // 0
+        {data: 'available_variances'},  // 1
+        {data: 'analysis_type'},        // 2
+        {data: 'label'}                 // 3
       ],
       columnDefs: [
         {
           targets: 0,
-          render: function(outcome, type, row, meta) {
+          render: (outcome, type, row, meta) => {
             return `<a href="${URL_PREFIX}/outcome/${outcome}">${outcome}</a>`;
+          }
+        },
+        {
+          targets: 1,
+          orderable: false,
+          searchable: false,
+          render: (variances, type, row, meta) => {
+            if (variances === null)
+              return '<span class="badge badge-warning">No results</span>';
+
+            return variances.sort().map(d => `<a href="${URL_PREFIX}/outcome/${row['id']}?variance_pct=${d}" class="badge badge-primary">${d}%</a>`).join(' ');
           }
         }
       ]
