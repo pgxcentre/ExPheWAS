@@ -80,10 +80,9 @@ def find_missing_results():
 
 
 def populate_available_results():
-    # First, we get the distinct gene/variance values
     session = Session()
 
-    # Getting the variance
+    # Getting the unique variance for each gene
     results_binary = session.query(
         models.BinaryVariableResult.gene,
         models.BinaryVariableResult.variance_pct,
@@ -94,10 +93,10 @@ def populate_available_results():
         models.ContinuousVariableResult.variance_pct,
     ).distinct()
 
-    # Deleting the current content
+    # Deleting the current content (gene)
     session.query(models.AvailableGeneResult).delete(synchronize_session=False)
 
-    # Pushing data to the database
+    # Pushing data to the database (gene)
     entries = []
     for ensembl_id, variance in results_binary.union(results_continuous).all():
         entries.append(models.AvailableGeneResult(
@@ -108,7 +107,36 @@ def populate_available_results():
     session.add_all(entries)
 
     session.commit()
-    print("Added {} available results.".format(len(entries)))
+    print("Added {} available gene results.".format(len(entries)))
+
+    # Getting the unique variance for each outcome
+    results_binary = session.query(
+        models.BinaryVariableResult.outcome_id,
+        models.BinaryVariableResult.variance_pct,
+    ).distinct()
+
+    results_continuous = session.query(
+        models.ContinuousVariableResult.outcome_id,
+        models.ContinuousVariableResult.variance_pct,
+    ).distinct()
+
+    # Deleting the current content (outcome)
+    session.query(models.AvailableOutcomeResult).delete(
+        synchronize_session=False,
+    )
+
+    # Pushing data to the database (outcome)
+    entries = []
+    for outcome_id, variance in results_binary.union(results_continuous).all():
+        entries.append(models.AvailableOutcomeResult(
+            outcome_id=outcome_id, variance_pct=variance,
+        ))
+
+    session = Session()
+    session.add_all(entries)
+
+    session.commit()
+    print("Added {} available outcome results.".format(len(entries)))
 
 
 def create_icd10_hierarchy():
