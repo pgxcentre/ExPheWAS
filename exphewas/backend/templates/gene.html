@@ -3,7 +3,7 @@
     <div class="geneHeader">
       <h3>Gene {{ name }}</h3>
         {%- for value in available_variance|sort %}
-        <a href="{{ url_for('backend_blueprint.get_gene', ensg=ensembl_id, variance_pct=value) }}" class="badge badge-light{{ ' selected' if value == variance_pct }}">{{ value }}%</a>
+        <a href="{{ url_for('backend_blueprint.get_gene', ensg=ensembl_id, variance_pct=value) }}" class="badge badge-{{ 'danger' if value == variance_pct else 'light'}}{{ ' selected' if value == variance_pct }}">{{ value }}%</a>
         {%- endfor %}
     </div>
 
