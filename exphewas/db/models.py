@@ -26,6 +26,25 @@ AnalysisEnum = Enum(*ANALYSIS_TYPES, name="enum_analysis_type")
 Base = declarative_base()
 
 
+class Hierarchy(Base):
+    __tablename__ = "hierarchy"
+
+    # A textual ID for the hierarchy (e.g. ICD10, UKB_SELF_REPORT)
+    id = Column(String, primary_key=True)
+
+    code = Column(String, primary_key=True)
+    parent = Column(String, nullable=True)
+    description = Column(String)
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["id", "parent"],
+            ["hierarchy.id", "hierarchy.code"],
+            name="fk_hierarchy_parent"
+        ),
+    )
+
+
 class Outcome(Base):
     __tablename__ = "outcomes"
 
@@ -40,13 +59,6 @@ class Outcome(Base):
         "polymorphic_on": type,
         "polymorphic_identity": "outcomes"
     }
-
-
-class OutcomeHierarchy(Base):
-    __tablename__ = "outcome_hierarchy"
-
-    id = Column(String, ForeignKey("outcomes.id"), primary_key=True)
-    parent = Column(String, ForeignKey("outcomes.id"), nullable=True)
 
 
 class BinaryOutcome(Outcome):

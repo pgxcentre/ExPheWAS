@@ -1,12 +1,16 @@
 import argparse
 import csv
+import glob
+import os
 import functools
 from collections import defaultdict
 
+import pandas as pd
 
 from ..engine import ENGINE, Session
 from ..models import Base, ANALYSIS_TYPES
 from .. import models
+from ..tree import tree_from_hierarchies
 
 from . import import_ensembl, import_results, import_n_pcs, import_external
 
@@ -111,80 +115,41 @@ def populate_available_results():
     print("Added {} available results.".format(len(entries)))
 
 
-def create_icd10_hierarchy():
+def import_hierarchies(args):
     session = Session()
 
-    # Getting the ICD10 blocks
-    icd10_blocks = _generate_icd10_blocks([
-        result[0] for result in
-        session.query(models.Outcome.id)
-            .filter_by(analysis_type="ICD10_BLOCK").all()
-    ])
+    path = os.path.join(args.directory_root, "hierarchy_*")
+    for filename in glob.glob(path):
+        cur = pd.read_csv(filename, dtype=str)
+        hierarchies = []
 
-    # Creating the chapters
-    chapters = defaultdict(list)
-    for block in icd10_blocks:
-        chapters[block.chapter].append(block)
+        for _, row in cur.iterrows():
+            if pd.isna(row.parent):
+                parent = None
+            else:
+                parent = row.parent
 
-    # Getting the ICD10 3 character codes
-    icd10_3char = [
-        result[0] for result in
-        session.query(models.Outcome.id)
-            .filter_by(analysis_type="ICD10_3CHAR").all()
-    ]
-
-    # Generating what will be added
-    hierarchy = [
-        models.OutcomeHierarchy(id=str(icd10_block), parent=None)
-        for icd10_block in icd10_blocks
-    ]
-
-    # Adding the 3 character codes
-    for code in icd10_3char:
-        parent = _get_icd10_parent(code, chapters)
-        if parent is not None:
-            parent = str(parent)
-        hierarchy.append(models.OutcomeHierarchy(id=code, parent=parent))
-
-    session.add_all(hierarchy)
-    session.commit()
-
-
-def _get_icd10_parent(code, chapters):
-    chapter = code[0]
-    blocks = chapters[chapter]
-    for block in blocks:
-        if code in block:
-            return block
-
-
-def _generate_icd10_blocks(blocks):
-    class ICD10Block(object):
-        def __init__(self, block):
-            self.chapter = block[0]
-            start, stop = block.split("-")
-            self.start = int(start[1:])
-            self.stop = int(stop[1:])
-
-        def __repr__(self):
-            return "<ICD10BLock: {}>".format(self.__str__())
-
-        def __str__(self):
-            return "{chapter}{start:02d}-{chapter}{stop:02d}".format(
-                chapter=self.chapter, start=self.start, stop=self.stop,
+            hierarchies.append(
+                models.Hierarchy(
+                    id=row["id"],
+                    code=row["code"],
+                    parent=parent,
+                    description=row["description"]
+                )
             )
 
-        def __contains__(self, icd10_3char):
-            """Checks if an ICD10 3 character code is in the block."""
-            chapter = icd10_3char[0]
-            section = int(icd10_3char[1:])
+        tree = tree_from_hierarchies(hierarchies)
 
-            return (
-                (chapter == self.chapter) and
-                (self.start <= section <= self.stop)
-            )
+        # We use depth first traversal of the tree to set the insertion order.
+        # The instance to the Hierarchy is held in the _data field when
+        # creating the tree to allow this.
+        hierarchies = [n._data for _, n in tree.iter_depth_first()]
 
-    return [ICD10Block(block) for block in blocks]
+        session.bulk_save_objects(hierarchies)
+        session.commit()
+
+        print("Added {} hierarchical entries from '{}'."
+              "".format(len(hierarchies), filename))
 
 
 def main():
@@ -202,8 +167,15 @@ def main():
     # Command to populate the available results for each gene
     subparsers.add_parser("populate-available-results")
 
-    # Command to create the outcome hierarchy
-    subparsers.add_parser("create-icd10-hierarchy")
+    # Command to load all hierarchical data.
+    parser_import_hierarchies = subparsers.add_parser("import-hierarchies")
+    parser_import_hierarchies.add_argument(
+        "directory_root",
+        help="Root directory from which to find hierarchy files. All files "
+             "in this directory prefixed with 'hierarchy_' will then be "
+             "imported. The expected format is a CSV file with: id, code, "
+             "parent and description."
+    )
 
     # Command to import ensembl data (from a GTF).
     parser_import_ensembl = subparsers.add_parser("import-ensembl")
@@ -282,8 +254,8 @@ def main():
     elif args.command == "import-results":
         return import_results.main(args)
 
-    elif args.command == "create-icd10-hierarchy":
-        return create_icd10_hierarchy()
+    elif args.command == "import-hierarchies":
+        return import_hierarchies(args)
 
     elif args.command == "import-external":
         return import_external.main(args)
