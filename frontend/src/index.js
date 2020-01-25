@@ -36,14 +36,27 @@ function mainOutcomeList() {
         dataSrc: ""
       },
       columns: [
-        {data: 'id'},
-        {data: 'label'}
+        {data: 'id'},                   // 0
+        {data: 'available_variances'},  // 1
+        {data: 'analysis_type'},        // 2
+        {data: 'label'}                 // 3
       ],
       columnDefs: [
         {
           targets: 0,
-          render: function(outcome, type, row, meta) {
+          render: (outcome, type, row, meta) => {
             return `<a href="${URL_PREFIX}/outcome/${outcome}">${outcome}</a>`;
+          }
+        },
+        {
+          targets: 1,
+          orderable: false,
+          searchable: false,
+          render: (variances, type, row, meta) => {
+            if (variances === null)
+              return '<span class="badge badge-warning">No results</span>';
+
+            return variances.sort().map(d => `<a href="${URL_PREFIX}/outcome/${row['id']}?variance_pct=${d}" class="badge badge-primary">${d}%</a>`).join(' ');
           }
         }
       ]
@@ -137,6 +150,7 @@ async function mainGeneResults(id) {
         {data: 'q'},              // 3
         {data: 'bonf'},           // 4
         {data: 'gof_meas'},       // 5
+        {data: 'test_statistic'}, // 6
       ],
       columnDefs: [
         {
@@ -152,13 +166,13 @@ async function mainGeneResults(id) {
           }
         },
         {
-          targets: 5,
-          render: function(gof_meas, type, row, meta) {
-            return gof_meas.toFixed(1);
+          targets: [5, 6],
+          render: function(numeric_value, type, row, meta) {
+            return numeric_value.toFixed(1);
           }
         },
         {
-          targets: [2, 3, 4, 5],
+          targets: [2, 3, 4, 5, 6],
           className: 'dt-body-right'
         }
       ],
@@ -346,6 +360,18 @@ function mainGeneList() {
       serverSide: true,
       ajax: `${DT_API_URL}/gene`,
       columnDefs: [
+        {
+          targets: 0,
+          render: (ensembl_id, type, row, meta) => {
+            let available_variances = row['1'];
+
+            if (available_variances === null)
+              return ensembl_id;
+
+            let max_variance = Math.max.apply(Math, available_variances);
+            return `<a href="${URL_PREFIX}/gene/${ensembl_id}?variance_pct=${max_variance}">${ensembl_id}</a>`;
+          }
+        },
         {
           targets: 1,
           orderable: false,

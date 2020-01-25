@@ -189,6 +189,13 @@ class AvailableGeneResult(Base):
     variance_pct = Column(Integer, primary_key=True)
 
 
+class AvailableOutcomeResult(Base):
+    __tablename__ = "available_outcome_results"
+
+    outcome_id = Column(String, ForeignKey("outcomes.id"), primary_key=True)
+    variance_pct = Column(Integer, primary_key=True)
+
+
 class ExternalDB(Base):
     __tablename__ = "external_db"
 

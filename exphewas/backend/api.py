@@ -9,7 +9,7 @@ from os import path
 
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
-from sqlalchemy.sql.expression import func
+from sqlalchemy.sql.expression import func, null
 
 from flask import Blueprint, jsonify, request
 
@@ -71,9 +71,23 @@ def resource_not_found(e):
 
 @make_api("/outcome")
 def get_outcomes():
-    res = Session.query(models.Outcome).all()
+    subquery = Session.query(
+        models.AvailableOutcomeResult.outcome_id,
+        func.array_agg(models.AvailableOutcomeResult.variance_pct)\
+            .label("available_variances"),
+    ).group_by(models.AvailableOutcomeResult.outcome_id).subquery()
 
-    return [{"id": i.id, "label": i.label} for i in res]
+    results = Session.query(models.Outcome, subquery)\
+        .join(subquery, isouter=True).all()
+
+    return [
+        {
+            "id": outcome.id,
+            "label": outcome.label,
+            "analysis_type": outcome.analysis_type,
+            "available_variances": available_variances,
+        } for outcome, outcome_id, available_variances in results
+    ]
 
 
 @make_api("/outcome/<id>")
@@ -219,16 +233,19 @@ def get_gene_results(ensg):
 
     # Find all results.
     fields = ("gene", "analysis_type", "outcome_id", "outcome_label",
-              "variance_pct", "p", "gof_meas", "gene_name", "n_components")
+              "variance_pct", "p", "gof_meas", "gene_name", "n_components",
+              "test_statistic")
 
     result_models = (
         {
             "model": models.BinaryVariableResult,
             "gof_meas": models.BinaryVariableResult.deviance,
+            "test_statistic": null(),
         },
         {
             "model": models.ContinuousVariableResult,
             "gof_meas": models.ContinuousVariableResult.sum_of_sq,
+            "test_statistic": models.ContinuousVariableResult.F_stat,
         },
     )
 
@@ -243,6 +260,7 @@ def get_gene_results(ensg):
             result_info["gof_meas"],
             models.Gene.name,
             models.GeneVariance.n_components,
+            result_info["test_statistic"],
         )
         .filter(models.Outcome.id == result_info["model"].outcome_id)
         .filter(models.Gene.ensembl_id == result_info["model"].gene)
@@ -298,3 +316,15 @@ def get_gene_available_variance(ensg):
         .group_by(models.AvailableGeneResult.ensembl_id).one()
 
     return {"ensembl_id": results[0], "available_variance": results[1]}
+
+
+@make_api("/outcome/<id>/available_variance")
+def get_outcome_available_variance(id):
+    results = Session.query(
+        models.AvailableOutcomeResult.outcome_id,
+        func.array_agg(models.AvailableOutcomeResult.variance_pct)
+            .label("available_variances"),
+    ).filter_by(outcome_id=id)\
+        .group_by(models.AvailableOutcomeResult.outcome_id).one()
+
+    return {"outcome_id": results[0], "available_variance": results[1]}
