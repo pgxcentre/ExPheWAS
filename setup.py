@@ -51,7 +51,7 @@ def setup_package():
                           "sqlalchemy-datatables >= 2.0.1"],
         packages=find_packages(),
         package_data={
-            "exphewas.backend": ["templates/*", "static/*"],
+            "exphewas.backend": ["templates/*", "static/*", "data/*"],
         },
         classifiers=["Development Status :: 4 - Beta",
                      "Intended Audience :: Science/Research",
