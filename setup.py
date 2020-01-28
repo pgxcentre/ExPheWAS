@@ -48,7 +48,8 @@ def setup_package():
         zip_safe=False,
         install_requires=["sqlalchemy >= 1.3.10", "Flask >= 1.1.1",
                           "Flask-Cors >= 3.0.8", "psycopg2-binary >= 2.8.4",
-                          "sqlalchemy-datatables >= 2.0.1"],
+                          "sqlalchemy-datatables >= 2.0.1",
+                          "pandas >= 0.25.3"],
         packages=find_packages(),
         package_data={
             "exphewas.backend": ["templates/*", "static/*", "data/*"],
