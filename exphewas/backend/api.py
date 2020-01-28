@@ -16,6 +16,7 @@ from flask import Blueprint, jsonify, request
 from ..db import models
 from ..db.engine import Session
 from ..db.utils import mod_to_dict
+from ..utils import load_gtex_median_tpm, load_gtex_statistics
 
 from .r_bindings import R
 
@@ -28,6 +29,11 @@ except:
 
 
 api = Blueprint("api_blueprint", __name__)
+
+
+# Loading GTEx data
+GTEX_MEDIAN_TPM = load_gtex_median_tpm()
+GTEX_STATS = load_gtex_statistics()
 
 
 class make_api(object):
@@ -328,3 +334,15 @@ def get_outcome_available_variance(id):
         .group_by(models.AvailableOutcomeResult.outcome_id).one()
 
     return {"outcome_id": results[0], "available_variance": results[1]}
+
+
+@make_api("/gene/<ensg>/gtex")
+def get_gene_gtex(ensg):
+    if ensg not in GTEX_MEDIAN_TPM.index:
+        return []
+
+    gtex_data = [
+        {"tissue": tissue, "value": value, "nb_samples": GTEX_STATS[tissue]}
+        for tissue, value in GTEX_MEDIAN_TPM.loc[ensg, :].iteritems()
+    ]
+    return gtex_data

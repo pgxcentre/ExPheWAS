@@ -1,5 +1,7 @@
 {% extends "index.html" %}
 {% block body %}
+    <div class="tooltip" id="tooltipGTEX"></div>
+
     <div class="geneHeader">
       <h3>Gene {{ name }}</h3>
         {%- for value in available_variance|sort %}
@@ -9,36 +11,44 @@
 
     <div id="app">
 
+      <div class="container-fluid">
       <div class="row">
-        <div class="col-5">
+        <div class="col-md-6">
         <div class="card geneDescription">
           <div class="card-body">
             <dl class="row">
-              <dt class="col-5">Location (GRCh37):</dt>
-              <dd class="col-7">chr{{ chrom }}:{{ '{:,d}'.format(start) }}-{{ '{:,d}'.format(end) }}</dd>
+              <dt class="col-md-4">Location (GRCh37):</dt>
+              <dd class="col-md-8">chr{{ chrom }}:{{ '{:,d}'.format(start) }}-{{ '{:,d}'.format(end) }}</dd>
 
               {% if description is not none -%}
-              <dt class="col-5">Description:</dt>
-              <dd class="col-7">{{ description }}</dd>
+              <dt class="col-md-4">Description:</dt>
+              <dd class="col-md-8">{{ description }}</dd>
               {%- endif %}
 
-              <dt class="col-5">Variance explained:</dt>
-              <dd class="col-7">{{ variance_pct }}%</dd>
+              <dt class="col-md-4">Variance explained:</dt>
+              <dd class="col-md-8">{{ variance_pct }}%</dd>
 
-              <dt class="col-5">Nb components:</dt>
-              <dd class="col-7">{{ n_components }}</dd>
+              <dt class="col-md-4">Nb components:</dt>
+              <dd class="col-md-8">{{ n_components }}</dd>
 
-              <dt class="col-5">Ensembl:</dt>
-              <dd class="col-7"><a target="_blank" href="http://grch37.ensembl.org/Homo_sapiens/Gene/Summary?g={{ ensembl_id }}">{{ ensembl_id }}</a></dd>
+              <dt class="col-md-4">Ensembl:</dt>
+              <dd class="col-md-8"><a target="_blank" href="http://grch37.ensembl.org/Homo_sapiens/Gene/Summary?g={{ ensembl_id }}">{{ ensembl_id }}</a></dd>
 
               {% for db_name in external_dbs|sort %}{% if db_name in xrefs %}
-              <dt class="col-5">{{ db_full_names[db_name] }}:</dt>
-              <dd class="col-7">{% for id in xrefs[db_name] %}{% if db_name in db_urls %}<a target="_blank" href="{{ db_urls[db_name].format(id=id) }}">{% endif %}{{ id }}{% if db_name in db_urls %}</a>{% endif %}{{ ", " if not loop.last }}{% endfor %}</dd>
+              <dt class="col-md-4">{{ db_full_names[db_name] }}:</dt>
+              <dd class="col-md-8">{% for id in xrefs[db_name] %}{% if db_name in db_urls %}<a target="_blank" href="{{ db_urls[db_name].format(id=id) }}">{% endif %}{{ id }}{% if db_name in db_urls %}</a>{% endif %}{{ ", " if not loop.last }}{% endfor %}</dd>
               {% endif %}{% endfor %}
             </dl>
           </div>
         </div>
         </div>
+
+        <div class="col-md-6">
+          <div class="card-body" id="cardGTEX" style="text-align: center;">
+            <svg id="geneGTEX"></svg>
+          </div>
+        </div>
+      </div>
       </div>
 
       <div class="dropdown analyisType">
@@ -172,5 +182,6 @@
 {% block other_script %}
     <script>
       window.pages.mainGeneResults("{{ ensembl_id }}");
+      window.pages.radialGTEX("{{ ensembl_id }}");
     </script>
 {% endblock %}
