@@ -8,7 +8,7 @@ from sqlalchemy.orm import column_property, relationship
 from sqlalchemy import (
     Table, Column, Integer, String, MetaData, ForeignKey, Enum, Float,
     Boolean, Sequence, UniqueConstraint, ForeignKeyConstraint, create_engine,
-    and_
+    and_, PrimaryKeyConstraint
 )
 
 from .engine import ENGINE, Session
@@ -29,20 +29,20 @@ Base = declarative_base()
 class Hierarchy(Base):
     __tablename__ = "hierarchy"
 
+    DEFAULT_PARENT = "_ROOT_"
+
     # A textual ID for the hierarchy (e.g. ICD10, UKB_SELF_REPORT)
     id = Column(String, primary_key=True)
 
     code = Column(String, primary_key=True)
-    parent = Column(String, nullable=True)
-    description = Column(String)
-
-    __table_args__ = (
-        ForeignKeyConstraint(
-            ["id", "parent"],
-            ["hierarchy.id", "hierarchy.code"],
-            name="fk_hierarchy_parent"
-        ),
+    parent = Column(
+        String,
+        server_default=DEFAULT_PARENT,
+        default=DEFAULT_PARENT,
+        primary_key=True
     )
+
+    description = Column(String)
 
 
 class Outcome(Base):

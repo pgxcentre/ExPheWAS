@@ -146,23 +146,37 @@ def populate_available_results():
 def import_hierarchies(args):
     session = Session()
 
-    path = os.path.join(args.directory_root, "hierarchy_*")
-    for filename in glob.glob(path):
+    if os.path.isfile(args.directory_root):
+        # Import single file.
+        filenames = [args.directory_root]
+
+    else:
+        # Import all hierarchies in path.
+        path = os.path.join(args.directory_root, "hierarchy_*")
+        filenames = glob.glob(path)
+
+    if len(filenames) == 0:
+        raise RuntimeError("Could not find hierarchies to import.")
+
+    for filename in filenames:
         cur = pd.read_csv(filename, dtype=str)
         hierarchies = []
 
         for _, row in cur.iterrows():
             if pd.isna(row.parent):
-                parent = None
+                parent = models.Hierarchy.DEFAULT_PARENT
             else:
                 parent = row.parent
+
+            desc = row["description"]
+            desc = None if pd.isnull(desc) else desc
 
             hierarchies.append(
                 models.Hierarchy(
                     id=row["id"],
                     code=row["code"],
                     parent=parent,
-                    description=row["description"]
+                    description=desc
                 )
             )
 
@@ -171,7 +185,10 @@ def import_hierarchies(args):
         # We use depth first traversal of the tree to set the insertion order.
         # The instance to the Hierarchy is held in the _data field when
         # creating the tree to allow this.
-        hierarchies = [n._data for _, n in tree.iter_depth_first()]
+        hierarchies = []
+        for _, n in tree.iter_depth_first():
+            print(n)
+            hierarchies.append(n._data)
 
         session.bulk_save_objects(hierarchies)
         session.commit()
@@ -202,7 +219,8 @@ def main():
         help="Root directory from which to find hierarchy files. All files "
              "in this directory prefixed with 'hierarchy_' will then be "
              "imported. The expected format is a CSV file with: id, code, "
-             "parent and description."
+             "parent and description. Alternatively, a single file can be "
+             "provided."
     )
 
     # Command to import ensembl data (from a GTF).

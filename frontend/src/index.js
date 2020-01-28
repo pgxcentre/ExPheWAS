@@ -7,7 +7,7 @@ import 'datatables.net-dt/css/jquery.dataTables.css';
 
 import '../scss/custom.scss';
 import { URL_PREFIX, API_URL, DT_API_URL, ICD10_URL, UNIPROT_URL } from './config';
-import { formatP, formatNumber, getUrlParam } from './utils';
+import { formatP, formatNumber, getUrlParam, ANALYSIS_LABELS } from './utils';
 
 // This is a shim for d3 events to work with webpack
 // https://github.com/d3/d3-zoom/issues/32#issuecomment-229889310
@@ -61,6 +61,10 @@ function mainOutcomeList() {
 
             return variances.sort().map(d => `<a href="${URL_PREFIX}/outcome/${row['id']}?variance_pct=${d}" class="badge badge-primary">${d}%</a>`).join(' ');
           }
+        },
+        {
+          targets: 2,
+          render: (analysis, type, row, meta) => ANALYSIS_LABELS[analysis]
         }
       ]
   });

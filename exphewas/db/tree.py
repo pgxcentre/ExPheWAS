@@ -5,8 +5,11 @@ tree = tree_from_hierarchy_id("ICD10")
 
 """
 
+import collections
+
 
 from .models import Hierarchy
+from .engine import Session
 
 
 class Node(object):
@@ -62,19 +65,26 @@ class Node(object):
         return None
 
     def formatted_ancestors(self, sep=" > "):
-        ancestors = [i.description for i in self.iter_parents()]
+        ancestors = [
+            i.description if i.description is not None else i.code
+            for i in self.iter_parents()
+        ]
 
         # Remove the root node
         ancestors.pop()
 
-        return sep.join(ancestors[::-1] + [self.description])
+        return sep.join(
+            ancestors[::-1] +
+            [self.description if self.description is not None else self.code]
+        )
 
 
 def tree_from_hierarchies(hierarchies):
     root = Node()
     root.is_root = True
 
-    nodes_dict = {}
+    # We use {code -> {parent_code: node}} for fast indexing.
+    nodes_dict = collections.defaultdict(dict)
 
     # Create all nodes.
     for h in hierarchies:
@@ -85,19 +95,40 @@ def tree_from_hierarchies(hierarchies):
         # We hold a pointer to the hierarchy if needed.
         n._data = h
 
-        nodes_dict[n.code] = n
+        nodes_dict[h.code][h.parent] = n
 
     # Set all the hierarchies.
     for h in hierarchies:
-        n = nodes_dict[h.code]
+        n = nodes_dict[h.code][h.parent]
 
-        if h.parent is None:
+        if h.parent != Hierarchy.DEFAULT_PARENT:
+            # Find parent if needed.
+            parent = list(nodes_dict[h.parent].values())
+
+            if len(parent) == 0:
+                raise ValueError(f"Could not find parent for node {n}")
+
+            elif len(parent) == 1:
+                parent = parent[0]
+
+            else:
+                raise ValueError(f"Ambiguous parent for node {n}")
+
+            # Set the parent and children.
+            n.parent = parent
+            parent.children.append(n)
+
+        else:
             n.parent = root
             root.children.append(n)
 
-        else:
-            # Set the parent and children.
-            n.parent = nodes_dict[h.parent]
-            nodes_dict[h.parent].children.append(n)
-
     return root
+
+
+def tree_from_hierarchy_id(id):
+    hierarchies = Session()\
+        .query(Hierarchy)\
+        .filter_by(id=id)\
+        .all()
+
+    return tree_from_hierarchies(hierarchies)
