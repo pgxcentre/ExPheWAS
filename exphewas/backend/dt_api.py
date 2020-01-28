@@ -6,6 +6,7 @@ Flask-based API specific for datatables.
 from flask import Blueprint, jsonify, request
 
 from sqlalchemy.sql.expression import func
+from sqlalchemy.dialects.postgresql import array
 
 from datatables import ColumnDT, DataTables
 
@@ -31,8 +32,14 @@ def dt_gene():
 
     subquery = Session.query(
         models.AvailableGeneResult.ensembl_id,
-        func.array_agg(models.AvailableGeneResult.variance_pct)\
-            .label("available_variances"),
+        func.array_agg(array([
+            models.AvailableGeneResult.variance_pct,
+            models.GeneVariance.n_components,
+        ])).label("available_variances"),
+    ).filter(
+        models.GeneVariance.ensembl_id == models.AvailableGeneResult.ensembl_id
+    ).filter(
+        models.GeneVariance.variance_pct == models.AvailableGeneResult.variance_pct
     ).group_by(models.AvailableGeneResult.ensembl_id).subquery()
 
     query = Session.query()\
