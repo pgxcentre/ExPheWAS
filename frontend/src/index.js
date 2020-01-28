@@ -380,7 +380,10 @@ function mainGeneList() {
             if (variances === null)
               return '<span class="badge badge-warning">No results</span>';
 
-            return variances.sort().map(d => `<a title="Explained by ${d[1]} components" href="${URL_PREFIX}/gene/${row['0']}?variance_pct=${d[0]}" class="badge badge-primary">${d[0]}%</a>`).join(' ');
+            return variances
+              .sort(d => d[0])
+              .map(d => `<a title="Explained by ${d[1]} components" href="${URL_PREFIX}/gene/${row['0']}?variance_pct=${d[0]}" class="badge badge-primary">${d[0]}%</a>`)
+              .join(' ');
           }
         },
         {
