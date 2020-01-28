@@ -43,3 +43,17 @@ export function getUrlParam(parameter, defaultvalue) {
   }
   return urlparameter;
 }
+
+
+export async function api_call(endpoint) {
+  let results;
+  try {
+    let response = await fetch(API_URL + endpoint);
+    results = await response.json();
+  }
+  catch (err) {
+    console.log(err);
+  }
+
+  return results;
+}

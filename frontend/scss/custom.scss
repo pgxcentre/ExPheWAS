@@ -34,3 +34,14 @@
   margin-top: 5px;
   font-size: small;
 }
+
+.tooltip {
+  padding: 7px;
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid #ccc;
+  pointer-events: none;
+}
+
+.axis, .tick text {
+  pointer-events: none;
+}
