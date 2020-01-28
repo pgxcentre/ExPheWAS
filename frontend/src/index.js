@@ -372,8 +372,8 @@ function mainGeneList() {
             if (available_variances === null)
               return ensembl_id;
 
-            let max_variance = Math.max.apply(Math, available_variances);
-            return `<a href="${URL_PREFIX}/gene/${ensembl_id}?variance_pct=${max_variance}">${ensembl_id}</a>`;
+            let max_variance = Math.max.apply(Math, available_variances.map(d => d[0]));
+            return `<a title="Results for ${max_variance}%" href="${URL_PREFIX}/gene/${ensembl_id}?variance_pct=${max_variance}">${ensembl_id}</a>`;
           }
         },
         {
@@ -384,7 +384,10 @@ function mainGeneList() {
             if (variances === null)
               return '<span class="badge badge-warning">No results</span>';
 
-            return variances.sort().map(d => `<a href="${URL_PREFIX}/gene/${row['0']}?variance_pct=${d}" class="badge badge-primary">${d}%</a>`).join(' ');
+            return variances
+              .sort(d => d[0])
+              .map(d => `<a title="Explained by ${d[1]} components" href="${URL_PREFIX}/gene/${row['0']}?variance_pct=${d[0]}" class="badge badge-primary">${d[0]}%</a>`)
+              .join(' ');
           }
         },
         {
