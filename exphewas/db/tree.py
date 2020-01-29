@@ -64,6 +64,13 @@ class Node(object):
 
         return None
 
+    def search_all(self, predicate):
+        """Search for all occurence verifying the predicate in the subtree
+           rooted at this node.
+
+        """
+        return filter(predicate, self.iter_depth_first())
+
     def formatted_ancestors(self, sep=" > "):
         ancestors = [
             i.description if i.description is not None else i.code

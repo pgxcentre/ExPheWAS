@@ -187,7 +187,6 @@ def import_hierarchies(args):
         # creating the tree to allow this.
         hierarchies = []
         for _, n in tree.iter_depth_first():
-            print(n)
             hierarchies.append(n._data)
 
         session.bulk_save_objects(hierarchies)
