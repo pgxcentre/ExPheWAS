@@ -70,5 +70,8 @@ deploy:ukbiobank:
   needs:
     - build:backend
     - build:frontend:ukbiobank
+  environment:
+    name: production_ukbiobank
+    url: http://wkipl-sg-005.statgen.local/exphewas/ukbiobank/
   only:
     - deploy
