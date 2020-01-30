@@ -63,12 +63,16 @@ def get_gene(ensg):
     available_variance = api.get_gene_available_variance(ensg)
     available_variance = available_variance["available_variance"]
 
+    # Checking if there are any GTEx data
+    has_gtex = len(api.get_gene_gtex(ensg)) > 0
+
     return render_template(
         "gene.html",
         page_title=f"{ensg} | {gene_info['variance_pct']}%",
         **gene_info,
         available_variance=available_variance,
         xrefs=xrefs,
+        has_gtex=has_gtex,
         db_full_names=db_names,
         db_urls=EXTERNAL_DB_URL,
         external_dbs=EXTERNAL_DB_TO_SHOW,
