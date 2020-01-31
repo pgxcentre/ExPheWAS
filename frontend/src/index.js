@@ -395,21 +395,21 @@ function mainGeneList() {
           }
         },
         {
-          targets: [4, 5],
+          targets: [5, 6],
           render: (position, type, row, meta) => formatNumber(position)
         },
         {
-          targets: [3, 4, 5],
+          targets: [4, 5, 6],
           searchable: false,
           className: 'dt-body-right'
         },
         {
-          targets: 6,
+          targets: 7,
           searchable: false,
           render: (pstrand, type, row, meta) => pstrand? '+': '-'
         }
       ],
-      order: [[3, 'asc'], [4, 'asc']]
+      order: [[4, 'asc'], [5, 'asc']]
   });
 }
 

@@ -44,9 +44,12 @@
         </div>
 
         <div class="col-md-6">
-          <div class="card-body" id="cardGTEX" style="text-align: center;">
+          {% if has_gtex -%}
+          <div class="contentGTEX" style="text-align: center;">
+            <h5>Median gene-level TPM by tissue (GTEx) <small>[<a target="_blank" href="https://www.gtexportal.org/home/gene/{{ ensembl_id }}">link</a>]</small></h5>
             <svg id="geneGTEX"></svg>
           </div>
+          {%- endif %}
         </div>
       </div>
       </div>
@@ -75,7 +78,7 @@
               <th class="dt-head-right">P-Value<sup>&nbsp;*</sup></th>
               <th class="dt-head-right">Q-Value<sup>&nbsp;*</sup></th>
               <th class="dt-head-right">Bonferroni p<sup>&nbsp;*</sup></th>
-              <th class="dt-head-right">Sum of Square</th>
+              <th class="dt-head-right">Sum of Square Difference</th>
               <th class="dt-head-right">F-Statistic</th>
             </tr>
           </thead>
@@ -98,7 +101,7 @@
               <th class="dt-head-right">P-Value<sup>&nbsp;*</sup></th>
               <th class="dt-head-right">Q-Value<sup>&nbsp;*</sup></th>
               <th class="dt-head-right">Bonferroni p<sup>&nbsp;*</sup></th>
-              <th class="dt-head-right">Deviance</th>
+              <th class="dt-head-right">Deviance Difference</th>
             </tr>
           </thead>
         </table>
@@ -120,7 +123,7 @@
               <th class="dt-head-right">P-Value<sup>&nbsp;*</sup></th>
               <th class="dt-head-right">Q-Value<sup>&nbsp;*</sup></th>
               <th class="dt-head-right">Bonferroni p<sup>&nbsp;*</sup></th>
-              <th class="dt-head-right">Deviance</th>
+              <th class="dt-head-right">Deviance Difference</th>
             </tr>
           </thead>
         </table>
@@ -142,7 +145,7 @@
               <th class="dt-head-right">P-Value<sup>&nbsp;*</sup></th>
               <th class="dt-head-right">Q-Value<sup>&nbsp;*</sup></th>
               <th class="dt-head-right">Bonferroni p<sup>&nbsp;*</sup></th>
-              <th class="dt-head-right">Deviance</th>
+              <th class="dt-head-right">Deviance Difference</th>
             </tr>
           </thead>
         </table>
@@ -164,7 +167,7 @@
               <th class="dt-head-right">P-Value<sup>&nbsp;*</sup></th>
               <th class="dt-head-right">Q-Value<sup>&nbsp;*</sup></th>
               <th class="dt-head-right">Bonferroni p<sup>&nbsp;*</sup></th>
-              <th class="dt-head-right">Deviance</th>
+              <th class="dt-head-right">Deviance Difference</th>
             </tr>
           </thead>
         </table>

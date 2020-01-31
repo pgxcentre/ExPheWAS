@@ -24,10 +24,11 @@ def dt_gene():
         ColumnDT(models.Gene.ensembl_id),                               # 0
         ColumnDT("available_variances", global_search=False),           # 1
         ColumnDT(models.Gene.name),                                     # 2
-        ColumnDT(models.Gene.chrom, global_search=False),               # 3
-        ColumnDT(models.Gene.start, global_search=False),               # 4
-        ColumnDT(models.Gene.end, global_search=False),                 # 5
-        ColumnDT(models.Gene.positive_strand, global_search=False),     # 6
+        ColumnDT(models.Gene.description),                              # 3
+        ColumnDT(models.Gene.chrom, global_search=False),               # 4
+        ColumnDT(models.Gene.start, global_search=False),               # 5
+        ColumnDT(models.Gene.end, global_search=False),                 # 6
+        ColumnDT(models.Gene.positive_strand, global_search=False),     # 7
     ]
 
     subquery = Session.query(
