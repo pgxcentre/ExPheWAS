@@ -180,7 +180,7 @@ def import_hierarchies(args):
                 )
             )
 
-        tree = tree_from_hierarchies(hierarchies)
+        tree = tree_from_hierarchies(hierarchies, keep_hierarchy=True)
 
         # We use depth first traversal of the tree to set the insertion order.
         # The instance to the Hierarchy is held in the _data field when
