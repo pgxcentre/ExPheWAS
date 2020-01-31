@@ -4,6 +4,7 @@
 Compute the enrichment of all ATC codes and all outcomes.
 """
 
+import sys
 import itertools
 import multiprocessing
 
@@ -115,7 +116,10 @@ def compute_fisher_exact_test(args):
     return (atc, or_, p)
 
 
-def main():
+def main(n_cpus=None):
+    if n_cpus is None:
+        n_cpus = multiprocessing.cpu_count() - 1
+
     # Get drug target data (prepared from ChEMBL)
     chembl = pd.read_csv("../data/chembl/chembl.csv.gz")
 
@@ -136,7 +140,7 @@ def main():
         cur = results.join(atc_targets, how="outer")
         cur = cur.fillna(0)
 
-        pool = multiprocessing.Pool(7)
+        pool = multiprocessing.Pool(n_cpus)
         cur_results = pool.map(
             compute_fisher_exact_test,
             zip(
@@ -144,6 +148,8 @@ def main():
                 atc_targets.columns
             )
         )
+
+        pool.close()
 
         out.extend(
             [(outcome_id, *i) for i in cur_results if i is not None]
@@ -154,4 +160,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    cpu_count = None
+    if len(sys.argv) == 2:
+        cpu_count = int(sys.argv[1])
+
+    main(cpu_count)
