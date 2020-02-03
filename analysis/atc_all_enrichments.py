@@ -102,18 +102,30 @@ def create_atc_targets(chembl, atc_tree, uniprot_to_ensembl):
 def compute_fisher_exact_test(args):
     data, atc = args
 
-    contingency = pd.crosstab(
-        data["q"] <= 0.01,
-        data[atc]
-    )
+    # Calculate the contingency table manually to easily serialize.
+    sig = data["q"] <= 0.01
+    target = data[atc].astype(bool)
 
-    if contingency.shape != (2, 2):
-        print(f"Weird contingency for {atc} (skipping)")
-        return
+    nsig = ~sig
+    ntarget = ~target
 
-    or_, p = scipy.stats.fisher_exact(contingency)
+    # Assume the following matrix for indexing:
+    #
+    # +===================+==========+==============+
+    # |                   | ATC code | Not ATC code |
+    # |-------------------+----------+--------------|
+    # | Phenotype Assoc.  | n00      | n01          |
+    # | Not associated    | n10      | n11          |
+    # +-------------------+----------+--------------+
 
-    return (atc, or_, p)
+    n00 = (sig & target).sum()
+    n01 = (sig & ntarget).sum()
+    n10 = (nsig & target).sum()
+    n11 = (nsig & ntarget).sum()
+
+    or_, p = scipy.stats.fisher_exact([[n00, n01], [n10, n11]])
+
+    return (atc, n00, n01, n10, n11, or_, p)
 
 
 def main(n_cpus=None):
@@ -129,6 +141,7 @@ def main(n_cpus=None):
 
     # Create a binary matrix of genes x ATC of membership.
     atc_targets = create_atc_targets(chembl, atc_tree, uniprot_to_ensembl)
+    atc_targets.to_csv("atc_to_drug_targets.csv")
 
     outcome_ids = [i for i, in Session().query(Outcome.id).distinct()]
 
@@ -155,8 +168,11 @@ def main(n_cpus=None):
             [(outcome_id, *i) for i in cur_results if i is not None]
         )
 
-    out = pd.DataFrame(out, columns=["outcome_id", "atc", "OR", "p"])
-    out.to_csv("atc_enrichment.csv")
+    out = pd.DataFrame(
+        out,
+        columns=["outcome_id", "atc", "n00", "n01", "n10", "n11", "OR", "p"]
+    )
+    out.to_csv("atc_enrichment.csv", index=False)
 
 
 if __name__ == "__main__":
