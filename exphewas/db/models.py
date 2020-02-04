@@ -26,6 +26,24 @@ AnalysisEnum = Enum(*ANALYSIS_TYPES, name="enum_analysis_type")
 Base = declarative_base()
 
 
+class Enrichment(Base):
+    __tablename__ = "enrichement"
+
+    outcome_id = Column(String, ForeignKey("outcomes.id"), primary_key=True)
+
+    # This could be a code from Hierarchy (e.g. ATC codes).
+    gene_set_id = Column(String, primary_key=True)
+
+    hierarchy_id = Column(String, nullable=True)
+
+    n00 = Column(Integer, nullable=False)
+    n01 = Column(Integer, nullable=False)
+    n10 = Column(Integer, nullable=False)
+    n11 = Column(Integer, nullable=False)
+
+    p = Column(Float, nullable=False)
+
+
 class Hierarchy(Base):
     __tablename__ = "hierarchy"
 

@@ -196,6 +196,57 @@ def import_hierarchies(args):
               "".format(len(hierarchies), filename))
 
 
+def import_enrichment(args):
+    session = Session()
+
+    results = pd.read_csv(args.filename)
+
+    expected_cols = {"outcome_id", "gene_set_id", "n00", "n01", "n10", "n11",
+                     "p"}
+
+    missing = expected_cols - set(results.columns)
+    if missing:
+        raise ValueError(f"Missing expected columns: {missing}")
+
+
+    # If there is a hierarchy_id, test that it exists.
+    if args.hierarchy_id:
+        try:
+            session\
+                .query(models.Hierarchy)\
+                .filter_by(id=args.hierarchy_id)\
+                .limit(1)\
+                .one()
+
+        except Exception as e:
+            print(e)
+            print(f"Could not find hierarchy id '{args.hierarchy_id}'")
+            return
+
+    # Insert the data.
+    db_dicts = []
+    for _, row in results.iterrows():
+        d = {
+            "outcome_id": row.outcome_id,
+            "gene_set_id": row.gene_set_id,
+            "n00": row.n00,
+            "n01": row.n01,
+            "n10": row.n10,
+            "n11": row.n11,
+            "p": row.p,
+        }
+
+        if args.hierarchy_id:
+            d["hierarchy_id"] = args.hierarchy_id
+
+        db_dicts.append(d)
+
+    session.bulk_insert_mappings(models.Enrichment, db_dicts)
+    session.commit()
+
+    print("Added {} enrichment analysis results.".format(len(db_dicts)))
+
+
 def main():
     parser = argparse.ArgumentParser()
 
@@ -220,6 +271,20 @@ def main():
              "imported. The expected format is a CSV file with: id, code, "
              "parent and description. Alternatively, a single file can be "
              "provided."
+    )
+
+    # Command to import results from enrichment analyses.
+    parser_import_enrichment = subparsers.add_parser("import-enrichment")
+    parser_import_enrichment.add_argument(
+        "filename",
+        help="Filename to the results of the form outcome_id, gene_set_id, "
+             "n00, n01, n10, n11 and p. Column names will be enforced."
+    )
+    parser_import_enrichment.add_argument(
+        "--hierarchy-id",
+        help="If the gene_set_ids correspond to codes in the hierarchy table, "
+             "this argument can be used to specify the code.",
+        default=None
     )
 
     # Command to import ensembl data (from a GTF).
@@ -301,6 +366,9 @@ def main():
 
     elif args.command == "import-hierarchies":
         return import_hierarchies(args)
+
+    elif args.command == "import-enrichment":
+        return import_enrichment(args)
 
     elif args.command == "import-external":
         return import_external.main(args)

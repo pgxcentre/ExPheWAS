@@ -5,6 +5,7 @@ Compute the enrichment of all ATC codes and all outcomes.
 """
 
 import sys
+import csv
 import itertools
 import functools
 import multiprocessing
@@ -165,31 +166,30 @@ def main(n_cpus=None):
 
     pool = multiprocessing.Pool(n_cpus)
 
-    out = []
-    for outcome_id in outcome_ids:
-        results = get_results(outcome_id)
+    with open("atc_enrichment.csv", "wt") as f:
+        out = csv.writer(f)
+        out.writerow(["outcome_id", "atc", "n00", "n01", "n10", "n11", "OR",
+                      "p"])
 
-        if (results["q"] > Q_THRESHOLD).all():
-            # There are no associated genes with this outcome.
-            print(f"No significant genes associated with {outcome_id} "
-                   "(ignoring).")
-            continue
+        for outcome_id in outcome_ids:
+            results = get_results(outcome_id)
 
-        cur = pool.map(
-            functools.partial(_worker,
-                              atc_targets=atc_targets, results=results),
-            atc_targets.columns
-        )
+            if (results["q"] > Q_THRESHOLD).all():
+                # There are no associated genes with this outcome.
+                print(f"No significant genes associated with {outcome_id} "
+                       "(ignoring).")
+                continue
 
-        out.extend([(outcome_id, *i) for i in cur])
+            cur = pool.map(
+                functools.partial(_worker,
+                                  atc_targets=atc_targets, results=results),
+                atc_targets.columns
+            )
+
+            for res in cur:
+                out.writerow([outcome_id, *res])
 
     pool.close()
-
-    out = pd.DataFrame(
-        out,
-        columns=["outcome_id", "atc", "n00", "n01", "n10", "n11", "OR", "p"]
-    )
-    out.to_csv("atc_enrichment.csv", index=False)
 
 
 if __name__ == "__main__":
