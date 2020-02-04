@@ -196,7 +196,7 @@ def import_hierarchies(args):
               "".format(len(hierarchies), filename))
 
 
-def import_enrichment(args):
+def import_enrichment_contingency(args):
     session = Session()
 
     results = pd.read_csv(args.filename)
@@ -241,7 +241,7 @@ def import_enrichment(args):
 
         db_dicts.append(d)
 
-    session.bulk_insert_mappings(models.Enrichment, db_dicts)
+    session.bulk_insert_mappings(models.EnrichmentContingency, db_dicts)
     session.commit()
 
     print("Added {} enrichment analysis results.".format(len(db_dicts)))
@@ -274,13 +274,15 @@ def main():
     )
 
     # Command to import results from enrichment analyses.
-    parser_import_enrichment = subparsers.add_parser("import-enrichment")
-    parser_import_enrichment.add_argument(
+    parser_import_enrichment_c = subparsers.add_parser(
+        "import-enrichment-contingency"
+    )
+    parser_import_enrichment_c.add_argument(
         "filename",
         help="Filename to the results of the form outcome_id, gene_set_id, "
              "n00, n01, n10, n11 and p. Column names will be enforced."
     )
-    parser_import_enrichment.add_argument(
+    parser_import_enrichment_c.add_argument(
         "--hierarchy-id",
         help="If the gene_set_ids correspond to codes in the hierarchy table, "
              "this argument can be used to specify the code.",
@@ -367,8 +369,8 @@ def main():
     elif args.command == "import-hierarchies":
         return import_hierarchies(args)
 
-    elif args.command == "import-enrichment":
-        return import_enrichment(args)
+    elif args.command == "import-enrichment-contingency":
+        return import_enrichment_contingency(args)
 
     elif args.command == "import-external":
         return import_external.main(args)

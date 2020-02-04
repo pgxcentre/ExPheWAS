@@ -26,8 +26,8 @@ AnalysisEnum = Enum(*ANALYSIS_TYPES, name="enum_analysis_type")
 Base = declarative_base()
 
 
-class Enrichment(Base):
-    __tablename__ = "enrichement"
+class EnrichmentContingency(Base):
+    __tablename__ = "enrichment_contingency"
 
     outcome_id = Column(String, ForeignKey("outcomes.id"), primary_key=True)
 
