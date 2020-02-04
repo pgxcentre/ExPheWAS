@@ -6,7 +6,7 @@ import * as d3 from 'd3';
 
 export default async function atcTree(id) {
   // Getting the data
-  let treeData = await api_call(`/tree/${id}`);
+  let treeData = await api_call(`/enrichment/atc/contingency/${id}`);
 
   // Set the dimensions and margins of the diagram
   let margin = {top: 20, right: 90, bottom: 30, left: 90};
@@ -26,6 +26,12 @@ export default async function atcTree(id) {
   let i = 0;
   let duration = 750;
   let root;
+
+  // Create a colorscale for enrichment p-values.
+  let pColorScale = d3.scaleLinear()
+    .domain([0, 0.01, 0.05, 0.1, 1])
+    .range(["#FC802D", "#E8BB09", "#FCF12A", "#E8E5DE", "#F2F2F2"])
+    .unknown("#FFFFFF");
 
   // declares a tree layout and assigns the size
   let treemap = d3.tree().size([height, width]);
@@ -82,7 +88,7 @@ export default async function atcTree(id) {
     nodeEnter.append('circle')
       .attr('class', 'node')
       .attr('r', 0)
-      .style("fill", d => d._children ? "lightsteelblue" : "#fff")
+      // .style("fill", d => pColorScale(d.data.data))
       .on('mouseover', d => {
         let description = d.data.description === ''? '': `- ${d.data.description}`;
         d3.select('#tooltip-atc-tree')
@@ -120,7 +126,12 @@ export default async function atcTree(id) {
     // Update the node attributes and style
     nodeUpdate.select('circle.node')
       .attr('r', 9)
-      .style("fill", d => d._children ? "lightsteelblue" : "#fff")
+      .style("fill", d => {
+        if (d.data.data === null)
+          return "#FFFFFF";
+
+        return pColorScale(d.data.data);
+      })
       .attr('cursor', 'pointer');
 
     // Remove any exiting nodes

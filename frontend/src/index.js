@@ -71,7 +71,7 @@ function mainOutcomeList() {
 
 async function mainOutcomeResults(id) {
   // Add the ATC tree
-  atcTree('ATC');
+  atcTree(id);
 
   let variance_pct = getUrlParam("variance_pct", 95);
   let urlParam = variance_pct != 95? `?variance_pct=${variance_pct}`: '';
