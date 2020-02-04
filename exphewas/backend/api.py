@@ -346,3 +346,36 @@ def get_gene_gtex(ensg):
         for tissue, value in GTEX_MEDIAN_TPM.loc[ensg, :].iteritems()
     ]
     return gtex_data
+
+
+@make_api("/outcome/venn")
+def get_outcome_venn():
+    # Getting the genes
+    outcomes = request.args.get("outcomes", "").split(";")
+
+    # Getting the p value threshold
+    q_threshold = float(request.args.get("q", 0.05))
+
+    # Getting the genes for each of the outcomes
+    outcome_genes = []
+    for outcome in outcomes:
+        genes = {
+            data["gene"] for data in get_outcome_results(outcome)
+            if data["q"] < q_threshold
+        }
+        outcome_genes.append(genes)
+
+    return [
+        {
+            "sets": [outcomes[0]],
+            "size": len(outcome_genes[0] - outcome_genes[1]),
+        },
+        {
+            "sets": [outcomes[1]],
+            "size": len(outcome_genes[1] - outcome_genes[0])
+        },
+        {
+            "sets": [outcomes],
+            "size": len(outcome_genes[1] & outcome_genes[0]),
+        },
+    ]
