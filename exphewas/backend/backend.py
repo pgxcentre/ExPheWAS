@@ -19,7 +19,8 @@ EXTERNAL_DB_URL = {
     "HGNC": "https://www.genenames.org/data/gene-symbol-report/#!/hgnc_id/HGNC:{id}",
 }
 
-EXTERNAL_DB_TO_SHOW = ("HGNC", "WikiGene", "MIM_GENE", "MIM_MORBID", "our_uniprot")
+EXTERNAL_DB_TO_SHOW = ("HGNC", "WikiGene", "MIM_GENE", "MIM_MORBID",
+                       "our_uniprot")
 
 
 @backend.route("/outcome")

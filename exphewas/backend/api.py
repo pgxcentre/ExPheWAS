@@ -14,6 +14,7 @@ from sqlalchemy.sql.expression import func, null
 from flask import Blueprint, jsonify, request
 
 from ..db import models
+from ..db.tree import tree_from_hierarchy_id
 from ..db.engine import Session
 from ..db.utils import mod_to_dict
 from ..utils import load_gtex_median_tpm, load_gtex_statistics
@@ -346,3 +347,48 @@ def get_gene_gtex(ensg):
         for tissue, value in GTEX_MEDIAN_TPM.loc[ensg, :].iteritems()
     ]
     return gtex_data
+
+
+@make_api("/outcome/venn")
+def get_outcome_venn():
+    # Getting the genes
+    outcomes = request.args.get("outcomes", "").split(";")
+
+    # Getting the p value threshold
+    q_threshold = float(request.args.get("q", 0.05))
+
+    # Getting the genes for each of the outcomes
+    outcome_genes = []
+    for outcome in outcomes:
+        genes = {
+            data["gene"] for data in get_outcome_results(outcome)
+            if data["q"] < q_threshold
+        }
+        outcome_genes.append(genes)
+
+    return [
+        {
+            "sets": [outcomes[0]],
+            "size": len(outcome_genes[0] - outcome_genes[1]),
+        },
+        {
+            "sets": [outcomes[1]],
+            "size": len(outcome_genes[1] - outcome_genes[0])
+        },
+        {
+            "sets": [outcomes],
+            "size": len(outcome_genes[1] & outcome_genes[0]),
+        },
+    ]
+
+
+@make_api("/tree/<id>")
+def get_tree(id):
+    root = tree_from_hierarchy_id(id)
+    if len(root.children) == 0:
+        raise RessourceNotFoundError(f"{id}: not a valid hierarchy")
+
+    tree = root.to_primitive()
+    tree["code"] = id
+
+    return tree

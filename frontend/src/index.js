@@ -8,7 +8,8 @@ import 'datatables.net-dt/css/jquery.dataTables.css';
 import '../scss/custom.scss';
 import { URL_PREFIX, API_URL, DT_API_URL, ICD10_URL, UNIPROT_URL } from './config';
 import { api_call, formatP, formatNumber, getUrlParam, ANALYSIS_LABELS } from './utils';
-import  radialGTEX from './radial_plot';
+import radialGTEX from './radial_plot';
+import atcTree from './atc_tree';
 
 
 // This is a shim for d3 events to work with webpack
@@ -69,6 +70,9 @@ function mainOutcomeList() {
 
 
 async function mainOutcomeResults(id) {
+  // Add the ATC tree
+  atcTree('ATC');
+
   let variance_pct = getUrlParam("variance_pct", 95);
   let urlParam = variance_pct != 95? `?variance_pct=${variance_pct}`: '';
 
@@ -113,7 +117,6 @@ async function mainOutcomeResults(id) {
 async function mainGeneResults(id) {
   // Add the GTEx radial plot.
   radialGTEX(id);
-
 
   // Add smooth scrolling to the page.
   // Adapted from https://stackoverflow.com/questions/7717527/smooth-scrolling-when-clicking-an-anchor-link/18795112#18795112

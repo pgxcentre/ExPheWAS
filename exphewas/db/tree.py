@@ -85,7 +85,7 @@ class Node(object):
             [self.description if self.description is not None else self.code]
         )
 
-    def to_native(self):
+    def to_primitive(self):
         """Converts a tree into a nested dict representation."""
 
         out = {
@@ -98,7 +98,7 @@ class Node(object):
             if "children" not in out:
                 out["children"] = []
 
-            out["children"].append(child.to_native())
+            out["children"].append(child.to_primitive())
 
         return out
 
