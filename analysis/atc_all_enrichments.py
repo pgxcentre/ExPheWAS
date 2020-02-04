@@ -6,9 +6,11 @@ Compute the enrichment of all ATC codes and all outcomes.
 
 import sys
 import itertools
+import functools
 import multiprocessing
 
 import pandas as pd
+import numpy as np
 import scipy.stats
 
 import exphewas.db.tree as tree
@@ -17,6 +19,7 @@ from exphewas.db.engine import Session
 from exphewas.backend.r_bindings import R as R_
 
 
+Q_THRESHOLD = 0.05
 R = R_()
 
 
@@ -66,26 +69,26 @@ def create_atc_targets(chembl, atc_tree, uniprot_to_ensembl):
     m = []
     for i, atc in atc_tree.iter_depth_first():
         level_codes = getattr(chembl, f"level{i}")
-            
+
         targets_uniprot = chembl.loc[
             level_codes == atc.code,
             "accession"
         ].drop_duplicates()
-        
+
         # We skip classes with few known targets because it's not
         # useful for enrichment.
         if len(targets_uniprot) <= 1:
             # No known targets for this class.
             continue
-        
+
         # Convert targets to Ensembl.
         for t in targets_uniprot:
             ensg = uniprot_to_ensembl.get(t)
-            
+
             if ensg is None:
                 print(f"Could not find Ensembl ID for '{t}' (ignoring).")
                 continue
-                
+
             m.append((atc.code, ensg))
 
     # This is a relationship table (long format)
@@ -99,11 +102,10 @@ def create_atc_targets(chembl, atc_tree, uniprot_to_ensembl):
     return df
 
 
-def compute_fisher_exact_test(args):
-    data, atc = args
+def compute_fisher_exact_test(data, atc):
 
     # Calculate the contingency table manually to easily serialize.
-    sig = data["q"] <= 0.01
+    sig = data["q"] <= Q_THRESHOLD
     target = data[atc].astype(bool)
 
     nsig = ~sig
@@ -123,9 +125,23 @@ def compute_fisher_exact_test(args):
     n10 = (nsig & target).sum()
     n11 = (nsig & ntarget).sum()
 
+    # If there are no genes associated with both the ATC code and the phenotype
+    # (n00) we take a shortcut.
+    if n00 == 0:
+        return (n00, n01, n10, n11, np.nan, 1)
+
     or_, p = scipy.stats.fisher_exact([[n00, n01], [n10, n11]])
 
-    return (atc, n00, n01, n10, n11, or_, p)
+    return (n00, n01, n10, n11, or_, p)
+
+
+def _worker(atc, atc_targets, results):
+    atc_cols = atc_targets.columns
+
+    cur = results.join(atc_targets, how="outer")
+    cur.loc[:, atc_cols] = cur.loc[:, atc_cols].fillna(0)
+
+    return (atc, *compute_fisher_exact_test(cur, atc))
 
 
 def main(n_cpus=None):
@@ -147,28 +163,27 @@ def main(n_cpus=None):
 
     outcome_ids = [i for i, in Session().query(Outcome.id).distinct()]
 
-    out = []
+    pool = multiprocessing.Pool(n_cpus)
 
+    out = []
     for outcome_id in outcome_ids:
         results = get_results(outcome_id)
 
-        cur = results.join(atc_targets, how="outer")
-        cur.loc[:, atc_cols] = cur.loc[:, atc_cols].fillna(0)
+        if (results["q"] > Q_THRESHOLD).all():
+            # There are no associated genes with this outcome.
+            print(f"No significant genes associated with {outcome_id} "
+                   "(ignoring).")
+            continue
 
-        pool = multiprocessing.Pool(n_cpus)
-        cur_results = pool.map(
-            compute_fisher_exact_test,
-            zip(
-                itertools.cycle([cur]),
-                atc_targets.columns
-            )
+        cur = pool.map(
+            functools.partial(_worker,
+                              atc_targets=atc_targets, results=results),
+            atc_targets.columns
         )
 
-        pool.close()
+        out.extend([(outcome_id, *i) for i in cur])
 
-        out.extend(
-            [(outcome_id, *i) for i in cur_results if i is not None]
-        )
+    pool.close()
 
     out = pd.DataFrame(
         out,
@@ -178,8 +193,9 @@ def main(n_cpus=None):
 
 
 if __name__ == "__main__":
-    cpu_count = None
-    if len(sys.argv) == 2:
-        cpu_count = int(sys.argv[1])
+    try:
+        n_cpus = int(sys.argv[1])
+    except:
+        n_cpus = None
 
-    main(cpu_count)
+    main(n_cpus)
