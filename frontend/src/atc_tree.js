@@ -17,6 +17,7 @@ export default async function atcTree(id) {
   // appends a 'group' element to 'svg'
   // moves the 'group' element to the top left margin
   let svg = d3.select("#atc-tree")
+      .on("mouseout", () => d3.select('#tooltip-atc-tree').style('opacity', 0) )
       .attr("width", width + margin.right + margin.left)
       .attr("height", height + margin.top + margin.bottom)
     .append("g")
@@ -71,11 +72,36 @@ export default async function atcTree(id) {
       .attr("transform", d => `translate(${source.y0}, ${source.x0})`)
       .on('click', click);
 
+    // Tooltip
+    d3.select('#tooltip-atc-tree')
+      .style('position', 'fixed')
+      .style('z-index', 20)
+      .style('opacity', 0);
+
     // Add Circle for the nodes
     nodeEnter.append('circle')
       .attr('class', 'node')
       .attr('r', 1e-6)
-      .style("fill", d => d._children ? "lightsteelblue" : "#fff");
+      .style("fill", d => d._children ? "lightsteelblue" : "#fff")
+      .on('mouseover', d => {
+        d3.select('#tooltip-atc-tree')
+          .html(`
+            <h6>${d.data.code} - ${d.data.description}</h6>
+          `)
+          .style('opacity', 1);
+      })
+      .on('mouseout', d => {
+        d3.select('#tooltip-atc-tree')
+          .style('opacity', 0);
+      })
+      .on('mousemove', d => {
+        let evt = d3.getEvent();
+
+        d3.select('#tooltip-atc-tree')
+          .style('left', evt.clientX + 20 + 'px')
+          .style('top', evt.clientY - 20 + 'px')
+          .style('opacity', 1);
+      });
 
     // Add labels for the nodes
     nodeEnter.append('text')
