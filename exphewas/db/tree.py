@@ -64,6 +64,13 @@ class Node(object):
 
         return None
 
+    def search_all(self, predicate):
+        """Search for all occurence verifying the predicate in the subtree
+           rooted at this node.
+
+        """
+        return filter(predicate, self.iter_depth_first())
+
     def formatted_ancestors(self, sep=" > "):
         ancestors = [
             i.description if i.description is not None else i.code
@@ -78,8 +85,25 @@ class Node(object):
             [self.description if self.description is not None else self.code]
         )
 
+    def to_native(self):
+        """Converts a tree into a nested dict representation."""
 
-def tree_from_hierarchies(hierarchies):
+        out = {
+            "code": self.code if not self.is_root else "root",
+            "description": self.description if self.description else "",
+            "data": self._data,
+        }
+
+        for child in self.children:
+            if "children" not in out:
+                out["children"] = []
+
+            out["children"].append(child.to_native())
+
+        return out
+
+
+def tree_from_hierarchies(hierarchies, keep_hierarchy=False):
     root = Node()
     root.is_root = True
 
@@ -93,7 +117,8 @@ def tree_from_hierarchies(hierarchies):
         n.description = h.description
 
         # We hold a pointer to the hierarchy if needed.
-        n._data = h
+        if keep_hierarchy:
+            n._data = h
 
         nodes_dict[h.code][h.parent] = n
 
