@@ -14,6 +14,7 @@ from sqlalchemy.sql.expression import func, null
 from flask import Blueprint, jsonify, request
 
 from ..db import models
+from ..db.tree import tree_from_hierarchy_id
 from ..db.engine import Session
 from ..db.utils import mod_to_dict
 from ..utils import load_gtex_median_tpm, load_gtex_statistics
@@ -379,3 +380,15 @@ def get_outcome_venn():
             "size": len(outcome_genes[1] & outcome_genes[0]),
         },
     ]
+
+
+@make_api("/tree/<id>")
+def get_tree(id):
+    root = tree_from_hierarchy_id(id)
+    if len(root.children) == 0:
+        raise RessourceNotFoundError(f"{id}: not a valid hierarchy")
+
+    tree = root.to_primitive()
+    tree["code"] = id
+
+    return tree

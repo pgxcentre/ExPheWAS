@@ -13,36 +13,45 @@
 
     <div id="app">
 
+      <div class="container-fluid">
       <div class="row">
-        <div class="col-5">
+        <div class="col-md-5">
         <div class="card outcomeDescription">
           <div class="card-body">
             <dl class="row">
-              <dt class="col-5">Trait:</dt>
-              <dd class="col-7">{{ type }}</dd>
+              <dt class="col-4">Trait:</dt>
+              <dd class="col-8">{{ type }}</dd>
 
-              <dt class="col-5">Analysis Type:</dt>
-              <dd class="col-7">{{ analysis_type }}</dd>
+              <dt class="col-4">Analysis Type:</dt>
+              <dd class="col-8">{{ analysis_type }}</dd>
 
               {%- if type == 'binary' %}
-              <dt class="col-5">Cases:</dt>
-              <dd class="col-7">{{ '{:,d}'.format(n_cases) }}</dd>
+              <dt class="col-4">Cases:</dt>
+              <dd class="col-8">{{ '{:,d}'.format(n_cases) }}</dd>
 
-              <dt class="col-5">Controls:</dt>
-              <dd class="col-7">{{ '{:,d}'.format(n_controls) }}</dd>
+              <dt class="col-4">Controls:</dt>
+              <dd class="col-8">{{ '{:,d}'.format(n_controls) }}</dd>
 
-              <dt class="col-5">Excluded from controls:</dt>
-              <dd class="col-7">{{ '{:,d}'.format(n_excluded_from_controls) }}</dd>
+              <dt class="col-4">Excluded from controls:</dt>
+              <dd class="col-8">{{ '{:,d}'.format(n_excluded_from_controls) }}</dd>
 
               {%- elif type == 'continuous' %}
-              <dt class="col-5">Samples:</dt>
-              <dd class="col-7">{{ '{:,d}'.format(n) if n is not none else '?' }}</dt>
+              <dt class="col-4">Samples:</dt>
+              <dd class="col-8">{{ '{:,d}'.format(n) if n is not none else '?' }}</dt>
 
               {%- endif %}
             </dl>
           </div>
         </div>
         </div>
+
+        <div class="col-md-7">
+          <div class="atc-enrichment" style="text-align: center;">
+            <h5>ATC Enrichment Analysis</h5>
+            <svg id="atc-tree"></svg>
+          </div>
+        </div>
+      </div>
       </div>
 
       <div class="outcomeResults">
