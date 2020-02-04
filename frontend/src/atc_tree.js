@@ -81,13 +81,12 @@ export default async function atcTree(id) {
     // Add Circle for the nodes
     nodeEnter.append('circle')
       .attr('class', 'node')
-      .attr('r', 1e-6)
+      .attr('r', 0)
       .style("fill", d => d._children ? "lightsteelblue" : "#fff")
       .on('mouseover', d => {
+        let description = d.data.description === ''? '': `- ${d.data.description}`;
         d3.select('#tooltip-atc-tree')
-          .html(`
-            <h6>${d.data.code} - ${d.data.description}</h6>
-          `)
+          .html(`<h6>${d.data.code} ${description}</h6>`)
           .style('opacity', 1);
       })
       .on('mouseout', d => {
@@ -120,7 +119,7 @@ export default async function atcTree(id) {
 
     // Update the node attributes and style
     nodeUpdate.select('circle.node')
-      .attr('r', 10)
+      .attr('r', 9)
       .style("fill", d => d._children ? "lightsteelblue" : "#fff")
       .attr('cursor', 'pointer');
 
@@ -132,7 +131,7 @@ export default async function atcTree(id) {
 
     // On exit reduce the node circles size to 0
     nodeExit.select('circle')
-      .attr('r', 1e-6);
+      .attr('r', 0);
 
     // On exit reduce the opacity of text labels
     nodeExit.select('text')
