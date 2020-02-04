@@ -143,6 +143,8 @@ def main(n_cpus=None):
     atc_targets = create_atc_targets(chembl, atc_tree, uniprot_to_ensembl)
     atc_targets.to_csv("atc_to_drug_targets.csv")
 
+    atc_cols = atc_targets.columns
+
     outcome_ids = [i for i, in Session().query(Outcome.id).distinct()]
 
     out = []
@@ -151,7 +153,7 @@ def main(n_cpus=None):
         results = get_results(outcome_id)
 
         cur = results.join(atc_targets, how="outer")
-        cur = cur.fillna(0)
+        cur.loc[:, atc_cols] = cur.loc[:, atc_cols].fillna(0)
 
         pool = multiprocessing.Pool(n_cpus)
         cur_results = pool.map(
