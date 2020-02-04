@@ -128,7 +128,7 @@ export default async function atcTree(id) {
       .attr('r', 9)
       .style("fill", d => {
         if (d.data.data === null)
-          return "#FFFFFF";
+          return "#767c85";
 
         return pColorScale(d.data.data);
       })
