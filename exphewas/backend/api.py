@@ -409,7 +409,37 @@ def get_enrichment_atc_contingency_for_outcome(outcome_id):
 
     for enrichment_result in results:
         n = atc_dict[enrichment_result.gene_set_id]
-        n._data = enrichment_result.p
+        n._data = {
+            "p": enrichment_result.p,
+            "min_p_children": None
+        }
+
+
+    stack = []
+    for _, node in atc_tree.iter_depth_first():
+        # Set the minimum p-value in subtree.
+        stack.append(node)
+
+    while stack:
+        cur = stack.pop()
+
+        if cur._data is None:
+            cur._data = {"p": None, "min_p_children": None}
+
+        ps = [i._data["min_p_children"] for i in cur.children]
+        ps.append(cur._data["p"])
+
+        # Remove Nones
+        ps = [i for i in ps if i is not None]
+
+        if len(ps) == 0:
+            # If there are no data for this node and all its children.
+            cur_min = None
+
+        else:
+            cur_min = min(ps)
+
+        cur._data["min_p_children"] = cur_min
 
     tree = atc_tree.to_primitive()
     tree["code"] = "ATC"

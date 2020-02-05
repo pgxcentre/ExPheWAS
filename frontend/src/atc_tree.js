@@ -116,7 +116,7 @@ export default async function atcTree(id) {
         d3.select('#tooltip-atc-tree')
           .html(`
             <h6>${d.data.code} ${description}</h6>
-            P-value: ${formatP(d.data.data)}
+            P-value: ${formatP(d.data.data.p)}
           `)
           .style('opacity', 1);
       })
@@ -151,7 +151,21 @@ export default async function atcTree(id) {
     // Update the node attributes and style
     nodeUpdate.select('circle.node')
       .attr('r', 9)
-      .style("fill", d => d.data.data === null? "url(#diagonalHatch)": pColorScale(d.data.data))
+      .style("fill", d => {
+        if (d.data.code == "ATC") {
+          // There is no data for the root node.
+          return "url(#diagonalHatch)";
+        }
+
+        return d.data.data.p === null? "url(#diagonalHatch)": pColorScale(d.data.data.p)
+      })
+      .style("stroke", d => {
+        if (d.data.code == "ATC") return;
+
+        let min_p  = d.data.data.min_p_children;
+
+        return min_p === null? "": pColorScale(min_p);
+      })
       .attr('cursor', 'pointer');
 
     // Remove any exiting nodes
