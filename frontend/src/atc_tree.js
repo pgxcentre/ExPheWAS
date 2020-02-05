@@ -1,6 +1,6 @@
 // From: https://bl.ocks.org/d3noob/43a860bc0024792f8803bba8ca0d5ecd
 
-import { api_call } from './utils';
+import { api_call, formatP } from './utils';
 import * as d3 from 'd3';
 
 
@@ -92,7 +92,10 @@ export default async function atcTree(id) {
       .on('mouseover', d => {
         let description = d.data.description === ''? '': `- ${d.data.description}`;
         d3.select('#tooltip-atc-tree')
-          .html(`<h6>${d.data.code} ${description}</h6>`)
+          .html(`
+            <h6>${d.data.code} ${description}</h6>
+            P-value: ${formatP(d.data.data)}
+          `)
           .style('opacity', 1);
       })
       .on('mouseout', d => {
