@@ -6,7 +6,7 @@ import * as d3 from 'd3';
 
 function addColorScale(svg, scale) {
   let rectSize = 15;
- 
+
   // p-values to display in the legend.
   let p = [1e-8, 1e-4, 1e-2, 0.05, 0.5, 1.0];
 
@@ -159,7 +159,7 @@ export default async function atcTree(id) {
 
     // Add Circle for the nodes
     nodeEnter.append('circle')
-      .attr('class', 'node')
+      .attr('class', d => d.data.children === undefined? 'node leaf': 'node')
       .attr('r', 0)
       .on('mouseover', d => {
         let description = d.data.description === ''? '': `- ${d.data.description}`;
