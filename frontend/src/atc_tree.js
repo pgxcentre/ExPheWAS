@@ -23,6 +23,29 @@ export default async function atcTree(id) {
     .append("g")
       .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
+  let pattern = svg
+    .append('defs')
+    .append('pattern')
+      .attr('id', 'diagonalHatch')
+      .attr('patternUnits', 'userSpaceOnUse')
+      .attr('width', 4)
+      .attr('height', 4);
+
+  pattern
+    .append('rect')
+      .attr('x', 0)
+      .attr('y', 0)
+      .attr('width', 4)
+      .attr('height', 4)
+      .attr('fill', 'white');
+
+  pattern
+    .append('path')
+      .attr('d', 'M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2')
+      .attr('stroke', '#000000')
+      .attr('stroke-width', 1)
+      .attr('fill', 'transparent');
+
   let i = 0;
   let duration = 750;
   let root;
@@ -88,7 +111,6 @@ export default async function atcTree(id) {
     nodeEnter.append('circle')
       .attr('class', 'node')
       .attr('r', 0)
-      // .style("fill", d => pColorScale(d.data.data))
       .on('mouseover', d => {
         let description = d.data.description === ''? '': `- ${d.data.description}`;
         d3.select('#tooltip-atc-tree')
@@ -129,12 +151,7 @@ export default async function atcTree(id) {
     // Update the node attributes and style
     nodeUpdate.select('circle.node')
       .attr('r', 9)
-      .style("fill", d => {
-        if (d.data.data === null)
-          return "#767c85";
-
-        return pColorScale(d.data.data);
-      })
+      .style("fill", d => d.data.data === null? "url(#diagonalHatch)": pColorScale(d.data.data))
       .attr('cursor', 'pointer');
 
     // Remove any exiting nodes
