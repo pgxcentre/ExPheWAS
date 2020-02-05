@@ -1,7 +1,51 @@
-// From: https://bl.ocks.org/d3noob/43a860bc0024792f8803bba8ca0d5ecd
+// Adapted from: https://bl.ocks.org/d3noob/43a860bc0024792f8803bba8ca0d5ecd
 
 import { api_call, formatP } from './utils';
 import * as d3 from 'd3';
+
+
+function addColorScale(svg, scale) {
+  let rectSize = 15;
+ 
+  // p-values to display in the legend.
+  let p = [1e-8, 1e-4, 1e-2, 0.05, 0.5, 1.0];
+
+  let colors = p.map(scale);
+
+  let plot = svg.append("g");
+
+  plot
+    .append("g")
+    .attr("transform", "translate(0, 10)")
+    .append("text")
+    .attr("class", "legend-title")
+    .text("P-value (Fisher's exact test)")
+
+  let g = plot
+    .attr("transform", `translate(10, 10)`)
+    .selectAll("g.color-legend")
+    .data(p)
+    .enter()
+    .append("g")
+    .attr("class", "color-legend")
+    .attr("transform", (_, i) => `translate(15, ${i * (rectSize + 10) + 30})`);
+
+  g
+    .append("rect")
+    .attr("x", 0)
+    .attr("y", 0)
+    .attr("width", rectSize)
+    .attr("height", rectSize)
+    .attr("fill", d => scale(d))
+    .style("stroke", "#000000")
+    .style("stroke-width", "1px");
+
+  g
+    .append("text")
+    .attr("x", rectSize + 7)
+    .attr("y", rectSize - 3)
+    .text(d => d);
+}
 
 
 export default async function atcTree(id) {
@@ -9,21 +53,24 @@ export default async function atcTree(id) {
   let treeData = await api_call(`/enrichment/atc/contingency/${id}`);
 
   // Set the dimensions and margins of the diagram
-  let margin = {top: 20, right: 90, bottom: 30, left: 90};
-  let width = 960 - margin.left - margin.right;
+  let margin = {top: 20, right: 0, bottom: 30, left: 90};
   let height = 500 - margin.top - margin.bottom;
+
+  // Detect width based on SVG.
+  let width = document.getElementById("atc-tree").clientWidth - margin.left - margin.right;
 
   // append the svg object to the body of the page
   // appends a 'group' element to 'svg'
   // moves the 'group' element to the top left margin
   let svg = d3.select("#atc-tree")
       .on("mouseout", () => d3.select('#tooltip-atc-tree').style('opacity', 0) )
-      .attr("width", width + margin.right + margin.left)
-      .attr("height", height + margin.top + margin.bottom)
+      .attr("height", height + margin.top + margin.bottom);
+
+  let plot = svg
     .append("g")
       .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-  let pattern = svg
+  let pattern = plot
     .append('defs')
     .append('pattern')
       .attr('id', 'diagonalHatch')
@@ -53,8 +100,10 @@ export default async function atcTree(id) {
   // Create a colorscale for enrichment p-values.
   let pColorScale = d3.scaleLinear()
     .domain([0, 0.01, 0.05, 0.1, 1])
-    .range(["#FC802D", "#E8BB09", "#FCF12A", "#E8E5DE", "#F2F2F2"])
+    .range(["#DC3545", "#F3856E", "#FFE28E", "#FFF4D3", "#EDE7E3"])
     .unknown("#FFFFFF");
+
+  addColorScale(svg, pColorScale);
 
   // declares a tree layout and assigns the size
   let treemap = d3.tree().size([height, width]);
@@ -87,12 +136,13 @@ export default async function atcTree(id) {
     let links = treeData.descendants().slice(1);
 
     // Normalize for fixed-depth.
-    nodes.forEach(d => d.y = d.depth * 180);
+    // ATC has 5 levels so we / 5
+    nodes.forEach(d => d.y = d.depth * width / 5);
 
     // ****************** Nodes section ***************************
 
     // Update the nodes...
-    let node = svg.selectAll('g.node')
+    let node = plot.selectAll('g.node')
       .data(nodes, d => d.id || (d.id = ++i));
 
     // Enter any new modes at the parent's previous position.
@@ -185,7 +235,7 @@ export default async function atcTree(id) {
     // ****************** links section ***************************
 
     // Update the links...
-    let link = svg.selectAll('path.link')
+    let link = plot.selectAll('path.link')
       .data(links, d => d.id);
 
     // Enter any new links at the parent's previous position.
