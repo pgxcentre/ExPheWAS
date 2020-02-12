@@ -64,7 +64,7 @@ get_all_outcome_ids <- function() {
 
 
 # Prepare the fgsea data.
-atc <- rjson::fromJSON(file = "/Users/legaultmarc/projects/StatGen/exphewas/browser/data/chembl/atc_to_target.json.gz")
+atc <- rjson::fromJSON(file = "../data/chembl/atc_to_target.json.gz")
 atc <- atc$ensembl
 
 
@@ -83,6 +83,11 @@ for (outcome in get_all_outcome_ids()) {
     nperm = 10000
   )
 
-  print(enrichment)
+  # Only keep easily serializable columns
+  enrichment <- enrichment[, c("pathway", "pval", "padj", "ES", "NES",
+                               "nMoreExtreme", "size")]
+
+  write.table(enrichment, file = "atc_fgsea_results.csv", append = T,
+              col.names = F)
 
 }
