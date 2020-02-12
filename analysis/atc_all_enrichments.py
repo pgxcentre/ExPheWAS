@@ -8,6 +8,7 @@ import sys
 import csv
 import itertools
 import functools
+import collections
 import multiprocessing
 
 import pandas as pd
@@ -24,12 +25,31 @@ Q_THRESHOLD = 0.05
 R = R_()
 
 
+def uniprot_list_to_ensembl(li, xrefs=None):
+    if xrefs is None:
+        xrefs = get_uniprot_to_ensembl_xref()
+
+    ensgs = []
+    for uniprot in li:
+        matches = xrefs.get(uniprot)
+        if matches is None:
+            continue
+
+        ensgs.extend(matches)
+
+    return ensgs
+
+
 def get_uniprot_to_ensembl_xref():
     # -1 is the id for the Uniprot to Ensembl mapping
     query = select([XRefs.external_id, XRefs.ensembl_id])\
         .where(XRefs.external_db_id == -1)
 
-    return {k: v for k, v in Session().execute(query)}
+    uniprot_to_ensembl = collections.defaultdict(list)
+    for uniprot, ensg in Session().execute(query):
+        uniprot_to_ensembl[uniprot].append(ensg)
+
+    return uniprot_to_ensembl
 
 
 def get_results(outcome_id):
@@ -84,13 +104,16 @@ def create_atc_targets(chembl, atc_tree, uniprot_to_ensembl):
 
         # Convert targets to Ensembl.
         for t in targets_uniprot:
-            ensg = uniprot_to_ensembl.get(t)
+            # ensg is a list of ensembl ids matching the uniprot accession.
+            # or None
+            ensgs = uniprot_to_ensembl.get(t)
 
             if ensg is None:
                 print(f"Could not find Ensembl ID for '{t}' (ignoring).")
                 continue
 
-            m.append((atc.code, ensg))
+            for ensg in ensg:
+                m.append((atc.code, ensg))
 
     # This is a relationship table (long format)
     df = pd.DataFrame(m, columns=["atc", "target"])
