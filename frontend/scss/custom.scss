@@ -79,6 +79,14 @@
 }
 
 
-g.node:first-of-type {
+#atc-tree g.node:first-of-type {
   pointer-events: none;
+}
+
+#atc-tree text {
+  pointer-events: none;
+}
+
+#atc-tree .leaf {
+  cursor: default;
 }

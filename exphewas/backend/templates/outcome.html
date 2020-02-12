@@ -48,10 +48,12 @@
         </div>
 
         <div class="col-md-7">
+          {% if has_atc_enrichment -%}
           <div class="atc-enrichment" style="text-align: center;">
             <h5>ATC Enrichment Analysis</h5>
             <svg id="atc-tree"></svg>
           </div>
+          {%- endif %}
         </div>
       </div>
       </div>

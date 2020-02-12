@@ -7,6 +7,8 @@ from collections import defaultdict
 from flask import Blueprint, render_template, abort
 
 from . import api
+from ..db import models
+from ..db.engine import Session
 
 
 backend = Blueprint("backend_blueprint", __name__)
@@ -34,9 +36,18 @@ def get_outcome(id):
         outcome_data = api.get_outcome(id)
     except api.RessourceNotFoundError as exception:
         abort(404)
+
+    # Checks if there are enrichment results for this outcome
+    enrichment_result = Session.query(models.EnrichmentContingency)\
+        .filter_by(hierarchy_id="ATC")\
+        .filter_by(outcome_id=id)\
+        .first()
+    has_atc = enrichment_result is not None
+
     return render_template(
         "outcome.html",
         page_title=f"outcome {id}",
+        has_atc_enrichment=has_atc,
         **outcome_data,
     )
 
