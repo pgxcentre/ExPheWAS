@@ -38,10 +38,11 @@ def get_outcome(id):
         abort(404)
 
     # Checks if there are enrichment results for this outcome
-    enrichment_result = Session.query(models.EnrichmentContingency)\
+    enrichment_result = Session.query(models.Enrichment)\
         .filter_by(hierarchy_id="ATC")\
         .filter_by(outcome_id=id)\
         .first()
+
     has_atc = enrichment_result is not None
 
     return render_template(
