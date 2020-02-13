@@ -26,6 +26,28 @@ AnalysisEnum = Enum(*ANALYSIS_TYPES, name="enum_analysis_type")
 Base = declarative_base()
 
 
+class Enrichment(Base):
+    __tablename__ = "enrichemnt"
+
+    outcome_id = Column(String, ForeignKey("outcomes.id"), primary_key=True)
+
+    # This could be a code from Hierarchy (e.g. ATC codes).
+    gene_set_id = Column(String, primary_key=True)
+    hierarchy_id = Column(String, nullable=True)
+
+    set_size = Column(Integer, nullable=True)
+    enrichment_score = Column(Float, nullable=True)
+
+    p = Column(Float, nullable=False)
+
+    def get_data_dict(self):
+        return {
+            "p": self.p,
+            "set_size": self.set_size,
+            "enrichment_score": self.enrichment_score,
+        }
+
+
 class EnrichmentContingency(Base):
     __tablename__ = "enrichment_contingency"
 
@@ -42,6 +64,15 @@ class EnrichmentContingency(Base):
     n11 = Column(Integer, nullable=False)
 
     p = Column(Float, nullable=False)
+
+    def get_data_dict(self):
+        return {
+            "p": self.p,
+            "n00": self.n00,
+            "n01": self.n01,
+            "n10": self.n10,
+            "n11": self.n11,
+        }
 
 
 class Hierarchy(Base):

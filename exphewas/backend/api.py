@@ -394,26 +394,32 @@ def get_tree(id):
     return tree
 
 
+@make_api("/enrichment/atc/fgsea/<outcome_id>")
+def get_enrichment_atc_fgsea_for_outcome(outcome_id):
+    return get_enrichment_for_outcome(outcome_id, models.Enrichment)
+
+
 @make_api("/enrichment/atc/contingency/<outcome_id>")
 def get_enrichment_atc_contingency_for_outcome(outcome_id):
+    return get_enrichment_for_outcome(outcome_id, models.EnrichmentContingency)
+
+
+def get_enrichment_for_outcome(outcome_id, enr_model):
     atc_tree = tree_from_hierarchy_id("ATC")
 
     # We will make a dict representation of the ATC tree to update the data
     # easily.
     atc_dict = {n.code: n for _, n in atc_tree.iter_depth_first()}
 
-    results = Session.query(models.EnrichmentContingency)\
+    results = Session.query(enr_model)\
         .filter_by(hierarchy_id="ATC")\
         .filter_by(outcome_id=outcome_id)\
         .all()
 
     for enrichment_result in results:
         n = atc_dict[enrichment_result.gene_set_id]
-        n._data = {
-            "p": enrichment_result.p,
-            "min_p_children": None
-        }
-
+        n._data = enrichment_result.get_data_dict()
+        n._data["min_p_children"] = None
 
     stack = []
     for _, node in atc_tree.iter_depth_first():

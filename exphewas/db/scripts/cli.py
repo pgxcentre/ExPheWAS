@@ -196,6 +196,29 @@ def import_hierarchies(args):
               "".format(len(hierarchies), filename))
 
 
+def import_enrichment(args):
+    results = pd.read_csv(args.filename)
+
+    # Insert the data.
+    db_dicts = []
+    for _, row in results.iterrows():
+        d = {
+            "outcome_id": row["outcome"],
+            "gene_set_id": row["pathway"],
+            "hierarchy_id": "ATC",
+            "set_size": row["size"],
+            "enrichment_score": row["NES"],
+            "p": row["pval"],
+        }
+
+        db_dicts.append(d)
+
+    Session().bulk_insert_mappings(models.Enrichment, db_dicts)
+    Session().commit()
+
+    print("Added {} enrichment analysis results.".format(len(db_dicts)))
+
+
 def import_enrichment_contingency(args):
     session = Session()
 
@@ -273,7 +296,8 @@ def main():
              "provided."
     )
 
-    # Command to import results from enrichment analyses.
+    # Command to import results from enrichment analyses based on contigency
+    # table.
     parser_import_enrichment_c = subparsers.add_parser(
         "import-enrichment-contingency"
     )
@@ -287,6 +311,15 @@ def main():
         help="If the gene_set_ids correspond to codes in the hierarchy table, "
              "this argument can be used to specify the code.",
         default=None
+    )
+
+    # Command to import results from enrichment analyses.
+    parser_import_enrichment = subparsers.add_parser(
+        "import-enrichment"
+    )
+    parser_import_enrichment.add_argument(
+        "filename",
+        help="Filename to the results of GSEA analysis."
     )
 
     # Command to import ensembl data (from a GTF).
@@ -371,6 +404,9 @@ def main():
 
     elif args.command == "import-enrichment-contingency":
         return import_enrichment_contingency(args)
+
+    elif args.command == "import-enrichment":
+        return import_enrichment(args)
 
     elif args.command == "import-external":
         return import_external.main(args)
