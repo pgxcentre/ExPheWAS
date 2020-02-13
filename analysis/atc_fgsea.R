@@ -87,7 +87,9 @@ for (outcome in get_all_outcome_ids()) {
   enrichment <- enrichment[, c("pathway", "pval", "padj", "ES", "NES",
                                "nMoreExtreme", "size")]
 
+  enrichment$outcome <- outcome
+
   write.table(enrichment, file = "atc_fgsea_results.csv", append = T,
-              col.names = F)
+              col.names = F, row.names = F, sep = ",")
 
 }
