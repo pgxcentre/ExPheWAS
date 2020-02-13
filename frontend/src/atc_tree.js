@@ -19,7 +19,7 @@ function addColorScale(svg, scale) {
     .attr('transform', 'translate(0, 10)')
     .append('text')
     .attr('class', 'legend-title')
-    .text('P-value (Fisher\'s exact test)')
+    .text('P-value (FGSEA enrichment)')
 
   let g = plot
     .attr('transform', `translate(10, 10)`)
@@ -50,7 +50,7 @@ function addColorScale(svg, scale) {
 
 export default async function atcTree(id) {
   // Getting the data
-  let treeData = await api_call(`/enrichment/atc/contingency/${id}`);
+  let treeData = await api_call(`/enrichment/atc/fgsea/${id}`);
 
   // Set the dimensions and margins of the diagram
   let margin = {top: 20, right: 0, bottom: 30, left: 90};
@@ -166,7 +166,10 @@ export default async function atcTree(id) {
         d3.select('#tooltip-atc-tree')
           .html(`
             <h6>${d.data.code} ${description}</h6>
-            P-value: ${formatP(d.data.data.p)}
+            <p>P-value: ${formatP(d.data.data.p)}</p>
+            <p>NES: ${formatP(d.data.data.enrichment_score)}</p>
+            <p>N drug target genes: ${d.data.data.set_size}</p>
+
           `)
           .style('opacity', 1);
       })

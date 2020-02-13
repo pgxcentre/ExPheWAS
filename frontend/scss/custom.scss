@@ -42,6 +42,11 @@
   pointer-events: none;
 }
 
+
+.tooltip p {
+  margin: 0px;
+}
+
 .axis, .tick text {
   pointer-events: none;
 }
