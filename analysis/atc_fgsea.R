@@ -42,7 +42,6 @@ get_results <- function(outcome_id) {
     results_table <- "results_binary_variables"
   }
 
-
   res <- dbGetQuery(con, paste0(
     "select gene, p ",
     "from ", results_table, " ",
@@ -51,6 +50,19 @@ get_results <- function(outcome_id) {
     " variance_pct=95 ",
     "order by p"
   ))
+
+  # We convert from p-value to scaled -log10(p).
+  res[, 2] <- -log10(res[, 2])
+
+  # If some p-values are numerically 0 we may have infinite values here.
+  # We clip them to be a little bit more than the highest finite value.
+  max_finite <- max(res[is.finite(res[, 2]), 2])
+  res[is.infinite(res[, 2]), 2] <- 1.1 * max_finite
+
+  res[, 2] <- res[, 2] / max(res[, 2])
+
+  # Fix the name to avoid confusion.
+  names(res)[2] <- "z"
 
   res
 }
@@ -67,12 +79,14 @@ get_all_outcome_ids <- function() {
 atc <- rjson::fromJSON(file = "../data/chembl/atc_to_target.json.gz")
 atc <- atc$ensembl
 
+# We limit ourselves to level 4 ATC codes.
+atc <- atc[nchar(names(atc)) <= 5]
 
+first = T
 for (outcome in get_all_outcome_ids()) {
-  # This is a DF with gene, p (already ordered)
   res <- get_results(outcome)
 
-  ranks <- res$p
+  ranks <- res[, 2]  # Weights are equivalent one-sided z-statistics.
   names(ranks) <- res$gene
 
   enrichment <- fgsea(
@@ -87,7 +101,17 @@ for (outcome in get_all_outcome_ids()) {
   enrichment <- enrichment[, c("pathway", "pval", "padj", "ES", "NES",
                                "nMoreExtreme", "size")]
 
+  # We know that ES should be positive as the highest p-values represent
+  # null associations.
+  enrichment[enrichment$ES < 0, c("pval", "padj")] <- 1
+
   enrichment$outcome <- outcome
+
+  if (first) {
+    first <- F
+    cat("pathway,pval,padj,ES,NES,nMoreExtreme,size,outcome\n",
+        file = "atc_fgsea_results.csv")
+  }
 
   write.table(enrichment, file = "atc_fgsea_results.csv", append = T,
               col.names = F, row.names = F, sep = ",")
