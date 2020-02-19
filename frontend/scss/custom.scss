@@ -95,3 +95,12 @@
 #atc-tree .leaf {
   cursor: default;
 }
+
+.atc-enrichment-header h5, .atc-enrichment-header select {
+  display: inline;
+}
+
+.atc-enrichment-header select {
+  margin-left: 5px;
+  width: 150px;
+}

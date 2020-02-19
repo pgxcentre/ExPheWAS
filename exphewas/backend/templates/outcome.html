@@ -50,7 +50,13 @@
         <div class="col-md-7">
           {% if has_atc_enrichment -%}
           <div class="atc-enrichment" style="text-align: center;">
-            <h5>ATC Enrichment Analysis</h5>
+            <div class="atc-enrichment-header">
+              <h5>Enrichment Analysis</h5>
+                <select id="atc-algorithm-select" class="custom-select">
+                  <option value="fgsea" selected>FGSEA</option>
+                  <option value="fisher">Fisher's exact</option>
+                </select>
+            </div>
             <svg id="atc-tree"></svg>
           </div>
           {%- endif %}

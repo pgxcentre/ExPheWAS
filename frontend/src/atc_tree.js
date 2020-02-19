@@ -1,10 +1,11 @@
 // Adapted from: https://bl.ocks.org/d3noob/43a860bc0024792f8803bba8ca0d5ecd
 
 import { api_call, formatP } from './utils';
+import { ATC_API_URLS } from './config';
 import * as d3 from 'd3';
 
 
-function addColorScale(svg, scale) {
+function addColorScale(svg, scale, legendText) {
   let rectSize = 15;
 
   // p-values to display in the legend.
@@ -19,7 +20,8 @@ function addColorScale(svg, scale) {
     .attr('transform', 'translate(0, 10)')
     .append('text')
     .attr('class', 'legend-title')
-    .text('P-value (FGSEA enrichment)')
+    .attr('id', 'atc-legend-title')
+    .text(legendText)
 
   let g = plot
     .attr('transform', `translate(10, 10)`)
@@ -49,8 +51,17 @@ function addColorScale(svg, scale) {
 
 
 export default async function atcTree(id) {
+  // The default enrichment algorithm
+  let defaultAlgo = 'fgsea';
+
+  // The legend text
+  let legendText = {
+    fgsea: 'P-value (FGSEA)',
+    fisher: 'P-value (Fisher\'s exact)'
+  };
+
   // Getting the data
-  let treeData = await api_call(`/enrichment/atc/fgsea/${id}`);
+  let treeData = await api_call(`${ATC_API_URLS[defaultAlgo]}/${id}`);
 
   // Set the dimensions and margins of the diagram
   let margin = {top: 20, right: 0, bottom: 30, left: 90};
@@ -103,7 +114,7 @@ export default async function atcTree(id) {
     .range(['#DC3545', '#F3856E', '#FFE28E', '#FFF4D3', '#EDE7E3'])
     .unknown('#FFFFFF');
 
-  addColorScale(svg, pColorScale);
+  addColorScale(svg, pColorScale, legendText[defaultAlgo]);
 
   // declares a tree layout and assigns the size
   let treemap = d3.tree().size([height, width]);
@@ -294,4 +305,23 @@ export default async function atcTree(id) {
       update(d);
     }
   }
+
+  // Changing the enrichment algorithm
+  d3.select('#atc-algorithm-select')
+    .on('change', async function() {
+      // Getting the selection
+      let select = document.getElementById('atc-algorithm-select');
+      let selection = select.options[select.selectedIndex].value;
+
+      // Changing the tree
+      let treeData = await api_call(`${ATC_API_URLS[selection]}/${id}`);
+      root = d3.hierarchy(treeData, d => d.children);
+      root.x0 = height / 2;
+      root.y0 = 0;
+      root.children.forEach(collapse);
+      update(root);
+
+      // Changing the legend's text
+      document.getElementById('atc-legend-title').innerHTML = legendText[selection];
+    });
 }
