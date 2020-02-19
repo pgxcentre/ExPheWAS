@@ -27,7 +27,7 @@ Base = declarative_base()
 
 
 class Enrichment(Base):
-    __tablename__ = "enrichemnt"
+    __tablename__ = "enrichment"
 
     outcome_id = Column(String, ForeignKey("outcomes.id"), primary_key=True)
 
