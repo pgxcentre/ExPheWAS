@@ -261,3 +261,58 @@ class XRefs(Base):
     external_db_id = Column(Integer, ForeignKey("external_db.id"),
                             primary_key=True)
     external_id = Column(String, nullable=False, primary_key=True)
+
+
+class ChEMBLDrug(Base):
+    # TODO Check if 24 or 25 was used and update table name so that we can
+    # update this.
+
+    __tablename__ = "chembl_drugs"
+
+    who_name = Column(String)
+    atc1 = Column(String(1))
+    atc2 = Column(String(3))
+    atc3 = Column(String(4))
+    atc4 = Column(String(5))
+    atc5 = Column(String(7), primary_key=True)
+
+    uniprot_ids = relationship("TargetToUniprot")
+
+    target_genes = relationship(
+        "Gene",
+        secondary="join(TargetToUniprot, XRefs, "
+                  "    and_(TargetToUniprot.uniprot == XRefs.external_id, "
+                  "         XRefs.external_db_id == -1))",
+        primaryjoin=(
+            "ChEMBLDrug.atc5 == TargetToUniprot.target_atc5"
+        ),
+        secondaryjoin=(
+            "XRefs.ensembl_id == Gene.ensembl_id"
+        )
+    )
+
+
+    def __repr__(self):
+        return f"<Drug '{self.who_name}' {self.atc5}>"
+
+
+class TargetToUniprot(Base):
+    __tablename__ = "target_uniprot"
+
+    target_atc5 = Column(String, ForeignKey("chembl_drugs.atc5"),
+                    primary_key=True)
+    uniprot = Column(String, primary_key=True)
+
+    action_type = Column(String)
+
+    # genes = relationship(
+    #     "Gene",
+    #     secondary=XRefs.__table__,
+    #     primaryjoin=(
+    #         "and_(XRefs.external_db_id == -1, "
+    #         "XRefs.external_id == TargetToUniprot.uniprot)"
+    #     ),
+    #     secondaryjoin=(
+    #         "XRefs.ensembl_id == Gene.ensembl_id"
+    #     )
+    # )

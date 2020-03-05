@@ -143,6 +143,48 @@ def populate_available_results():
     print("Added {} available outcome results.".format(len(entries)))
 
 
+class hashabledict(dict):
+    def __hash__(self):
+        return hash(tuple(sorted(self.items())))
+
+
+def import_chembl(args):
+    chembl = pd.read_csv(args.filename)
+
+    chembl = chembl[["who_name", "level1", "level2", "level3", "level4",
+                     "level5", "action_type", "accession"]].drop_duplicates()
+
+    db_dicts_targets = set()
+    db_dicts_uniprots = []
+    for _, row in chembl.iterrows():
+
+        d = hashabledict(
+            who_name = row["who_name"],
+            atc1 = row["level1"],
+            atc2 = row["level2"],
+            atc3 = row["level3"],
+            atc4 = row["level4"],
+            atc5 = row["level5"],
+        )
+
+        if d not in db_dicts_targets:
+            db_dicts_targets.add(d)
+
+        d = {
+            "target_atc5": row["level5"],
+            "uniprot": row["accession"],
+            "action_type": row["action_type"],
+        }
+        db_dicts_uniprots.append(d)
+
+    Session().bulk_insert_mappings(models.ChEMBLDrug, db_dicts_targets)
+    Session().commit()
+    Session().bulk_insert_mappings(models.TargetToUniprot, db_dicts_uniprots)
+    Session().commit()
+
+    print("Added {} ChEMBL drug target entries.".format(len(db_dicts_targets)))
+
+
 def import_hierarchies(args):
     session = Session()
 
@@ -331,6 +373,15 @@ def main():
         "--description", help="Optional description for each gene (CSV)",
     )
 
+    # Command to import ChEMBL drug target data.
+    parser_import_chembl = subparsers.add_parser(
+        "import-chembl-targets"
+    )
+    parser_import_chembl.add_argument(
+        "filename",
+        help="Filename formatted ChEMBL data."
+    )
+
     # Command to import the number of PCs for a gene.
     parser_import_n_pcs = subparsers.add_parser("import-n-pcs")
     parser_import_n_pcs.add_argument(
@@ -392,6 +443,9 @@ def main():
 
     elif args.command == "import-ensembl":
         return import_ensembl.main(args)
+
+    elif args.command == "import-chembl-targets":
+        return import_chembl(args)
 
     elif args.command == "import-n-pcs":
         return import_n_pcs.main(args)
