@@ -7,26 +7,20 @@ import itertools
 import functools
 from os import path
 
+import numpy as np
+
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.expression import func, null
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 
 from ..db import models
 from ..db.tree import tree_from_hierarchy_id
 from ..db.engine import Session
 from ..db.utils import mod_to_dict
-from ..utils import load_gtex_median_tpm, load_gtex_statistics
+from ..utils import load_gtex_median_tpm, load_gtex_statistics, qvalue
 
-from .r_bindings import R
-
-
-try:
-    R_instance = R()
-
-except:
-    R_instance = None
 
 
 api = Blueprint("api_blueprint", __name__)
@@ -152,10 +146,7 @@ def get_outcome_results(id):
         .all()
 
     # Get the corresponding Q-values.
-    if R_instance is not None:
-        qs = R_instance.qvalue([r.p for r in results])
-    else:
-        qs = itertools.cycle([None])
+    qs = qvalue(np.fromiter((r.p for r in results), dtype=np.float))
 
     return [
         {
@@ -283,10 +274,7 @@ def get_gene_results(ensg):
     results = [dict(zip(fields, i)) for i in results]
 
     # Get the corresponding Q-values.
-    if R_instance is not None:
-        qs = R_instance.qvalue([r["p"] for r in results])
-    else:
-        qs = None
+    qs = qvalue(np.fromiter((r["p"] for r in results), dtype=float))
 
     for i in range(len(results)):
         results[i]["q"] = None if qs is None else qs[i]
