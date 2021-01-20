@@ -1,6 +1,7 @@
 {% extends "index.html" %}
 {% block body %}
     <div class="tooltip" id="tooltipGTEX"></div>
+    <div class="tooltip" id="tooltipQQ"></div>
 
     <div class="geneHeader">
       <h3>Gene {{ name }}</h3>
@@ -39,33 +40,49 @@
               <dd class="col-md-8">{% for id in xrefs[db_name] %}{% if db_name in db_urls %}<a target="_blank" href="{{ db_urls[db_name].format(id=id) }}">{% endif %}{{ id }}{% if db_name in db_urls %}</a>{% endif %}{{ ", " if not loop.last }}{% endfor %}</dd>
               {% endif %}{% endfor %}
             </dl>
+
+            <dl class="row">
+              <div class="col-md-12">
+                {% if has_gtex -%}
+                <div class="contentGTEX">
+                  <h5>Median gene-level TPM by tissue (GTEx) <small>[<a target="_blank" href="https://www.gtexportal.org/home/gene/{{ ensembl_id }}">link</a>]</small>:</h5>
+                  <div style="text-align: center">
+                    <svg id="geneGTEX"></svg>
+                  </div>
+                </div>
+                {%- endif %}
+              </div>
+            </dl>
           </div>
         </div>
         </div>
 
+        <!-- GTEx expression median to know where the gene is expressed. -->
         <div class="col-md-6">
-          {% if has_gtex -%}
-          <div class="contentGTEX" style="text-align: center;">
-            <h5>Median gene-level TPM by tissue (GTEx) <small>[<a target="_blank" href="https://www.gtexportal.org/home/gene/{{ ensembl_id }}">link</a>]</small></h5>
-            <svg id="geneGTEX"></svg>
-          </div>
-          {%- endif %}
-        </div>
-      </div>
-      </div>
+            <!-- QQ plot as a measure of pleiotropy -->
+            <h5>Gene associations QQ-plot</h5>
+            <svg id="geneQQ"></svg>
 
-      <div class="dropdown analyisType">
-        <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          Analysis Type
-        </a>
+            <div>
+              <h5>Browse associated phenotypes:</h5>
 
-        <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
-          <a class="dropdown-item" href="#continuous-results-section">Continuous variables</a>
-          <a class="dropdown-item" href="#cardio-endpoints-results-section">Cardiovascular Endpoints</a>
-          <a class="dropdown-item" href="#self-reported-results-section">Self Reported</a>
-          <a class="dropdown-item" href="#icd10-blocks-results-section">ICD10 Blocks</a>
-          <a class="dropdown-item" href="#icd10-3char-results-section">ICD10 (3 characters)</a>
+              <div class="dropdown analyisType">
+                <a class="btn btn-secondary dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  Analysis Type
+                </a>
+
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                  <a class="dropdown-item" href="#continuous-results-section">Continuous variables</a>
+                  <a class="dropdown-item" href="#cardio-endpoints-results-section">Cardiovascular Endpoints</a>
+                  <a class="dropdown-item" href="#self-reported-results-section">Self Reported</a>
+                  <a class="dropdown-item" href="#icd10-blocks-results-section">ICD10 Blocks</a>
+                  <a class="dropdown-item" href="#icd10-3char-results-section">ICD10 (3 characters)</a>
+                </div>
+              </div>
+
+            </div>
         </div>
+
       </div>
 
       <div class="geneResults continuousVariable">

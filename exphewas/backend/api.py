@@ -146,7 +146,8 @@ def get_outcome_results(id):
         .all()
 
     # Get the corresponding Q-values.
-    qs = qvalue(np.fromiter((r.p for r in results), dtype=np.float))
+    qs = qvalue(np.fromiter((r.p for r in results), dtype=np.float,
+                count=len(results)))
 
     return [
         {
@@ -274,7 +275,8 @@ def get_gene_results(ensg):
     results = [dict(zip(fields, i)) for i in results]
 
     # Get the corresponding Q-values.
-    qs = qvalue(np.fromiter((r["p"] for r in results), dtype=float))
+    qs = qvalue(np.fromiter((r["p"] for r in results), dtype=float,
+                count=len(results)))
 
     for i in range(len(results)):
         results[i]["q"] = None if qs is None else qs[i]

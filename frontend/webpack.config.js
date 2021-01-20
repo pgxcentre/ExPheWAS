@@ -48,5 +48,9 @@ module.exports = {
   },
   output: {
     path: path.resolve(__dirname, OUTPUT_PATH)
+  },
+  node: {
+    fs: 'empty',
+    net: 'empty'
   }
 }

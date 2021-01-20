@@ -25,6 +25,11 @@ EXTERNAL_DB_TO_SHOW = ("HGNC", "WikiGene", "MIM_GENE", "MIM_MORBID",
                        "our_uniprot")
 
 
+@backend.route("/docs")
+def get_docs():
+    return render_template("api_docs.html", page_title="docs")
+
+
 @backend.route("/outcome")
 def get_outcomes():
     return render_template("outcome_list.html", page_title="outcomes")

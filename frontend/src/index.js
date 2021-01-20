@@ -9,6 +9,7 @@ import '../scss/custom.scss';
 import { URL_PREFIX, API_URL, DT_API_URL, ICD10_URL, UNIPROT_URL } from './config';
 import { api_call, formatP, formatNumber, getUrlParam, ANALYSIS_LABELS } from './utils';
 import radialGTEX from './radial_plot';
+import qq from './qq_plot';
 import atcTree from './atc_tree';
 
 
@@ -146,6 +147,9 @@ async function mainGeneResults(id) {
   let urlParam = variance_pct != 95? `?variance_pct=${variance_pct}`: '';
 
   let data = await api_call(`/gene/${id}/results${urlParam}`);
+
+  // Add the gene QQ plot as a measure of pleiotropy.
+  qq(data);
 
   // Total number of results
   let n_results = data.length;

@@ -13,7 +13,7 @@ export default async function radialGTEX(id) {
     return;
   }
 
-  let height = 400;
+  let height = 350;
   let width = height;
   let barHeight = height / 2 - 40;
 
