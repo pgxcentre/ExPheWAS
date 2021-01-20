@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import csv
 import glob
 import os
@@ -12,7 +13,8 @@ from ..models import Base, ANALYSIS_TYPES
 from .. import models
 from ..tree import tree_from_hierarchies
 
-from . import import_ensembl, import_results, import_n_pcs, import_external
+from . import (import_ensembl, import_results, import_n_pcs, import_external,
+               metadata)
 
 
 def create():
@@ -324,6 +326,33 @@ def main():
     # Command to delete all results.
     subparsers.add_parser("delete-results")
 
+    # Command to set or view the data freeze version and metadata.
+    parser_metadata = subparsers.add_parser("metadata")
+    parser_metadata.add_argument(
+        "--view",
+        action="store_true",
+        help="Prints the current database metadata instead of creating or "
+             "updating it."
+    )
+
+    parser_metadata.add_argument(
+        "--version", "-v",
+        type=str,
+        help="Set the version (e.g. 0.1)."
+    )
+
+    parser_metadata.add_argument(
+        "--comments",
+        type=str,
+        help="Set extra description or comments."
+    )
+
+    parser_metadata.add_argument(
+        "--date",
+        type=lambda s: datetime.datetime.strptime(s, "%Y-%m-%d"),
+        help="Set the recorded data creation date."
+    )
+
     # Command to populate the available results for each gene
     subparsers.add_parser("populate-available-results")
 
@@ -434,6 +463,9 @@ def main():
 
     elif args.command == "delete-results":
         return delete_results()
+
+    elif args.command == "metadata":
+        return metadata.main(args)
 
     elif args.command == "find-missing-results":
         return find_missing_results()

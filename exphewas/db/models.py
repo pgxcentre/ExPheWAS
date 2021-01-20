@@ -8,7 +8,7 @@ from sqlalchemy.orm import column_property, relationship
 from sqlalchemy import (
     Table, Column, Integer, String, MetaData, ForeignKey, Enum, Float,
     Boolean, Sequence, UniqueConstraint, ForeignKeyConstraint, create_engine,
-    and_, PrimaryKeyConstraint
+    and_, PrimaryKeyConstraint, Date
 )
 
 from .engine import ENGINE, Session
@@ -24,6 +24,24 @@ AnalysisEnum = Enum(*ANALYSIS_TYPES, name="enum_analysis_type")
 
 
 Base = declarative_base()
+
+
+class Metadata(Base):
+    __tablename__ = "meta"
+
+    version = Column(String, primary_key=True)
+    date = Column(Date)
+    comments = Column(String)
+
+    def metadata_dict(self):
+        return {
+            "version": self.version,
+            "date": self.date,
+            "comments": self.comments,
+        }
+
+    def __repr__(self):
+        return f"<Metadata v{self.version} - {self.date} // {self.comments}>"
 
 
 class Enrichment(Base):

@@ -70,6 +70,18 @@ def resource_not_found(e):
     return jsonify(error=str(e)), 404
 
 
+@make_api("/metadata")
+def get_metadata():
+    try:
+        return Session.query(models.Metadata).one().metadata_dict()
+    except NoResultFound:
+        return {
+            "version": "unknown",
+            "date": "",
+            "comments": "The version has not been set in the results database."
+        }
+
+
 @make_api("/outcome")
 def get_outcomes():
     subquery = Session.query(

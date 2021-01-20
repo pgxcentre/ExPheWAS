@@ -1,9 +1,11 @@
-import { api_call } from './utils';
+import { api_call, formatP } from './utils';
+
 import * as d3 from 'd3';
-import { Delaunay } from 'd3-delaunay';
 import * as d3fc from 'd3fc';
+import { Delaunay } from 'd3-delaunay';
 
 import * as qbeta from '@stdlib/stats/base/dists/beta/quantile';
+
 
 
 /**
@@ -36,7 +38,7 @@ function rangeTicks(start, end, maxTicks = 10, addEnd = false) {
 export default async function qq(data) {
 
   // Try to infer available width.
-  let fullWidth = document.getElementById("geneQQ").parentNode.clientWidth;
+  let fullWidth = document.getElementById('geneQQ').parentNode.clientWidth;
 
   const aspectRatio = 0.6;
   const width = 0.7 * fullWidth;
@@ -54,6 +56,7 @@ export default async function qq(data) {
       outcomeLabel: cur.outcome_label,
       x: -Math.log10((i + 1) / n),
       y: -Math.log10(cur.p == 0? 1e-300: cur.p),
+      p: cur.p,
       c975: -Math.log10(qbeta(0.975, i + 1, n - i)),
       c025: -Math.log10(qbeta(0.025, i + 1, n - i))
     };
@@ -82,7 +85,7 @@ export default async function qq(data) {
         d3.select('#tooltipQQ')
           .style('opacity', 0);
 
-        d3.select(".selected-pt").remove();
+        d3.select('.selected-pt').remove();
       })
       .attr('width', width + margins.left + margins.right)
       .attr('height', height + margins.top + margins.bottom)
@@ -197,22 +200,26 @@ export default async function qq(data) {
 
   const voronoi = delaunay.voronoi([0, 0, width, height]);
 
-  d3.select("#tooltipQQ")
-    .style("position", "fixed")
-    .style("z-index", "20")
-    .style("opacity", 1);
+  d3.select('#tooltipQQ')
+    .style('position', 'fixed')
+    .style('z-index', '20')
+    .style('opacity', 1);
 
   const svgRect = svg.node().getBoundingClientRect();
-  d3.select("#geneQQ").on("mousemove", () => {
+  d3.select('#geneQQ').on('mousemove', () => {
     let pos = d3.clientPoint(svg.node(), d3.event);
     let datum = xy[delaunay.find(...pos)];
 
     const tooltip = d3.select('#tooltipQQ');
+
+    let p = datum.p == 0? '<1e-300': formatP(datum.p);
+
     tooltip
       .html(`
         Analysis type: ${datum.analysisType}<br />
         Outcome ID: ${datum.outcomeId}<br />
-        Outcome: ${datum.outcomeLabel}
+        Outcome: ${datum.outcomeLabel}<br />
+        Association p-value: ${p}
       `)
 
     // Get tooltip dimension after writing html to position the box correctly.
@@ -226,21 +233,21 @@ export default async function qq(data) {
       .style('opacity', 1)
 
     // Highlight point.
-    let hlCircle = svg.selectAll(".selected-pt")
+    let hlCircle = svg.selectAll('.selected-pt')
       .data([datum]);
 
     hlCircle.exit().remove();
 
     hlCircle
       .enter()
-      .append("circle")
-      .attr("class", "selected-pt")
+      .append('circle')
+      .attr('class', 'selected-pt')
       .attr('pointer-events', 'none');
 
     hlCircle
-      .attr("cx", d => xScale(d.x))
-      .attr("cy", d => yScale(d.y))
-      .attr("r", 5);
+      .attr('cx', d => xScale(d.x))
+      .attr('cy', d => yScale(d.y))
+      .attr('r', 5);
 
   });
 
@@ -290,19 +297,19 @@ export default async function qq(data) {
 
   // Axis labels.
   // X
-  svg.append("text")
-    .attr("transform", `translate(${width / 2}, ${height + margins.top + 20})`)
-    .style("text-anchor", 'middle')
+  svg.append('text')
+    .attr('transform', `translate(${width / 2}, ${height + margins.top + 20})`)
+    .style('text-anchor', 'middle')
     .attr('font-size', '0.8em')
     .text('Expected -log10(p)');
 
   // Y
-  svg.append("text")
-    .attr("transform", "rotate(-90)")
+  svg.append('text')
+    .attr('transform', 'rotate(-90)')
     .attr('x', 0 - height / 2)
     .attr('y', 0 - margins.left)
     .attr('dy', '1em')
-    .style("text-anchor", 'middle')
+    .style('text-anchor', 'middle')
     .attr('font-size', '0.8em')
     .text('Observed -log10(p)');
 }
