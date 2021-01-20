@@ -7,6 +7,7 @@ from collections import defaultdict
 from flask import Blueprint, render_template, abort
 
 from . import api
+from ..version import exphewas_version
 from ..db import models
 from ..db.engine import Session
 
@@ -24,10 +25,27 @@ EXTERNAL_DB_URL = {
 EXTERNAL_DB_TO_SHOW = ("HGNC", "WikiGene", "MIM_GENE", "MIM_MORBID",
                        "our_uniprot")
 
+@backend.context_processor
+def inject_db_metadata():
+    metadata = {
+        "exphewas_version": exphewas_version,
+        "db": {}
+    }
+
+    try:
+        metadata["db"] = Session.query(models.Metadata).one().metadata_dict()
+    except NoResultFound:
+        pass
+
+    return {"meta": metadata}
+
 
 @backend.route("/docs")
 def get_docs():
-    return render_template("api_docs.html", page_title="docs")
+    return render_template(
+        "api_docs.html",
+        page_title="docs"
+    )
 
 
 @backend.route("/outcome")

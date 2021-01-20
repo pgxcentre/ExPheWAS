@@ -1,18 +1,36 @@
 {% extends "index.html" %}
 {% block body %}
+    <h3>Data release</h3>
+
+    <div>
+      <p>The current data release is v{{ meta.db.version }}</p>
+      <p>Generated on {{ meta.db.date }}</p>
+      <p>{{ meta.db.comments }}</p>
+    </div>
+
     <h3>API Documentation</h3>
 
     <div>
 
-      <table id="outcomes" class="display" style="width:100%">
+      <p>The current API root {{ meta.db.comments }}</p>
+
+      <table id="api" class="table table-striped" style="width:100%">
         <thead>
           <tr>
-            <th class="dt-head-left">Outcome Id</th>
-            <th class="dt-head-left">Available Analyses</th>
-            <th class="dt-head-left">Analysis Type</th>
+            <th class="dt-head-left">Resource</th>
             <th class="dt-head-left">Description</th>
           </tr>
         </thead>
+        <tbody>
+          <tr>
+            <td class="dt-left">GET /metadata</td>
+            <td class="dt-left">Get information for the data release currently available through the API.</td>
+          </tr>
+          <tr>
+            <td class="dt-left">GET /outcome</td>
+            <td class="dt-left">Get a list of outcomes</td>
+          </tr>
+        </tbody>
       </table>
 
     </div>
