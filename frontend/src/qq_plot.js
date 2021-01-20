@@ -72,8 +72,8 @@ export default async function qq(data) {
   let margins = {
     top: 10,
     right: 30,
-    bottom: 30,
-    left: 30
+    bottom: 40,
+    left: 40
   };
 
   // Create SVG for plot.
@@ -288,4 +288,21 @@ export default async function qq(data) {
     .style('stroke-width', 1)
     .style('stroke-dasharray', '4 2')
 
+  // Axis labels.
+  // X
+  svg.append("text")
+    .attr("transform", `translate(${width / 2}, ${height + margins.top + 20})`)
+    .style("text-anchor", 'middle')
+    .attr('font-size', '0.8em')
+    .text('Expected -log10(p)');
+
+  // Y
+  svg.append("text")
+    .attr("transform", "rotate(-90)")
+    .attr('x', 0 - height / 2)
+    .attr('y', 0 - margins.left)
+    .attr('dy', '1em')
+    .style("text-anchor", 'middle')
+    .attr('font-size', '0.8em')
+    .text('Observed -log10(p)');
 }
