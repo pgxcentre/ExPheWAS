@@ -81,6 +81,8 @@ export default async function qq(data) {
       .on('mouseout', () => {
         d3.select('#tooltipQQ')
           .style('opacity', 0);
+
+        d3.select(".selected-pt").remove();
       })
       .attr('width', width + margins.left + margins.right)
       .attr('height', height + margins.top + margins.bottom)
@@ -200,20 +202,45 @@ export default async function qq(data) {
     .style("z-index", "20")
     .style("opacity", 1);
 
+  const svgRect = svg.node().getBoundingClientRect();
   d3.select("#geneQQ").on("mousemove", () => {
-    console.log(d3.event.pageX);
     let pos = d3.clientPoint(svg.node(), d3.event);
     let datum = xy[delaunay.find(...pos)];
 
-    d3.select("#tooltipQQ")
-      .style('left', `${d3.event.pageX + 20}px`)
-      .style('top', `${d3.event.pageY - 20}px`)
-      .style('opacity', 1)
+    const tooltip = d3.select('#tooltipQQ');
+    tooltip
       .html(`
         Analysis type: ${datum.analysisType}<br />
         Outcome ID: ${datum.outcomeId}<br />
         Outcome: ${datum.outcomeLabel}
       `)
+
+    // Get tooltip dimension after writing html to position the box correctly.
+    let ttRect = tooltip.node().getBoundingClientRect();
+    let ttX = svgRect.x + xScale(datum.x) - ttRect.width - 5;
+    let ttY = svgRect.y + yScale(datum.y) - ttRect.height - 5;
+
+    tooltip
+      .style('left', `${ttX}px`)
+      .style('top', `${ttY}px`)
+      .style('opacity', 1)
+
+    // Highlight point.
+    let hlCircle = svg.selectAll(".selected-pt")
+      .data([datum]);
+
+    hlCircle.exit().remove();
+
+    hlCircle
+      .enter()
+      .append("circle")
+      .attr("class", "selected-pt")
+      .attr('pointer-events', 'none');
+
+    hlCircle
+      .attr("cx", d => xScale(d.x))
+      .attr("cy", d => yScale(d.y))
+      .attr("r", 5);
 
   });
 
