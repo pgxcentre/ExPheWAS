@@ -21,6 +21,9 @@ async function modalCallback(event) {
     
     let modal = $(this);
 
+    // Reset results if needed.
+    modal.find('.results').text('Loading...');
+
     // The endpoint may be parametrized. If it is the case we make
     // substitutions as needed.
     if (params !== undefined) {

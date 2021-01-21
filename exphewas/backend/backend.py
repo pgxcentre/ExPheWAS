@@ -51,6 +51,7 @@ def get_docs():
         "api_docs.html",
         page_title="docs",
         full_api_url=api_root
+
     )
 
 

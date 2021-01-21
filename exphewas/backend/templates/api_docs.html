@@ -1,10 +1,7 @@
 {% extends "index.html" %}
 {% block body %}
-    <h4>Overview</h4>
 
-    <p>todo</p>
-
-    <h4>Current data release</h4>
+    <h3>Data release</h3>
 
     <div>
       <p>The current data release is v{{ meta.db.version }}</p>
@@ -12,9 +9,13 @@
       <p>{{ meta.db.comments }}</p>
     </div>
 
-    <h4>API Documentation</h4>
+    <h3>API Documentation</h3>
 
     <div>
+      <p>The current data release is v{{ meta.db.version }}</p>
+      <p>Generated on {{ meta.db.date }}</p>
+      <p>{{ meta.db.comments }}</p>
+    </div>
 
       <p>You can access the data from the results browser programmatically by sending an HTTP request to the follow API endpoints.</p>
       <p>The API root is: '{{ full_api_url }}'</p>
