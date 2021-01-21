@@ -30,13 +30,13 @@
   "dependencies": {
     "@babel/polyfill": "^7.7.0",
     "@stdlib/stdlib": "0.0.93",
-    "bootstrap": "^4.4.1",
+    "bootstrap": "^4.6.0",
     "d3": "^5.16.0",
     "d3-delaunay": "^5.3.0",
     "d3-save-svg": "0.0.2",
     "d3fc": "^15.1.2",
     "datatables.net": "^1.10.20",
     "datatables.net-dt": "^1.10.20",
-    "popper.js": "^1.16.0"
+    "popper.js": "^1.16.1"
   }
 }

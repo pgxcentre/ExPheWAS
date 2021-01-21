@@ -1,6 +1,10 @@
 {% extends "index.html" %}
 {% block body %}
-    <h3>Data release</h3>
+    <h4>Overview</h4>
+
+    <p>todo</p>
+
+    <h4>Current data release</h4>
 
     <div>
       <p>The current data release is v{{ meta.db.version }}</p>
@@ -8,36 +12,88 @@
       <p>{{ meta.db.comments }}</p>
     </div>
 
-    <h3>API Documentation</h3>
+    <h4>API Documentation</h4>
 
     <div>
 
-      <p>The current API root {{ meta.db.comments }}</p>
+      <p>You can access the data from the results browser programmatically by sending an HTTP request to the follow API endpoints.</p>
+      <p>The API root is: '{{ full_api_url }}'</p>
 
       <table id="api" class="table table-striped" style="width:100%">
         <thead>
           <tr>
             <th class="dt-head-left">Resource</th>
             <th class="dt-head-left">Description</th>
+            <th class="dt-head-left">Parameters</th>
+            <th class="dt-head-left"><!-- Example //--></th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td class="dt-left">GET /metadata</td>
             <td class="dt-left">Get information for the data release currently available through the API.</td>
+            <td></td>
+            <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/metadata">Example</button></td>
           </tr>
           <tr>
             <td class="dt-left">GET /outcome</td>
             <td class="dt-left">Get a list of outcomes</td>
+            <td></td>
+            <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/outcome">Example</button></td> <!-- e.g. //-->
+          </tr>
+          <tr>
+            <td class="dt-left">GET /outcome/&lt;id&gt;/results</td>
+            <td class="dt-left">Get all gene association statistics for an outcome.</td>
+            <td>
+              <ul class="list-group list-group-flush">
+                <li class="list-group-item"><span class="badge badge-pill badge-dark">id</span> The outcome identifier</li>
+                <li class="list-group-item"><span class="badge badge-pill badge-dark">variance_pct</span> Percentage of variance explained by the PCs (default: 95)</li>
+              </ul>
+            </td>
+            <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/outcome/<id>/results" data-params='{"id": 1092, "variance_pct": 95}'>Example</button></td> <!-- e.g. //-->
           </tr>
         </tbody>
       </table>
-
     </div>
+
+  <!-- API documentation modals. //-->
+  <div class="modal fade" id="egModal" tabindex="-1" aria-labelledby="egModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">API Example</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+
+          <div>
+            <div>
+              <h6>Sample Request:</h6>
+              <code class="example-command">
+              </code>
+            </div>
+            <div style="margin-top: 20px">
+              <h6>Results:</h6>
+              <pre class="results">Loading...</pre>
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
 
 {% endblock %}
 
 {% block other_script %}
     <script type="text/javascript">
+      window.pages.documentation();
     </script>
 {% endblock %}

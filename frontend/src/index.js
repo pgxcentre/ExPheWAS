@@ -11,6 +11,7 @@ import { api_call, formatP, formatNumber, getUrlParam, ANALYSIS_LABELS } from '.
 import radialGTEX from './radial_plot';
 import qq from './qq_plot';
 import atcTree from './atc_tree';
+import documentation from './documentation';
 
 
 // This is a shim for d3 events to work with webpack
@@ -425,5 +426,6 @@ window.pages = {
   mainOutcomeList,
   mainOutcomeResults,
   mainGeneResults,
-  mainGeneList
+  mainGeneList,
+  documentation
 }

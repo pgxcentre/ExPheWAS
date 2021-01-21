@@ -4,7 +4,8 @@ Flask-based application for ExPheWAS.
 
 from collections import defaultdict
 
-from flask import Blueprint, render_template, abort
+from sqlalchemy.orm.exc import NoResultFound
+from flask import Blueprint, render_template, abort, url_for
 
 from . import api
 from ..version import exphewas_version
@@ -42,9 +43,14 @@ def inject_db_metadata():
 
 @backend.route("/docs")
 def get_docs():
+    # Infer api root
+    api_root = url_for("api_blueprint.get_metadata", _external=True)
+    api_root = "/".join(api_root.split("/")[:-1])
+
     return render_template(
         "api_docs.html",
-        page_title="docs"
+        page_title="docs",
+        full_api_url=api_root
     )
 
 
