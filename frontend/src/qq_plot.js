@@ -203,7 +203,7 @@ export default async function qq(data) {
   d3.select('#tooltipQQ')
     .style('position', 'fixed')
     .style('z-index', '20')
-    .style('opacity', 1);
+    .style('opacity', 0);
 
   const svgRect = svg.node().getBoundingClientRect();
   d3.select('#geneQQ').on('mousemove', () => {
