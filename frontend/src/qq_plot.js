@@ -5,7 +5,17 @@ import * as d3fc from 'd3fc';
 import { Delaunay } from 'd3-delaunay';
 
 import * as qbeta from '@stdlib/stats/base/dists/beta/quantile';
+import * as qchi2 from '@stdlib/stats/base/dists/chisquare/quantile';
 
+
+const analysisTypeToColor = {
+  "ICD10_3CHAR": "#3E5CBD",
+  "ICD10_BLOCK": "#3E5CBD",
+  "ICD10_RAW": "#3E5CBD",
+  "CONTINUOUS_VARIABLE": "#339C62",
+  "SELF_REPORTED": "#FCB605",
+  "CV_ENDPOINTS": "#FF5E54"
+};
 
 
 /**
@@ -35,6 +45,22 @@ function rangeTicks(start, end, maxTicks = 10, addEnd = false) {
 
 }
 
+
+function medianAssumeSorted(li, accessor) {
+  if (accessor === undefined)
+    accessor = x => x;
+
+  if(li.length === 0) return undefined;
+
+  var half = Math.floor(li.length / 2);
+
+  if (li.length % 2)
+    return accessor(li[half]);
+
+  return (accessor(li[half - 1]) + accessor(li[half])) / 2.0;
+}
+
+
 export default async function qq(data) {
 
   // Try to infer available width.
@@ -54,11 +80,12 @@ export default async function qq(data) {
       analysisType: cur.analysis_type,
       outcomeId: cur.outcome_id,
       outcomeLabel: cur.outcome_label,
-      x: -Math.log10((i + 1) / n),
-      y: -Math.log10(cur.p == 0? 1e-300: cur.p),
+      x: -Math.log10((i + 1) / n),  // Exoected
+      y: -Math.log10(cur.p == 0? 1e-300: cur.p),  // Observed
       p: cur.p,
       c975: -Math.log10(qbeta(0.975, i + 1, n - i)),
-      c025: -Math.log10(qbeta(0.025, i + 1, n - i))
+      c025: -Math.log10(qbeta(0.025, i + 1, n - i)),
+      color: analysisTypeToColor[cur.analysis_type]
     };
   });
 
@@ -70,6 +97,17 @@ export default async function qq(data) {
     if (cur.y > maxY)
       maxY = cur.y
   });
+
+  // Compute the lambda inflation factor.
+  // lambda = median(chi2_obs) / median(chi2_exp)
+  let medianPExpected = medianAssumeSorted(xy, (d) => 10 ** (-d.x));
+  let medianPObserved = medianAssumeSorted(xy, (d) => d.p);
+
+  let medianChiExpected = qchi2(1 - medianPExpected, 1);
+  let medianChiObserved = qchi2(1 - medianPObserved, 1);
+
+  let lambda = medianChiObserved / medianChiExpected;
+  d3.select("#lambdaQQ").text(lambda.toFixed(2));
 
   // Setup plot margins.
   let margins = {
@@ -247,7 +285,9 @@ export default async function qq(data) {
     hlCircle
       .attr('cx', d => xScale(d.x))
       .attr('cy', d => yScale(d.y))
-      .attr('r', 5);
+      .attr('r', 5)
+      .attr('stroke', 'black')
+      .attr('fill', 'none');
 
   });
 
@@ -280,9 +320,10 @@ export default async function qq(data) {
     .enter()
     .append('circle')
     .attr('class', 'pt')
+    .attr('fill', d => d.color)
     .attr('cx', d => xScale(d.x))
     .attr('cy', d => yScale(d.y))
-    .attr('r', 1)
+    .attr('r', 1);
 
   // Identity line
   svg.append('g')

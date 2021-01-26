@@ -36,6 +36,7 @@
             <td></td>
             <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/metadata">Example</button></td>
           </tr>
+          <tr><td colspan=4><b>Query results by outcome</b></td></tr>
           <tr>
             <td class="dt-left">GET /outcome</td>
             <td class="dt-left">Get a list of outcomes</td>
@@ -52,6 +53,48 @@
               </ul>
             </td>
             <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/outcome/<id>/results" data-params='{"id": 1092, "variance_pct": 95}'>Example</button></td> <!-- e.g. //-->
+          </tr>
+          <tr>
+            <td class="dt-left">GET /outcome/venn</td>
+            <td class="dt-left">Get number of shared associated genes for an arbitrary number of outcomes.</td>
+            <td>
+              <ul class="list-group list-group-flush">
+                <li class="list-group-item"><span class="badge badge-pill badge-dark">outcomes</span> List of outcomes delimited by ';'</li>
+                <li class="list-group-item"><span class="badge badge-pill badge-dark">q</span> The Q-value threshold to call an association 'significant' (default: 0.05)</li>
+              </ul>
+            </td>
+            <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/outcome/venn" data-params='{"outcomes": "cont_v12;cont_v10"}'>Example</button></td> <!-- e.g. //-->
+          </tr>
+          <tr><td colspan=4><b>Query results by gene and utilities for cross referencing</b></td></tr>
+          <tr>
+            <td class="dt-left">GET /gene</td>
+            <td class="dt-left">Get name strand and location of a gene.</td>
+            <td></td>
+            <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/gene">Example</button></td>
+          </tr>
+          <tr>
+            <td class="dt-left">GET /gene/name/&lt;name&gt;</td>
+            <td class="dt-left">Get gene information by name. Used for cross-referencing.</td>
+            <td></td>
+            <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/gene/name/<name>" data-params='{"name": "HCN4"}'>Example</button></td>
+          </tr>
+          <tr>
+            <td class="dt-left">GET /gene/ensembl/&lt;ensg&gt;</td>
+            <td class="dt-left">Get gene information by Ensembl ID. Used for cross-referencing.</td>
+            <td></td>
+            <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/gene/ensembl/<ensg>" data-params='{"ensg": "ENSG00000087237"}'>Example</button></td>
+          </tr>
+          <tr>
+            <td class="dt-left">GET /gene/&lt;ensg&gt;/results</td>
+            <td class="dt-left">Get results for a gene given its Ensembl ID.</td>
+            <td></td>
+            <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/gene/<ensg>/results" data-params='{"ensg": "ENSG00000087237"}'>Example</button></td>
+          </tr>
+          <tr>
+            <td class="dt-left">GET /gene/&lt;ensg&gt;/xrefs</td>
+            <td class="dt-left">Get cross references to other external databases from an Ensembl gene ID.</td>
+            <td></td>
+            <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/gene/<ensg>/xrefs" data-params='{"ensg": "ENSG00000087237"}'>Example</button></td>
           </tr>
         </tbody>
       </table>

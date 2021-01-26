@@ -33,7 +33,7 @@ async function modalCallback(event) {
         for (const [k, v] of Object.entries(params)) {
           // Check if this parameter goes in the path or query string.
           let pathMatcher = new RegExp(`<${k}>`);
-          if (reqURL.search(pathMatcher)) {
+          if (reqURL.search(pathMatcher) !== -1) {
             reqURL = reqURL.replace(pathMatcher, v);
           } else {
             chunks.push(`${k}=${v}`);
