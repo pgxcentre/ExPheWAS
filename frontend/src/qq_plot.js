@@ -1,9 +1,21 @@
-import { api_call } from './utils';
+import { api_call, formatP } from './utils';
+
 import * as d3 from 'd3';
-import { Delaunay } from 'd3-delaunay';
 import * as d3fc from 'd3fc';
+import { Delaunay } from 'd3-delaunay';
 
 import * as qbeta from '@stdlib/stats/base/dists/beta/quantile';
+import * as qchi2 from '@stdlib/stats/base/dists/chisquare/quantile';
+
+
+const analysisTypeToColor = {
+  "ICD10_3CHAR": "#3E5CBD",
+  "ICD10_BLOCK": "#3E5CBD",
+  "ICD10_RAW": "#3E5CBD",
+  "CONTINUOUS_VARIABLE": "#339C62",
+  "SELF_REPORTED": "#FCB605",
+  "CV_ENDPOINTS": "#FF5E54"
+};
 
 
 /**
@@ -33,10 +45,26 @@ function rangeTicks(start, end, maxTicks = 10, addEnd = false) {
 
 }
 
+
+function medianAssumeSorted(li, accessor) {
+  if (accessor === undefined)
+    accessor = x => x;
+
+  if(li.length === 0) return undefined;
+
+  var half = Math.floor(li.length / 2);
+
+  if (li.length % 2)
+    return accessor(li[half]);
+
+  return (accessor(li[half - 1]) + accessor(li[half])) / 2.0;
+}
+
+
 export default async function qq(data) {
 
   // Try to infer available width.
-  let fullWidth = document.getElementById("geneQQ").parentNode.clientWidth;
+  let fullWidth = document.getElementById('geneQQ').parentNode.clientWidth;
 
   const aspectRatio = 0.6;
   const width = 0.7 * fullWidth;
@@ -52,10 +80,12 @@ export default async function qq(data) {
       analysisType: cur.analysis_type,
       outcomeId: cur.outcome_id,
       outcomeLabel: cur.outcome_label,
-      x: -Math.log10((i + 1) / n),
-      y: -Math.log10(cur.p == 0? 1e-300: cur.p),
+      x: -Math.log10((i + 1) / n),  // Exoected
+      y: -Math.log10(cur.p == 0? 1e-300: cur.p),  // Observed
+      p: cur.p,
       c975: -Math.log10(qbeta(0.975, i + 1, n - i)),
-      c025: -Math.log10(qbeta(0.025, i + 1, n - i))
+      c025: -Math.log10(qbeta(0.025, i + 1, n - i)),
+      color: analysisTypeToColor[cur.analysis_type]
     };
   });
 
@@ -67,6 +97,17 @@ export default async function qq(data) {
     if (cur.y > maxY)
       maxY = cur.y
   });
+
+  // Compute the lambda inflation factor.
+  // lambda = median(chi2_obs) / median(chi2_exp)
+  let medianPExpected = medianAssumeSorted(xy, (d) => 10 ** (-d.x));
+  let medianPObserved = medianAssumeSorted(xy, (d) => d.p);
+
+  let medianChiExpected = qchi2(1 - medianPExpected, 1);
+  let medianChiObserved = qchi2(1 - medianPObserved, 1);
+
+  let lambda = medianChiObserved / medianChiExpected;
+  d3.select("#lambdaQQ").text(lambda.toFixed(2));
 
   // Setup plot margins.
   let margins = {
@@ -82,7 +123,7 @@ export default async function qq(data) {
         d3.select('#tooltipQQ')
           .style('opacity', 0);
 
-        d3.select(".selected-pt").remove();
+        d3.select('.selected-pt').remove();
       })
       .attr('width', width + margins.left + margins.right)
       .attr('height', height + margins.top + margins.bottom)
@@ -197,22 +238,26 @@ export default async function qq(data) {
 
   const voronoi = delaunay.voronoi([0, 0, width, height]);
 
-  d3.select("#tooltipQQ")
-    .style("position", "fixed")
-    .style("z-index", "20")
-    .style("opacity", 1);
+  d3.select('#tooltipQQ')
+    .style('position', 'fixed')
+    .style('z-index', '20')
+    .style('opacity', 0);
 
   const svgRect = svg.node().getBoundingClientRect();
-  d3.select("#geneQQ").on("mousemove", () => {
+  d3.select('#geneQQ').on('mousemove', () => {
     let pos = d3.clientPoint(svg.node(), d3.event);
     let datum = xy[delaunay.find(...pos)];
 
     const tooltip = d3.select('#tooltipQQ');
+
+    let p = datum.p == 0? '<1e-300': formatP(datum.p);
+
     tooltip
       .html(`
         Analysis type: ${datum.analysisType}<br />
         Outcome ID: ${datum.outcomeId}<br />
-        Outcome: ${datum.outcomeLabel}
+        Outcome: ${datum.outcomeLabel}<br />
+        Association p-value: ${p}
       `)
 
     // Get tooltip dimension after writing html to position the box correctly.
@@ -226,21 +271,23 @@ export default async function qq(data) {
       .style('opacity', 1)
 
     // Highlight point.
-    let hlCircle = svg.selectAll(".selected-pt")
+    let hlCircle = svg.selectAll('.selected-pt')
       .data([datum]);
 
     hlCircle.exit().remove();
 
     hlCircle
       .enter()
-      .append("circle")
-      .attr("class", "selected-pt")
+      .append('circle')
+      .attr('class', 'selected-pt')
       .attr('pointer-events', 'none');
 
     hlCircle
-      .attr("cx", d => xScale(d.x))
-      .attr("cy", d => yScale(d.y))
-      .attr("r", 5);
+      .attr('cx', d => xScale(d.x))
+      .attr('cy', d => yScale(d.y))
+      .attr('r', 5)
+      .attr('stroke', 'black')
+      .attr('fill', 'none');
 
   });
 
@@ -273,9 +320,10 @@ export default async function qq(data) {
     .enter()
     .append('circle')
     .attr('class', 'pt')
+    .attr('fill', d => d.color)
     .attr('cx', d => xScale(d.x))
     .attr('cy', d => yScale(d.y))
-    .attr('r', 1)
+    .attr('r', 1);
 
   // Identity line
   svg.append('g')
@@ -290,19 +338,19 @@ export default async function qq(data) {
 
   // Axis labels.
   // X
-  svg.append("text")
-    .attr("transform", `translate(${width / 2}, ${height + margins.top + 20})`)
-    .style("text-anchor", 'middle')
+  svg.append('text')
+    .attr('transform', `translate(${width / 2}, ${height + margins.top + 20})`)
+    .style('text-anchor', 'middle')
     .attr('font-size', '0.8em')
     .text('Expected -log10(p)');
 
   // Y
-  svg.append("text")
-    .attr("transform", "rotate(-90)")
+  svg.append('text')
+    .attr('transform', 'rotate(-90)')
     .attr('x', 0 - height / 2)
     .attr('y', 0 - margins.left)
     .attr('dy', '1em')
-    .style("text-anchor", 'middle')
+    .style('text-anchor', 'middle')
     .attr('font-size', '0.8em')
     .text('Observed -log10(p)');
 }

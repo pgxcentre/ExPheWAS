@@ -31,7 +31,7 @@ if DEBUG:
     print(f"[DEBUG] Creating engine with url {EXPHEWAS_DATABASE_URL}",
           file=sys.stderr)
 
-ENGINE = create_engine(EXPHEWAS_DATABASE_URL, echo=DEBUG)
+ENGINE = create_engine(EXPHEWAS_DATABASE_URL, echo=DEBUG, pool_pre_ping=True)
 
 
 Session = scoped_session(sessionmaker(bind=ENGINE))

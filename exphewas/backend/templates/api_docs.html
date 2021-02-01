@@ -1,25 +1,143 @@
 {% extends "index.html" %}
 {% block body %}
+
+    <h3>Data release</h3>
+
+    <div>
+      <p>The current data release is v{{ meta.db.version }}</p>
+      <p>Generated on {{ meta.db.date }}</p>
+      <p>{{ meta.db.comments }}</p>
+    </div>
+
     <h3>API Documentation</h3>
 
     <div>
+      <p>The current data release is v{{ meta.db.version }}</p>
+      <p>Generated on {{ meta.db.date }}</p>
+      <p>{{ meta.db.comments }}</p>
+    </div>
 
-      <table id="outcomes" class="display" style="width:100%">
+      <p>You can access the data from the results browser programmatically by sending an HTTP request to the follow API endpoints.</p>
+      <p>The API root is: '{{ full_api_url }}'</p>
+
+      <table id="api" class="table table-striped" style="width:100%">
         <thead>
           <tr>
-            <th class="dt-head-left">Outcome Id</th>
-            <th class="dt-head-left">Available Analyses</th>
-            <th class="dt-head-left">Analysis Type</th>
+            <th class="dt-head-left">Resource</th>
             <th class="dt-head-left">Description</th>
+            <th class="dt-head-left">Parameters</th>
+            <th class="dt-head-left"><!-- Example //--></th>
           </tr>
         </thead>
+        <tbody>
+          <tr>
+            <td class="dt-left">GET /metadata</td>
+            <td class="dt-left">Get information for the data release currently available through the API.</td>
+            <td></td>
+            <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/metadata">Example</button></td>
+          </tr>
+          <tr><td colspan=4><b>Query results by outcome</b></td></tr>
+          <tr>
+            <td class="dt-left">GET /outcome</td>
+            <td class="dt-left">Get a list of outcomes</td>
+            <td></td>
+            <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/outcome">Example</button></td> <!-- e.g. //-->
+          </tr>
+          <tr>
+            <td class="dt-left">GET /outcome/&lt;id&gt;/results</td>
+            <td class="dt-left">Get all gene association statistics for an outcome.</td>
+            <td>
+              <ul class="list-group list-group-flush">
+                <li class="list-group-item"><span class="badge badge-pill badge-dark">id</span> The outcome identifier</li>
+                <li class="list-group-item"><span class="badge badge-pill badge-dark">variance_pct</span> Percentage of variance explained by the PCs (default: 95)</li>
+              </ul>
+            </td>
+            <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/outcome/<id>/results" data-params='{"id": 1092, "variance_pct": 95}'>Example</button></td> <!-- e.g. //-->
+          </tr>
+          <tr>
+            <td class="dt-left">GET /outcome/venn</td>
+            <td class="dt-left">Get number of shared associated genes for an arbitrary number of outcomes.</td>
+            <td>
+              <ul class="list-group list-group-flush">
+                <li class="list-group-item"><span class="badge badge-pill badge-dark">outcomes</span> List of outcomes delimited by ';'</li>
+                <li class="list-group-item"><span class="badge badge-pill badge-dark">q</span> The Q-value threshold to call an association 'significant' (default: 0.05)</li>
+              </ul>
+            </td>
+            <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/outcome/venn" data-params='{"outcomes": "cont_v12;cont_v10"}'>Example</button></td> <!-- e.g. //-->
+          </tr>
+          <tr><td colspan=4><b>Query results by gene and utilities for cross referencing</b></td></tr>
+          <tr>
+            <td class="dt-left">GET /gene</td>
+            <td class="dt-left">Get name strand and location of a gene.</td>
+            <td></td>
+            <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/gene">Example</button></td>
+          </tr>
+          <tr>
+            <td class="dt-left">GET /gene/name/&lt;name&gt;</td>
+            <td class="dt-left">Get gene information by name. Used for cross-referencing.</td>
+            <td></td>
+            <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/gene/name/<name>" data-params='{"name": "HCN4"}'>Example</button></td>
+          </tr>
+          <tr>
+            <td class="dt-left">GET /gene/ensembl/&lt;ensg&gt;</td>
+            <td class="dt-left">Get gene information by Ensembl ID. Used for cross-referencing.</td>
+            <td></td>
+            <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/gene/ensembl/<ensg>" data-params='{"ensg": "ENSG00000087237"}'>Example</button></td>
+          </tr>
+          <tr>
+            <td class="dt-left">GET /gene/&lt;ensg&gt;/results</td>
+            <td class="dt-left">Get results for a gene given its Ensembl ID.</td>
+            <td></td>
+            <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/gene/<ensg>/results" data-params='{"ensg": "ENSG00000087237"}'>Example</button></td>
+          </tr>
+          <tr>
+            <td class="dt-left">GET /gene/&lt;ensg&gt;/xrefs</td>
+            <td class="dt-left">Get cross references to other external databases from an Ensembl gene ID.</td>
+            <td></td>
+            <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/gene/<ensg>/xrefs" data-params='{"ensg": "ENSG00000087237"}'>Example</button></td>
+          </tr>
+        </tbody>
       </table>
-
     </div>
+
+  <!-- API documentation modals. //-->
+  <div class="modal fade" id="egModal" tabindex="-1" aria-labelledby="egModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">API Example</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+
+          <div>
+            <div>
+              <h6>Sample Request:</h6>
+              <code class="example-command">
+              </code>
+            </div>
+            <div style="margin-top: 20px">
+              <h6>Results:</h6>
+              <pre class="results">Loading...</pre>
+            </div>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
 
 {% endblock %}
 
 {% block other_script %}
     <script type="text/javascript">
+      window.pages.documentation();
     </script>
 {% endblock %}

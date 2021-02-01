@@ -4,9 +4,11 @@ Flask-based application for ExPheWAS.
 
 from collections import defaultdict
 
-from flask import Blueprint, render_template, abort
+from sqlalchemy.orm.exc import NoResultFound
+from flask import Blueprint, render_template, abort, url_for
 
 from . import api
+from ..version import exphewas_version
 from ..db import models
 from ..db.engine import Session
 
@@ -24,10 +26,33 @@ EXTERNAL_DB_URL = {
 EXTERNAL_DB_TO_SHOW = ("HGNC", "WikiGene", "MIM_GENE", "MIM_MORBID",
                        "our_uniprot")
 
+@backend.context_processor
+def inject_db_metadata():
+    metadata = {
+        "exphewas_version": exphewas_version,
+        "db": {}
+    }
+
+    try:
+        metadata["db"] = Session.query(models.Metadata).one().metadata_dict()
+    except NoResultFound:
+        pass
+
+    return {"meta": metadata}
+
 
 @backend.route("/docs")
 def get_docs():
-    return render_template("api_docs.html", page_title="docs")
+    # Infer api root
+    api_root = url_for("api_blueprint.get_metadata", _external=True)
+    api_root = "/".join(api_root.split("/")[:-1])
+
+    return render_template(
+        "api_docs.html",
+        page_title="docs",
+        full_api_url=api_root
+
+    )
 
 
 @backend.route("/outcome")
