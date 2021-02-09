@@ -19,8 +19,9 @@ function addColorScale(svg, scale, legendText) {
     .append('g')
     .attr('transform', 'translate(0, 10)')
     .append('text')
-    .attr('class', 'legend-title')
     .attr('id', 'atc-legend-title')
+    .attr('font-family', 'sans-serif')
+    .attr('font-size', '14px')
     .text(legendText)
 
   let g = plot
@@ -46,6 +47,8 @@ function addColorScale(svg, scale, legendText) {
     .append('text')
     .attr('x', rectSize + 7)
     .attr('y', rectSize - 3)
+    .attr('font-family', 'sans-serif')
+    .attr('font-size', '13px')
     .text(d => d);
 }
 
@@ -172,6 +175,9 @@ export default async function atcTree(id) {
     nodeEnter.append('circle')
       .attr('class', d => d.data.children === undefined? 'node leaf': 'node')
       .attr('r', 0)
+      .attr('fill', '#ffffff')
+      .attr('stroke', '#666666')
+      .attr('stroke-width', '2px')
       .on('mouseover', d => {
         let description = d.data.description === ''? '': `- ${d.data.description}`;
         d3.select('#tooltip-atc-tree')
@@ -202,6 +208,8 @@ export default async function atcTree(id) {
       .attr('dy', '.35em')
       .attr('x', d  => d.children || d._children ? -13 : 13)
       .attr('text-anchor', d => d.children || d._children ? 'end' : 'start')
+      .attr('font-size', '12px')
+      .attr('font-family', 'arial, sans-serif')
       .text(d => d.data.code);
 
     // UPDATE
@@ -255,6 +263,9 @@ export default async function atcTree(id) {
     // Enter any new links at the parent's previous position.
     let linkEnter = link.enter().insert('path', 'g')
       .attr('class', 'link')
+      .style('fill', 'none')
+      .style('stroke', '#cccccc')
+      .style('stroke-width', '2px')
       .attr('d', d => {
         var o = {x: source.x0, y: source.y0};
         return diagonal(o, o);
