@@ -1,5 +1,6 @@
 # export EXPHEWAS_DATABASE_URL to configure the database.
 # e.g. export EXPHEWAS_DATABASE_URL=postgresql+psycopg2://user:pwd@localhost/mydatabase
+host ?= 127.0.0.1
 
 .PHONY: database
 database: create ensembl uniprot_xref n_pcs hierarchy external_db populate_available_results
@@ -47,7 +48,7 @@ clear_results:
 
 .PHONY: serve_dev
 serve_dev:
-	FLASK_ENV=development FLASK_APP=exphewas.backend flask run --port 5001
+	FLASK_ENV=development FLASK_APP=exphewas.backend flask run --port 5001 --host '$(host)'
 
 
 .PHONY: serve
