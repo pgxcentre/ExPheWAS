@@ -175,7 +175,6 @@ export default async function atcTree(id) {
     nodeEnter.append('circle')
       .attr('class', d => d.data.children === undefined? 'node leaf': 'node')
       .attr('r', 0)
-      .attr('fill', '#ffffff')
       .attr('stroke', '#666666')
       .attr('stroke-width', '2px')
       .on('mouseover', d => {
@@ -223,7 +222,7 @@ export default async function atcTree(id) {
     // Update the node attributes and style
     nodeUpdate.select('circle.node')
       .attr('r', 9)
-      .style('fill', d => {
+      .attr('fill', d => {
         if (d.data.code == 'ATC') {
           // There is no data for the root node.
           return 'url(#diagonalHatch)';
@@ -231,7 +230,7 @@ export default async function atcTree(id) {
 
         return d.data.data.p === null? 'url(#diagonalHatch)': pColorScale(d.data.data.p)
       })
-      .style('stroke', d => {
+      .attr('stroke', d => {
         if (d.data.code == 'ATC') return;
 
         let min_p  = d.data.data.min_p_children;
