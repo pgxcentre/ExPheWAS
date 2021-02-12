@@ -244,6 +244,7 @@ export default async function qq(data) {
     .style('opacity', 0);
 
   const svgRect = svg.node().getBoundingClientRect();
+
   d3.select('#geneQQ').on('mousemove', () => {
     let pos = d3.clientPoint(svg.node(), d3.event);
     let datum = xy[delaunay.find(...pos)];
@@ -353,4 +354,10 @@ export default async function qq(data) {
     .style('text-anchor', 'middle')
     .attr('font-size', '0.8em')
     .text('Observed -log10(p)');
+
+  window.highlightTop = (n) => {
+    svg.selectAll("circle")
+      .attr("r", (e, i) => { return (i < n)? 4: 1 });
+  };
+
 }

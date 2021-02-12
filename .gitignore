@@ -10,3 +10,5 @@ config
 exphewas/version.py
 pyvenv
 dist
+build
+test
