@@ -12,8 +12,32 @@ create_python_venv() {
 
     python3 -m venv "$venv_dir"
     . "$venv_dir"/bin/activate
+
     pip install -U pip setuptools wheel
     deactivate
+}
+
+install_frontend() {
+    # Cleans the directory, and extract the frontend
+    local archive_name=$1
+    local destination=$2
+
+    rm -rf "$destination"/dist
+    tar -C "$destination" -xf "$archive_name"
+}
+
+install_backend() {
+    # Cleans the python virtual environment, and install the backend
+    local package=$1
+    local python_venv=$2
+
+    source "$python_venv"/bin/activate
+
+    if grep exphewas > /dev/null < <(pip list); then
+        pip uninstall -y exphewas
+    fi
+
+    pip install "$package"
 }
 
 main() {
@@ -55,16 +79,11 @@ main() {
         mkdir -p "$destination"/"$backend_version"
     fi
 
-    # Extracting the frontend to the directory
-    rm -rf "$destination"/"$backend_version"/dist
-    tar -C "$destination"/"$backend_version" -xf "$frontend"
+    # Installing the frontend
+    install_frontend "$frontend" "$destination"/"$backend_version"
 
-    # Updating the python virtual environment
-    source "$python_venv"/bin/activate
-    if grep exphewas > /dev/null < <(pip list); then
-        pip uninstall -y exphewas
-    fi
-    pip install "$backend"
+    # Installing the backend
+    install_backend "$backend" "$python_venv"
 }
 
 main "$@"
