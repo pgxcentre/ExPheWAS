@@ -41,6 +41,8 @@ build:staging:frontend:ukbiobank:
     expire_in: 1 day
   dependencies:
     - build:staging:backend
+  needs:
+    - build:staging:backend
   only:
     - deploy
 
