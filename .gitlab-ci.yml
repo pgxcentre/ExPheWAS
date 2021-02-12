@@ -1,10 +1,10 @@
 stages:
-  - build
+  - build:backend
+  - build:frontend
   - deploy
 
-
 build:staging:backend:
-  stage: build
+  stage: build:backend
   image: python:3.8
   tags:
     - deploy
@@ -19,9 +19,8 @@ build:staging:backend:
   only:
     - staging
 
-
 build:staging:frontend:ukbiobank:
-  stage: build
+  stage: build:frontend
   image: node:latest
   tags:
     - deploy
@@ -44,8 +43,7 @@ build:staging:frontend:ukbiobank:
   needs:
     - build:staging:backend
   only:
-    - deploy
-
+    - staging
 
 deploy:staging:ukbiobank:
   stage: deploy
@@ -78,4 +76,4 @@ deploy:staging:ukbiobank:
     name: staging_ukbiobank
     url: http://wkipl-sg-005.statgen.local/exphewas/ukbiobank/
   only:
-    - deploy
+    - staging
