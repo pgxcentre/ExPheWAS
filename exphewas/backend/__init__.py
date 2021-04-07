@@ -26,7 +26,7 @@ if STATIC_FOLDER is None:
 
 app = Flask(
     __name__,
-    static_url_path=URL_ROOT.rstrip("/") + "/dist",
+    # static_url_path=URL_ROOT.rstrip("/") + "/dist",
     static_folder=STATIC_FOLDER,
 )
 

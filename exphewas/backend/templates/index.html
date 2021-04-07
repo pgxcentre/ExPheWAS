@@ -1,46 +1,32 @@
-<!Doctype html>
-<html>
-  <head>
-    <script
-      src="https://code.jquery.com/jquery-3.1.0.js"
-      integrity="sha256-slogkvB1K3VOkzAI8QITxV3VzpOnkeNVsKvtkYLMjfk="
-      crossorigin="anonymous">
-    </script>
+{% extends "base.html" %}
+{% block body %}
 
-    <title>ExPheWAS Browser{{ " | " + page_title if page_title is not none }}</title>
-  </head>
+<div class="container">
+    <p>See the preprint for a thorough discussion or to cite this resource:</p>
 
-  <body>
-
-    <div>
-      <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="#">ExPheWAS Browser</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav mr-auto">
-            <li class="nav-item outcomes"><a class="nav-link" href="{{ url_for("backend_blueprint.get_outcomes") }}">Outcomes</a></li>
-            <li class="nav-item genes"><a class="nav-link" href="{{ url_for("backend_blueprint.get_genes") }}">Genes</a></li>
-            <li class="nav-item docs"><a class="nav-link" href="{{ url_for("backend_blueprint.get_docs") }}">Documentation</a></li>
-          </ul>
-        </div>
-
-        <span class="navbar-text">
-          <small>
-            Browser v{{ meta.exphewas_version }} //
-            Data v{{ meta.db.version }}</small>
-        </span>
-      </nav>
+    <div class="citation">
+      <p><b><i>ExPheWas</i>: a browser for gene-based pheWAS associations.</b><br /> Legault, M.-A., Lemieux Perreault, L.-P., & Dubé, M.-P. (2021). medRxiv. <a href="https://doi.org/10.1101/2021.03.17.21253824">https://doi.org/10.1101/2021.03.17.21253824</a></p>
     </div>
 
-    <div class="container-fluid">
-      {% block body %}{% endblock %}
-    </div>
+    <h3>Overview</h3>
 
-    <script type="text/javascript" src="{{ url_for('static', filename='main.js') }}?{{ config.EXPHEWAS_VERSION }}"></script>
-    {% block other_script %}{% endblock %}
+    <p>The ExPheWas browser showcases the results of a phenome-wide association study (PheWAS) using an approach that models the joint effect of variants at protein coding genes. In the original release, we tested the association between 19,114 genes on human autosomes and 1,210 phenotypes available from the UK Biobank.</p>
 
-  </body>
-</html>
+    <p>Briefly, we used a principal component analysis of common variant genotypes (PCA) to reduce the effective number of variables needed to represent the genotypes. Association testing is then done by assessing the improvement in goodness of fit from including the gene based principal components to a regression model. The experimental setup is described in more details in the figure below:</p>
+
+    <p style="text-align: center;"><img style="max-width: 100%; height: auto" src="{{ url_for('backend_blueprint.static', filename='analysis_summary.png') }}" /></p>
+
+    <p>PheWAS results can then be browsed <a href="{{ url_for("backend_blueprint.get_genes") }}">by gene</a> or <a href="{{ url_for("backend_blueprint.get_outcomes") }}">by phenotype</a>. The pages are mostly self-explanatory, but key features are illustrated below:</p>
+
+    <p style="text-align: center;"><img style="max-width: 100%; height: auto" src="{{ url_for('backend_blueprint.static', filename='browser_figure.svg') }}" /></p>
+
+    <h3>Support</h3>
+
+    <p>For technical assistance or feature requests, we recommend you open a ticket on the project's <a href="https://github.com/pgxcentre/ExPheWAS/issues">Github page</a>. For other inquiries, you may contact the corresponding author of the manuscript.</p>
+
+</div>
+
+{% endblock %}
+
+{% block other_script %}
+{% endblock %}

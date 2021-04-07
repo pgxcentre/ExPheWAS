@@ -20,9 +20,6 @@ d3.getEvent = () => require("d3-selection").event;
 
 
 function mainOutcomeList() {
-  // Add active page styling.
-  $('.nav-item.outcomes').addClass('active');
-
   $('#app #outcomes')
     .DataTable({
       deferRender: true,
@@ -367,9 +364,6 @@ async function mainGeneResults(id) {
 
 
 function mainGeneList() {
-  // Add active page styling.
-  $('.nav-item.genes').addClass('active');
-
   $('#app #genes')
     .DataTable({
       processing: true,

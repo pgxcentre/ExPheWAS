@@ -1,0 +1,55 @@
+<!Doctype html>
+<html>
+  <head>
+    <script
+      src="https://code.jquery.com/jquery-3.1.0.js"
+      integrity="sha256-slogkvB1K3VOkzAI8QITxV3VzpOnkeNVsKvtkYLMjfk="
+      crossorigin="anonymous">
+    </script>
+
+    <title>ExPheWAS Browser{{ " | " + page_title if page_title is not none }}</title>
+  </head>
+
+  <body>
+
+    <div>
+      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <span class="navbar-brand"><img src="{{ url_for('backend_blueprint.static', filename='exphewas_logo.svg') }}" height="30px" /></span>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item home">
+              <a class="nav-link{% if request.url_rule.endpoint == 'backend_blueprint.get_index' %} active{% endif %}" href="{{ url_for("backend_blueprint.get_index") }}">Home</a>
+            </li>
+            <li class="nav-item outcomes">
+              <a class="nav-link{% if request.url_rule.endpoint == 'backend_blueprint.get_outcomes' %} active{% endif %}" href="{{ url_for("backend_blueprint.get_outcomes") }}">Phenotypes</a>
+            </li>
+            <li class="nav-item genes">
+              <a class="nav-link{% if request.url_rule.endpoint == 'backend_blueprint.get_genes' %} active{% endif %}" href="{{ url_for("backend_blueprint.get_genes") }}">Genes</a>
+            </li>
+            <li class="nav-item docs">
+              <a class="nav-link{% if request.url_rule.endpoint == 'backend_blueprint.get_docs' %} active{% endif %}" href="{{ url_for("backend_blueprint.get_docs") }}">Documentation</a>
+            </li>
+          </ul>
+        </div>
+
+        <span class="navbar-text">
+          <small>
+            Browser v{{ meta.exphewas_version }} //
+            Data v{{ meta.db.version }}</small>
+        </span>
+      </nav>
+    </div>
+
+    <div class="container-fluid px-4 mb-5">
+      {% block body %}{% endblock %}
+    </div>
+
+    <script type="text/javascript" src="{{ url_for('static', filename='main.js') }}?{{ config.EXPHEWAS_VERSION }}"></script>
+    {% block other_script %}{% endblock %}
+
+  </body>
+</html>
