@@ -107,3 +107,31 @@ deploy:staging:ukbiobank:
     url: http://wkipl-sg-005.statgen.local/exphewas/ukbiobank/
   only:
     - staging
+
+deploy:production:
+  stage: deploy
+  image: centos:latest
+  tags:
+    - deploy
+  before_script:
+    - yum install -y which openssh-clients rsync
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+    - chmod 600 ~/.ssh/known_hosts
+  script:
+    - rsync -av dist/exphewas-*.tar.gz frontend/frontend_dist.tar.gz exphewas@exphewas.statgen.org:.
+  dependencies:
+    - build:backend
+    - build:production:frontend
+  needs:
+    - build:backend
+    - build:production:frontend
+  environment:
+    name: production_ukbiobank
+    url: https://exphewas.statgen.org/
+  only:
+    - production
+    - dev
