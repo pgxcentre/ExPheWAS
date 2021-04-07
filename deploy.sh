@@ -38,6 +38,7 @@ install_backend() {
     fi
 
     pip install "$package"
+    deactivate
 }
 
 main() {
