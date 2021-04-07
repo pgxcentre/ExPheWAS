@@ -18,8 +18,7 @@ build:backend:
   dependencies: []
   only:
     - staging
-    - production
-    - dev
+    - deploy
 
 build:staging:frontend:ukbiobank:
   stage: build:frontend
@@ -72,8 +71,7 @@ build:production:frontend:
   needs:
     - build:backend
   only:
-    - production
-    - dev
+    - deploy
 
 deploy:staging:ukbiobank:
   stage: deploy
@@ -137,5 +135,4 @@ deploy:production:
     name: production_ukbiobank
     url: https://exphewas.statgen.org/
   only:
-    - production
-    - dev
+    - deploy
