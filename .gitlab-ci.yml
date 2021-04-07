@@ -62,7 +62,7 @@ build:production:frontend:
     - npm run build
   after_script:
     - cd frontend
-    - tar -zcvf ./frontend_dist.tar.gz ./dist
+    - tar -zcvf ./frontend_dist.tar.gz dist
   artifacts:
     paths:
       - frontend/frontend_dist.tar.gz
