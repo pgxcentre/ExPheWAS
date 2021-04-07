@@ -53,10 +53,10 @@ build:production:frontend:
   tags:
     - deploy
   before_script:
+    - export EXPHEWAS_MAJOR_VERSION=v$(ls dist/exphewas-*.tar.gz | sort -V | tail -n1 | grep -o -E "[0-9]+\.[0-9]+\.[0-9]+" | cut -d. -f1)
+    - echo Building for $EXPHEWAS_MAJOR_VERSION
     - cd frontend
     - npm install
-    - export EXPHEWAS_MAJOR_VERSION=v$(ls dist/exphewas-*.tar.gz | sort -V | tail -n1 | grep -o -E "[0-9]+\.[0-9]+\.[0-9]+" | cut -d. -f1)
-    - echo $EXPHEWAS_MAJOR_VERSION
     - export EXPHEWAS_URL_ROOT=/$EXPHEWAS_MAJOR_VERSION
   script:
     - npm run build
