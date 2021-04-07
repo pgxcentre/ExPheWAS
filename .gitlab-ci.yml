@@ -122,7 +122,7 @@ deploy:production:
     - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
     - chmod 600 ~/.ssh/known_hosts
   script:
-    - rsync -av dist/exphewas-*.tar.gz frontend/frontend_dist.tar.gz exphewas@exphewas.statgen.org:.
+    - rsync -av deploy.sh dist/exphewas-*.tar.gz frontend/frontend_dist.tar.gz exphewas@exphewas.statgen.org:.
   dependencies:
     - build:backend
     - build:production:frontend
