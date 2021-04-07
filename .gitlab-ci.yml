@@ -3,7 +3,7 @@ stages:
   - build:frontend
   - deploy
 
-build:staging:backend:
+build:backend:
   stage: build:backend
   image: python:3.8
   tags:
@@ -18,6 +18,8 @@ build:staging:backend:
   dependencies: []
   only:
     - staging
+    - production
+    - dev
 
 build:staging:frontend:ukbiobank:
   stage: build:frontend
@@ -39,11 +41,38 @@ build:staging:frontend:ukbiobank:
       - frontend/dist/frontend_ukbiobank.tar.gz
     expire_in: 1 day
   dependencies:
-    - build:staging:backend
+    - build:backend
   needs:
-    - build:staging:backend
+    - build:backend
   only:
     - staging
+
+build:production:frontend:
+  stage: build:frontend
+  image: node:latest
+  tags:
+    - deploy
+  before_script:
+    - cd frontend
+    - npm install
+    - export EXPHEWAS_MAJOR_VERSION=v$(ls dist/*.tar.gz | sort -V | tail -n1 | grep -o -E "[0-9]+\.[0-9]+\.[0-9]+" | cut -d. -f1)
+    - export EXPHEWAS_URL_ROOT=/$EXPHEWAS_MAJOR_VERSION
+  script:
+    - npm run build
+  after_script:
+    - cd frontend
+    - tar -zcvf ./frontend_dist.tar.gz ./dist
+  artifacts:
+    paths:
+      - frontend/frontend_dist.tar.gz
+    expire_in: 1 day
+  dependencies:
+    - build:backend
+  needs:
+    - build:backend
+  only:
+    - production
+    - dev
 
 deploy:staging:ukbiobank:
   stage: deploy
@@ -67,10 +96,10 @@ deploy:staging:ukbiobank:
     - ssh flask@wkipl-sg-005.statgen.local "tar -C /var/www/exphewas/ukbiobank/frontend/dist -zxvf /var/www/exphewas/ukbiobank/files/frontend_ukbiobank.tar.gz"
     - ssh flask@wkipl-sg-005.statgen.local "sudo /usr/bin/systemctl start exphewas_ukbiobank.service"
   dependencies:
-    - build:staging:backend
+    - build:backend
     - build:staging:frontend:ukbiobank
   needs:
-    - build:staging:backend
+    - build:backend
     - build:staging:frontend:ukbiobank
   environment:
     name: staging_ukbiobank
