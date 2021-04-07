@@ -2,6 +2,7 @@
 Flask-based application for ExPheWAS.
 """
 
+import os
 from collections import defaultdict
 
 from sqlalchemy.orm.exc import NoResultFound
@@ -13,7 +14,12 @@ from ..db import models
 from ..db.engine import Session
 
 
-backend = Blueprint("backend_blueprint", __name__)
+backend = Blueprint(
+    "backend_blueprint",
+    __name__,
+    static_url_path="/backend_static/",
+    static_folder=os.path.join(os.path.dirname(__file__), "static")
+)
 
 EXTERNAL_DB_URL = {
     "WikiGene": "https://www.wikigenes.org/e/gene/e/{id}.html",
@@ -41,6 +47,11 @@ def inject_db_metadata():
     return {"meta": metadata}
 
 
+@backend.route("/")
+def get_index():
+    return render_template("index.html", page_title="Home")
+
+
 @backend.route("/docs")
 def get_docs():
     # Infer api root
@@ -48,16 +59,15 @@ def get_docs():
     api_root = "/".join(api_root.split("/")[:-1])
 
     return render_template(
-        "api_docs.html",
-        page_title="docs",
+        "docs.html",
+        page_title="Documentation",
         full_api_url=api_root
-
     )
 
 
 @backend.route("/outcome")
 def get_outcomes():
-    return render_template("outcome_list.html", page_title="outcomes")
+    return render_template("outcome_list.html", page_title="Phenotypes")
 
 
 @backend.route("/outcome/<id>")
@@ -77,7 +87,7 @@ def get_outcome(id):
 
     return render_template(
         "outcome.html",
-        page_title=f"outcome {id}",
+        page_title=f"Outcome {id}",
         has_atc_enrichment=has_atc,
         **outcome_data,
     )
@@ -85,7 +95,7 @@ def get_outcome(id):
 
 @backend.route("/gene")
 def get_genes():
-    return render_template("gene_list.html", page_title="genes")
+    return render_template("gene_list.html", page_title="Genes")
 
 
 @backend.route("/gene/<ensg>")

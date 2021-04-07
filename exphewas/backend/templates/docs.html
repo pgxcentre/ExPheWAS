@@ -1,24 +1,20 @@
-{% extends "index.html" %}
+{% extends "base.html" %}
 {% block body %}
 
-    <h3>Data release</h3>
+  <div class="container">  <!-- Documentation is narrower because it's more text-heavy. -->
+    <h3>Data release information</h3>
 
     <div>
       <p>The current data release is v{{ meta.db.version }}</p>
       <p>Generated on {{ meta.db.date }}</p>
-      <p>{{ meta.db.comments }}</p>
+      <p>{{ meta.db.comments|safe }}</p>
     </div>
 
     <h3>API Documentation</h3>
 
-    <div>
-      <p>The current data release is v{{ meta.db.version }}</p>
-      <p>Generated on {{ meta.db.date }}</p>
-      <p>{{ meta.db.comments }}</p>
-    </div>
+    <p>Programmatic access to ExPheWas results is provided through a web API. This makes is easy to use any programming language or the command line (<i>e.g.</i> using cURL on UNIX-based systems). Every entry from the API documentation is accompanied by a dynamically populated example (blue buttons in the table below). Clicking the "Example" button will show a sample request using the <i>curl</i> command along with live results from the API. For Python users, we suggest looking at the <a href="https://docs.python-requests.org/en/master/">requests</a> library to facilitate programmatic access. For now, all API endpoints use JSON as the content-type. This format is widely supported by modern programming languages. For specific applications that may require high throughput access, contact the authors for the possibility of deploying local instances.</p>
 
-      <p>You can access the data from the results browser programmatically by sending an HTTP request to the follow API endpoints.</p>
-      <p>The API root is: '{{ full_api_url }}'</p>
+      <p><b>The API root is: '{{ full_api_url }}'</b></p>
 
       <table id="api" class="table table-striped" style="width:100%">
         <thead>
@@ -100,39 +96,39 @@
       </table>
     </div>
 
-  <!-- API documentation modals. //-->
-  <div class="modal fade" id="egModal" tabindex="-1" aria-labelledby="egModal" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">API Example</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-
-          <div>
-            <div>
-              <h6>Sample Request:</h6>
-              <code class="example-command">
-              </code>
-            </div>
-            <div style="margin-top: 20px">
-              <h6>Results:</h6>
-              <pre class="results">Loading...</pre>
-            </div>
+    <!-- API documentation modals. //-->
+    <div class="modal fade" id="egModal" tabindex="-1" aria-labelledby="egModal" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">API Example</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
           </div>
+          <div class="modal-body">
 
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <div>
+              <div>
+                <h6>Sample Request:</h6>
+                <code class="example-command">
+                </code>
+              </div>
+              <div style="margin-top: 20px">
+                <h6>Results:</h6>
+                <pre class="results">Loading...</pre>
+              </div>
+            </div>
+
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
         </div>
       </div>
     </div>
+
   </div>
-
-
 
 {% endblock %}
 
