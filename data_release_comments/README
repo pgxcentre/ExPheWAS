@@ -1,0 +1,4 @@
+To load the release metadata in the database, it is recommended to use the CLI as follows:
+
+exphewas-db metadata --comments "$(cat v0.1.html)"
+
