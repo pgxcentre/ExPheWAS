@@ -78,7 +78,6 @@
   width: 150px;
 }
 
-
 .citation {
   max-width: 500px;
   margin: 10px 0 20px 20px;
@@ -89,4 +88,20 @@
 
 .citation p {
     margin: 0;
+}
+
+#home-phen-page-link {
+    display: block;
+    width: 41.27%;
+    height: auto;
+    float: left;
+}
+
+#home-gene-page-link {
+    display: block;
+    width: 48.72%;
+    height: auto;
+    float: right;
+    margin-left: 10px;
+    margin-bottom: auto;
 }

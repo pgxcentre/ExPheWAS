@@ -18,7 +18,14 @@
 
     <p>PheWAS results can then be browsed <a href="{{ url_for("backend_blueprint.get_genes") }}">by gene</a> or <a href="{{ url_for("backend_blueprint.get_outcomes") }}">by phenotype</a>. The pages are mostly self-explanatory, but key features are illustrated below:</p>
 
-    <p style="text-align: center;"><img style="max-width: 100%; height: auto" src="{{ url_for('backend_blueprint.static', filename='browser_figure.svg') }}" /></p>
+    <div class="row" style="margin-bottom: 30px;">
+      <a id="home-phen-page-link" href="{{ url_for('backend_blueprint.get_outcomes') }}">
+        <img src="{{ url_for('backend_blueprint.static', filename='browser_figure_phenotype.svg') }}" />
+      </a>
+      <a id="home-gene-page-link" href="{{ url_for('backend_blueprint.get_genes') }}">
+        <img src="{{ url_for('backend_blueprint.static', filename='browser_figure_gene.svg') }}" />
+      </a>
+    </div>
 
     <h3>Support</h3>
 
