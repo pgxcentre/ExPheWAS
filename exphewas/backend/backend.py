@@ -9,7 +9,6 @@ from sqlalchemy.orm.exc import NoResultFound
 from flask import Blueprint, render_template, abort, url_for
 
 from . import api
-from .config import URL_ROOT
 from ..version import exphewas_version
 from ..db import models
 from ..db.engine import Session
@@ -18,7 +17,7 @@ from ..db.engine import Session
 backend = Blueprint(
     "backend_blueprint",
     __name__,
-    static_url_path=URL_ROOT.rstrip("/") + "/backend_static/",
+    static_url_path="/backend_static/",
     static_folder=os.path.join(os.path.dirname(__file__), "static")
 )
 
