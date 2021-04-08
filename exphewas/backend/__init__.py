@@ -9,6 +9,7 @@ from flask_cors import CORS
 
 from .. import __version__
 
+from .config import URL_ROOT, STATIC_FOLDER
 from .api import api as api_blueprint
 from .backend import backend as backend_blueprint
 from .dt_api import dt_api as dt_api_blueprint
@@ -16,17 +17,9 @@ from .dt_api import dt_api as dt_api_blueprint
 from ..db.engine import Session
 
 
-URL_ROOT = os.environ.get("EXPHEWAS_URL_ROOT", "/")
-STATIC_FOLDER = os.environ.get("EXPHEWAS_STATIC_FOLDER")
-
-if STATIC_FOLDER is None:
-    raise RuntimeError("No static folder specified for the frontend. Use "
-                       "EXPHEWAS_STATIC_FOLDER environment variable.")
-
-
 app = Flask(
     __name__,
-    # static_url_path=URL_ROOT.rstrip("/") + "/dist",
+    static_url_path=URL_ROOT.rstrip("/") + "/dist",
     static_folder=STATIC_FOLDER,
 )
 
