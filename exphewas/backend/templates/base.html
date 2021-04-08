@@ -34,13 +34,13 @@
               <a class="nav-link{% if request.url_rule.endpoint == 'backend_blueprint.get_docs' %} active{% endif %}" href="{{ url_for("backend_blueprint.get_docs") }}">Documentation</a>
             </li>
           </ul>
+          <div class="dropdown-divider"></div>
+          <span class="navbar-text">
+            <small>
+              Browser v{{ meta.exphewas_version }} //
+              Data v{{ meta.db.version }}</small>
+          </span>
         </div>
-
-        <span class="navbar-text">
-          <small>
-            Browser v{{ meta.exphewas_version }} //
-            Data v{{ meta.db.version }}</small>
-        </span>
       </nav>
     </div>
 
