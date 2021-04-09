@@ -243,8 +243,6 @@ export default async function qq(data) {
     .style('z-index', '20')
     .style('opacity', 0);
 
-  const svgRect = svg.node().getBoundingClientRect();
-
   d3.select('#geneQQ').on('mousemove', () => {
     let pos = d3.clientPoint(svg.node(), d3.event);
     let datum = xy[delaunay.find(...pos)];
@@ -260,15 +258,21 @@ export default async function qq(data) {
         Outcome: ${datum.outcomeLabel}<br />
         Association p-value: ${p}
       `)
-
-    // Get tooltip dimension after writing html to position the box correctly.
     let ttRect = tooltip.node().getBoundingClientRect();
-    let ttX = svgRect.x + xScale(datum.x) - ttRect.width - 5;
-    let ttY = svgRect.y + yScale(datum.y) - ttRect.height - 5;
+
+    let curCircle = d3.select(`#qqid-${datum.analysisType}-${datum.outcomeId}`)
+      .node();
+
+    var matrix = curCircle.getScreenCTM()
+      .translate(+curCircle.getAttribute("cx"),
+                 +curCircle.getAttribute("cy"));
+
+    let ttLeft = window.pageXOffset + matrix.e - ttRect.width - 5;
+    let ttTop = window.pageYOffset + matrix.f - ttRect.height - 5;
 
     tooltip
-      .style('left', `${ttX}px`)
-      .style('top', `${ttY}px`)
+      .style('left', `${ttLeft}px`)
+      .style('top', `${ttTop}px`)
       .style('opacity', 1)
 
     // Highlight point.
@@ -320,6 +324,7 @@ export default async function qq(data) {
     .data(xy)
     .enter()
     .append('circle')
+    .attr('id', d => `qqid-${d.analysisType}-${d.outcomeId}`)
     .attr('class', 'pt')
     .attr('fill', d => d.color)
     .attr('cx', d => xScale(d.x))

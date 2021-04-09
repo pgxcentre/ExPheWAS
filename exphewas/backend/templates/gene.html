@@ -1,8 +1,11 @@
 {% extends "base.html" %}
-{% block body %}
-    <div class="tooltip" id="tooltipGTEX"></div>
-    <div class="tooltip" id="tooltipQQ"></div>
 
+{% block tooltips %}
+  <div class="tooltip" id="tooltipGTEX"></div>
+  <div class="tooltip" id="tooltipQQ"></div>
+{% endblock %}
+
+{% block body %}
     <div class="geneHeader">
       <h3>Gene {{ name }}</h3>
         {%- for value in available_variance|sort %}
