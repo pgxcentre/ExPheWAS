@@ -90,7 +90,7 @@ def parse_args():
         "--explain-variance",
         help="Keep the number of PCs so that this amount of variance is "
              "explained (default: %(default)s)",
-        default=0.99,
+        default=0.95,
         type=float
     )
 
