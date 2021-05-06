@@ -71,7 +71,7 @@ def main():
         columns=["XPC{}".format(i + 1) for i in range(pcs.shape[1])]
     )
 
-    df.to_csv(args.output + "_pcs.csv.gzip", compression="gzip",
+    df.to_csv(args.output + "_pcs.csv.gz", compression="gzip",
               index_label="sample_id")
 
     # Save the PCA object.
