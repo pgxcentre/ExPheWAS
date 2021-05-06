@@ -23,7 +23,8 @@ def main():
 
     chrom, _pos = args.region.split(":")
     start, end = [int(i) for i in _pos.split("-")]
-    genotypes = extract_genotypes_in_region(reader, chrom, start, end)
+    genotypes = extract_genotypes_in_region(reader, chrom, start, end,
+                                            maf=args.maf)
 
     n_samples, n_snps = genotypes.shape
     print(
@@ -62,12 +63,12 @@ def main():
 def _get_maf(g):
     return g.genotypes, g.maf()
 
-def extract_genotypes_in_region(reader, chrom, start, end):
+def extract_genotypes_in_region(reader, chrom, start, end, maf_threshold):
     genotypes = []
     for g in reader.get_variants_in_region(chrom, start, end):
         maf = g.maf()
 
-        if np.isnan(maf) or maf < 0.01:
+        if np.isnan(maf) or maf < maf_threshold:
             continue
 
         # Normalize the genotypes
@@ -106,6 +107,14 @@ def parse_args():
         "--output", "-o",
         help="Prefix for output file (default: %(default)s).",
         default="gene2vec"
+    )
+
+
+    parser.add_argument(
+        "--maf",
+        help="Maf threshold for inclusion (MAF < threshold will be excluded). "
+             "default: %(default)s",
+        default=0.01
     )
 
     return parser.parse_args()
