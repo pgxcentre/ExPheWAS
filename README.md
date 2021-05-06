@@ -20,4 +20,4 @@ The [issue tracker](https://github.com/pgxcentre/ExPheWAS/issues) is a good way 
 
 ### Citation
 
-Legault, Marc-André, Louis-Philippe Lemieux Perreault, and Marie-Pierre Dubé. "ExPheWas: a browser for gene-based pheWAS associations." medRxiv (2021).
+Marc-André Legault, Louis-Philippe Lemieux Perreault, and Marie-Pierre Dubé. "ExPheWas: a browser for gene-based pheWAS associations." medRxiv (2021).
