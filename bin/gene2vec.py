@@ -21,10 +21,29 @@ def main():
         **geneparse.utils.parse_kwargs(args.genotypes_kwargs)
     )
 
+    # Read the list of variants to consider.
+    extract_ids = None
+    if args.extract is not None:
+        with open(args.extract, "rt") as f:
+            extract_ids = set(f.read().splitlines())
+
+    # Read the list of individuals to consider.
+    keep_samples = None
+    if args.keep is not None:
+        with open(args.keep, "rt") as f:
+            keep_samples = set(f.read().splitlines())
+
     chrom, _pos = args.region.split(":")
     start, end = [int(i) for i in _pos.split("-")]
     genotypes = extract_genotypes_in_region(reader, chrom, start, end,
-                                            maf=args.maf)
+                                            maf_threshold=args.maf,
+                                            extract_ids=extract_ids)
+
+    # Apply the sample filtering.
+    reader_samples = pd.Index(reader.get_samples())
+    samples_filter_vector = reader_samples.isin(keep_samples)
+    output_samples = reader_samples[samples_filter_vector]
+    genotypes = genotypes[samples_filter_vector, :]
 
     n_samples, n_snps = genotypes.shape
     print(
@@ -48,7 +67,7 @@ def main():
     # Save the PCs
     df = pd.DataFrame(
         pcs,
-        index=reader.get_samples(),
+        index=output_samples,
         columns=["XPC{}".format(i + 1) for i in range(pcs.shape[1])]
     )
 
@@ -63,10 +82,21 @@ def main():
 def _get_maf(g):
     return g.genotypes, g.maf()
 
-def extract_genotypes_in_region(reader, chrom, start, end, maf_threshold):
+def extract_genotypes_in_region(reader, chrom, start, end, maf_threshold,
+                                extract_ids):
+    """Returns a m x n matrix of standardized genotypes.
+
+       m: number of individuals
+       n: number of variants
+
+    """
+
     genotypes = []
     for g in reader.get_variants_in_region(chrom, start, end):
         maf = g.maf()
+
+        if (extract_ids is not None) and (g.variant.name not in extract_ids):
+            continue
 
         if np.isnan(maf) or maf < maf_threshold:
             continue
@@ -114,7 +144,23 @@ def parse_args():
         "--maf",
         help="Maf threshold for inclusion (MAF < threshold will be excluded). "
              "default: %(default)s",
-        default=0.01
+        default=0.01,
+        type=float
+    )
+
+    parser.add_argument(
+        "--extract",
+        help="Specify a list of GENETIC VARIANTS to keep for the PCA. Only "
+             "variants in this list will be considered.",
+        default=None,
+        type=str
+    )
+
+    parser.add_argument(
+        "--keep",
+        help="Specify a list of SAMPLES to keep for the PCA.",
+        default=None,
+        type=str
     )
 
     return parser.parse_args()
