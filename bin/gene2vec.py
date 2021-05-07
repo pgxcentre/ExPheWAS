@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-import os
+import sys
 import pickle
 import gzip
 import argparse
@@ -109,6 +109,10 @@ def extract_genotypes_in_region(reader, chrom, start, end, maf_threshold,
 
         genotypes.append(g)
 
+    if len(genotypes) == 0:
+        print("No variant left in the region 'chr{}:{}-{}'"
+              "".format(chrom, start, end))
+        sys.exit(0)
     return np.vstack(genotypes).T
 
 
