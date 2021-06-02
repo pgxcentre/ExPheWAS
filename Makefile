@@ -3,7 +3,7 @@
 host ?= 127.0.0.1
 
 .PHONY: database
-database: create ensembl uniprot_xref n_pcs hierarchy external_db populate_available_results
+database: create ensembl uniprot_xref hierarchy external_db populate_available_results
 
 
 .PHONY: create
@@ -13,7 +13,9 @@ create:
 
 .PHONY: ensembl
 ensembl:
-	exphewas-db import-ensembl data/ensembl/human_protein_coding_genes.gtf.gz --description data/ensembl/gene_descrtiption.csv.gz
+	exphewas-db import-ensembl data/ensembl/Homo_sapiens.GRCh37.87.protein_coding_lincRNA.gtf.gz \
+	   --description data/ensembl/gene_description.csv.gz \
+	   --included-genes data/exphewas/pca_metadata.csv.gz
 
 
 .PHONY: uniprot_xref
@@ -21,9 +23,9 @@ uniprot_xref:
 	exphewas-db import-external --external-db data/uniprot/external_db.our.csv.gz --xrefs data/uniprot/ensembl_xrefs.our.csv.gz
 
 
-.PHONY: n_pcs
-n_pcs:
-	exphewas-db import-n-pcs data/exphewas/n_components_all.csv.gz
+# .PHONY: n_pcs
+# n_pcs:
+# 	exphewas-db import-n-pcs data/exphewas/n_components_all.csv.gz
 
 
 .PHONY: hierarchy

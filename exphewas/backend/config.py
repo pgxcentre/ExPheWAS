@@ -2,6 +2,10 @@
 
 import os
 
+# Other important configuration variables are:
+#
+# EXPHEWAS_DATABASE_URL
+# EXPHEWAS_DEBUG
 
 URL_ROOT = os.environ.get("EXPHEWAS_URL_ROOT", "/")
 STATIC_FOLDER = os.environ.get("EXPHEWAS_STATIC_FOLDER")

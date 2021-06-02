@@ -2,9 +2,12 @@
 
 
 from os import path
+import gzip
+import json
 
 import pandas as pd
 import numpy as np
+import scipy.stats
 from scipy.interpolate import UnivariateSpline
 
 from pkg_resources import resource_filename
@@ -40,6 +43,71 @@ def load_gtex_statistics():
     df = pd.read_csv(fn).set_index("Tissue", verify_integrity=True)
 
     return dict(df["# RNASeq Samples"].iteritems())
+
+
+def load_ukbphewas_model(filename):
+    """Load the full model fit as serialized by UKBPheWAS.
+
+    It's one phenotype per row. Every row is a valid JSON.
+
+    """
+    models = []
+    with gzip.open(filename, "rt") as f:
+        for line in f:
+            model = json.loads(line)
+            fit = model.pop("model_fit")
+            fit = pd.DataFrame(fit)
+            model["model_fit"] = fit
+            models.append(model)
+
+    return models
+
+
+def one_sample_pca_ivw(x_model, y_model, ci=None):
+    """Compute the IVW estimate of the effect of X on Y using PCs as IVs.
+
+    CI needs to be an alpha level.
+
+    """
+    def _prep_df(df, label):
+        term_column = "term" if "term" in df.columns else "variable"
+        cols = [term_column, "beta", "se"]
+
+        # Keep only PCs and the relevant columns.
+        df = df.loc[df[term_column].str.startswith("XPC"), cols].copy()
+        df = df.set_index(term_column)
+        df.columns = [f"{label}_beta", f"{label}_se"]
+        return df
+
+    x = _prep_df(x_model["model_fit"], "x")
+    y = _prep_df(y_model["model_fit"], "y")
+    df = pd.concat((x, y), axis=1)
+
+    # The IVW weight is only valid under relevance, but if we filter out PCs
+    # with a null effect, then we're subject to Winner's curse.
+    precisions = df["y_se"] ** -2
+    ivw_denum = np.sum(df["x_beta"] ** 2 * precisions)
+    ivw = (
+        np.sum(df["x_beta"] * df["y_beta"] * precisions) /
+        ivw_denum
+    )
+
+    # We use the first order approximation as in Burgess 2013 (Genetic Epi.)
+    # for now.
+    se = np.sqrt(1 / ivw_denum)
+
+    out = {
+        "ivw_beta": ivw,
+        "ivw_se": se
+    }
+
+    if ci:
+        z = scipy.stats.norm.ppf(ci / 2)
+        ci = str(int(ci * 100))
+        out[f"lower_ci{ci}"] = ivw + z * se
+        out[f"upper_ci{ci}"] = ivw - z * se
+
+    return out
 
 
 def _pi_0(ps, l=0.5):

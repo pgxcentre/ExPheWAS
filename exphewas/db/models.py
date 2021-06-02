@@ -1,5 +1,5 @@
 """
-Database models to store the results of exPheWAS analysis.
+Database models to store the results of ExPheWas analysis.
 """
 
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
@@ -11,16 +11,20 @@ from sqlalchemy import (
     and_, PrimaryKeyConstraint, Date
 )
 
+import scipy.stats
+import numpy as np
+
 from .engine import ENGINE, Session
 
 
 ANALYSIS_TYPES = [
-    "ICD10_3CHAR", "ICD10_BLOCK", "ICD10_RAW", "CONTINUOUS_VARIABLE",
-    "SELF_REPORTED", "CV_ENDPOINTS"
+    "PHECODES", "CONTINUOUS_VARIABLE", "SELF_REPORTED", "CV_ENDPOINTS"
 ]
 
 
 AnalysisEnum = Enum(*ANALYSIS_TYPES, name="enum_analysis_type")
+SexSubsetEnum = Enum("BOTH", "FEMALE_ONLY", "MALE_ONLY",
+                     name="enum_sex_subset")
 
 
 Base = declarative_base()
@@ -154,27 +158,12 @@ class ContinuousOutcome(Outcome):
     }
 
 
-class GeneVariance(Base):
-    __tablename__ = "gene_variance"
-
-    ensembl_id = Column(
-        String, ForeignKey("genes.ensembl_id"), primary_key=True
-    )
-    variance_pct = Column(Integer, primary_key=True)
-    n_components = Column(Integer, nullable=False)
-
-    def __init__(self, ensg, variance_pct, n_components):
-        self.ensembl_id = ensg
-        self.variance_pct = variance_pct
-        self.n_components = n_components
-
-
 class ResultMixin(object):
+    analysis_subset = Column(SexSubsetEnum, primary_key=True)
+
     @declared_attr
     def gene(cls):
         return Column(String, ForeignKey("genes.ensembl_id"), primary_key=True)
-
-    variance_pct = Column(Integer, primary_key=True)
 
     @declared_attr
     def outcome_id(cls):
@@ -185,47 +174,60 @@ class ResultMixin(object):
         return relationship("Gene")
 
     @declared_attr
-    def __table_args__(cls):
-        return (
-            ForeignKeyConstraint(
-                [cls.gene, cls.variance_pct],
-                ["gene_variance.ensembl_id", "gene_variance.variance_pct"]
-            ),
-        )
-
-    @declared_attr
     def outcome_obj(cls):
         return relationship("Outcome")
-
-    @declared_attr
-    def gene_variance_obj(cls):
-        return relationship(
-            "GeneVariance",
-            primaryjoin="and_({model}.gene==GeneVariance.ensembl_id,"
-                        "{model}.variance_pct==GeneVariance.variance_pct)"
-                        "".format(model=cls.__name__),
-            uselist=False,
-            viewonly=True
-        )
 
 
 class ContinuousVariableResult(Base, ResultMixin):
     __tablename__ = "results_continuous_variables"
 
-    p = Column(Float, nullable=False)
     rss_base = Column(Float)
     rss_augmented = Column(Float)
-    sum_of_sq = Column(Float)
-    F_stat = Column(Float)
+    n_params_base = Column(Integer)
+    n_params_augmented = Column(Integer)
+
+    def f_stat(self):
+        rss1 = self.rss_base
+        rss2 = self.rss_augmented
+        n = self.outcome_obj.n
+        p1 = self.n_params_base
+        p2 = self.n_params_augmented
+
+        f_stat = (rss1 - rss2) / (p2 - p1) * ((n - p2) / rss2)
+
+    def p(self):
+        return scipy.stats.f.sf(
+            self.f_stat(),
+            self.n_params_augmented - self.n_params_base,
+            self.outcome_obj.n - self.n_params_augmented
+        )
+
+    def nlog10p(self):
+        return scipy.stats.f.logsf(
+            self.f_stat(),
+            self.n_params_augmented - self.n_params_base,
+            self.outcome_obj.n - self.n_params_augmented
+        ) / -np.log(10)
 
 
 class BinaryVariableResult(Base, ResultMixin):
     __tablename__ = "results_binary_variables"
 
-    p = Column(Float, nullable=False)
-    resid_deviance_base = Column(Float)
-    resid_deviance_augmented = Column(Float)
-    deviance = Column(Float)
+    deviance_base = Column(Float)
+    deviance_augmented = Column(Float)
+
+    def p(self):
+        # Get the number of PCs (difference in number of parameters).
+        return scipy.stats.chi2.sf(
+            self.deviance_augmented - self.deviance_base,
+            df=self.gene_obj.n_pcs
+        )
+
+    def nlog10p(self):
+        return scipy.stats.chi2.logsf(
+            self.deviance_augmented - self.deviance_base,
+            df=self.gene_obj.n_pcs
+        ) / -np.log(10)
 
 
 class Gene(Base):
@@ -240,6 +242,8 @@ class Gene(Base):
     positive_strand = Column(Boolean)
     description = Column(String)
 
+    n_pcs = relationship("GeneNPcs", uselist=False, back_populates="gene")
+
     def __repr__(self):
         return "<Gene: {} - {}:{}-{} ({})>".format(
             self.ensembl_id,
@@ -248,19 +252,13 @@ class Gene(Base):
         )
 
 
-class AvailableGeneResult(Base):
-    __tablename__ = "available_gene_results"
+class GeneNPcs(Base):
+    __tablename__ = "gene_n_pcs"
 
     ensembl_id = Column(String, ForeignKey("genes.ensembl_id"),
                         primary_key=True)
-    variance_pct = Column(Integer, primary_key=True)
-
-
-class AvailableOutcomeResult(Base):
-    __tablename__ = "available_outcome_results"
-
-    outcome_id = Column(String, ForeignKey("outcomes.id"), primary_key=True)
-    variance_pct = Column(Integer, primary_key=True)
+    n_pcs_95 = Column(Integer, primary_key=True)
+    gene = relationship("Gene", back_populates="n_pcs")
 
 
 class ExternalDB(Base):

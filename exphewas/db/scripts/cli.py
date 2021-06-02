@@ -13,8 +13,7 @@ from ..models import Base, ANALYSIS_TYPES
 from .. import models
 from ..tree import tree_from_hierarchies
 
-from . import (import_ensembl, import_results, import_n_pcs, import_external,
-               metadata)
+from . import import_ensembl, import_results, import_external, metadata
 
 
 def create():
@@ -401,6 +400,11 @@ def main():
     parser_import_ensembl.add_argument(
         "--description", help="Optional description for each gene (CSV)",
     )
+    parser_import_ensembl.add_argument(
+        "--included-genes",
+        help="CSV file with an ensembl_id column. Only genes found in this "
+             "file will be included.",
+    )
 
     # Command to import ChEMBL drug target data.
     parser_import_chembl = subparsers.add_parser(
@@ -409,14 +413,6 @@ def main():
     parser_import_chembl.add_argument(
         "filename",
         help="Filename formatted ChEMBL data."
-    )
-
-    # Command to import the number of PCs for a gene.
-    parser_import_n_pcs = subparsers.add_parser("import-n-pcs")
-    parser_import_n_pcs.add_argument(
-        "filename",
-        help=("The file containing the number of PCs per gene for various "
-              "percentages of variance explained.")
     )
 
     # Command to import the results.
@@ -478,9 +474,6 @@ def main():
 
     elif args.command == "import-chembl-targets":
         return import_chembl(args)
-
-    elif args.command == "import-n-pcs":
-        return import_n_pcs.main(args)
 
     elif args.command == "import-results":
         return import_results.main(args)
