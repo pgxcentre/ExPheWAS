@@ -84,66 +84,6 @@ def find_missing_results():
             writer.writerow(row)
 
 
-def populate_available_results():
-    session = Session()
-
-    # Getting the unique variance for each gene
-    results_binary = session.query(
-        models.BinaryVariableResult.gene,
-        models.BinaryVariableResult.variance_pct,
-    ).distinct()
-
-    results_continuous = session.query(
-        models.ContinuousVariableResult.gene,
-        models.ContinuousVariableResult.variance_pct,
-    ).distinct()
-
-    # Deleting the current content (gene)
-    session.query(models.AvailableGeneResult).delete(synchronize_session=False)
-
-    # Pushing data to the database (gene)
-    entries = []
-    for ensembl_id, variance in results_binary.union(results_continuous).all():
-        entries.append(models.AvailableGeneResult(
-            ensembl_id=ensembl_id, variance_pct=variance,
-        ))
-
-    session = Session()
-    session.add_all(entries)
-
-    session.commit()
-    print("Added {} available gene results.".format(len(entries)))
-
-    # Getting the unique variance for each outcome
-    results_binary = session.query(
-        models.BinaryVariableResult.outcome_id,
-        models.BinaryVariableResult.variance_pct,
-    ).distinct()
-
-    results_continuous = session.query(
-        models.ContinuousVariableResult.outcome_id,
-        models.ContinuousVariableResult.variance_pct,
-    ).distinct()
-
-    # Deleting the current content (outcome)
-    session.query(models.AvailableOutcomeResult).delete(
-        synchronize_session=False,
-    )
-
-    # Pushing data to the database (outcome)
-    entries = []
-    for outcome_id, variance in results_binary.union(results_continuous).all():
-        entries.append(models.AvailableOutcomeResult(
-            outcome_id=outcome_id, variance_pct=variance,
-        ))
-
-    session = Session()
-    session.add_all(entries)
-
-    session.commit()
-    print("Added {} available outcome results.".format(len(entries)))
-
-
 class hashabledict(dict):
     def __hash__(self):
         return hash(tuple(sorted(self.items())))
@@ -313,6 +253,26 @@ def import_enrichment_contingency(args):
     print("Added {} enrichment analysis results.".format(len(db_dicts)))
 
 
+def import_n_pcs(args):
+    df = pd.read_csv(args.filename)
+    db_dicts = []
+    for _, row in df.iterrows():
+        d = {
+            "ensembl_id": row["ensembl_id"],
+            "n_pcs_95": row["nb_pcs"],
+            "n_variants": row["nb_variants"],
+            "pct_explained": row["pct_explained"]
+        }
+
+        db_dicts.append(d)
+
+    session = Session()
+    session.bulk_insert_mappings(models.GeneNPcs, db_dicts)
+    session.commit()
+
+    print("Added {} PCA metadata (n PCs).".format(len(db_dicts)))
+
+
 def main():
     parser = argparse.ArgumentParser()
 
@@ -351,9 +311,6 @@ def main():
         type=lambda s: datetime.datetime.strptime(s, "%Y-%m-%d"),
         help="Set the recorded data creation date."
     )
-
-    # Command to populate the available results for each gene
-    subparsers.add_parser("populate-available-results")
 
     # Command to load all hierarchical data.
     parser_import_hierarchies = subparsers.add_parser("import-hierarchies")
@@ -415,30 +372,29 @@ def main():
         help="Filename formatted ChEMBL data."
     )
 
+    # Command to import the number of PCs per gene used for analysis.
+    parser_import_n_pcs = subparsers.add_parser(
+        "import-n-pcs"
+    )
+    parser_import_n_pcs.add_argument(
+        "filename",
+        help="Filename for the PCA metadata file."
+    )
+
     # Command to import the results.
     parser_import_results = subparsers.add_parser("import-results")
     parser_import_results.add_argument(
-        "filename",
-        help="Path to the results file."
+        "prefix",
+        help="Path and prefix of the results filename. "
+             "For example: 'results_all/results_ENSG00000087237_binary_model' "
+             "The suffixes _model.json.gz and _summary.csv.gz will be assumed."
     )
 
     parser_import_results.add_argument(
-        "--gene",
-        help="Ensembl ID of the gene.",
-        required=True
-    )
-
-    parser_import_results.add_argument(
-        "--analysis",
-        help="Type of analysis.",
-        choices=ANALYSIS_TYPES,
-        required=True
-    )
-
-    parser_import_results.add_argument(
-        "--pct-variance",
-        help="Percentage of the variance explained by the PCs.",
-        default=95
+        "--sex-subset",
+        help="Sex subset for the analysis.",
+        default="BOTH",
+        choices=["BOTH", "FEMALE_ONLY", "MALE_ONLY"]
     )
 
     parser_import_external = subparsers.add_parser("import-external")
@@ -466,9 +422,6 @@ def main():
     elif args.command == "find-missing-results":
         return find_missing_results()
 
-    elif args.command == "populate-available-results":
-        return populate_available_results()
-
     elif args.command == "import-ensembl":
         return import_ensembl.main(args)
 
@@ -477,6 +430,9 @@ def main():
 
     elif args.command == "import-results":
         return import_results.main(args)
+
+    elif args.command == "import-n-pcs":
+        return import_n_pcs(args)
 
     elif args.command == "import-hierarchies":
         return import_hierarchies(args)

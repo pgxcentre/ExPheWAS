@@ -4,6 +4,7 @@
 from os import path
 import gzip
 import json
+import csv
 
 import pandas as pd
 import numpy as np
@@ -45,7 +46,24 @@ def load_gtex_statistics():
     return dict(df["# RNASeq Samples"].iteritems())
 
 
-def load_ukbphewas_model(filename):
+def load_variable_labels():
+    """Load the label for UKBPheWAS IDs."""
+    fn = "variable_labels.csv.gz"
+    fn = resource_filename(__name__, path.join("db", "scripts", "data", fn))
+
+    labels = {}
+    with gzip.open(fn, "rt") as f:
+        csv_reader = csv.reader(f)
+        next(csv_reader)  # skip header.
+
+        for row in csv_reader:
+            analysis_type, variable_id, label = row
+            labels[(analysis_type, variable_id)] = label
+
+    return labels
+
+
+def load_ukbphewas_model(filename, as_dict=False, fit_df=True):
     """Load the full model fit as serialized by UKBPheWAS.
 
     It's one phenotype per row. Every row is a valid JSON.
@@ -55,12 +73,21 @@ def load_ukbphewas_model(filename):
     with gzip.open(filename, "rt") as f:
         for line in f:
             model = json.loads(line)
-            fit = model.pop("model_fit")
-            fit = pd.DataFrame(fit)
-            model["model_fit"] = fit
+            model["variable_id"] = str(model["variable_id"])
+            if fit_df:
+                fit = model.pop("model_fit")
+                fit = pd.DataFrame(fit)
+                model["model_fit"] = fit
+
             models.append(model)
 
-    return models
+    if as_dict:
+        return {
+            (i["analysis_type"], i["variable_id"]): i["model_fit"]
+            for i in models
+        }
+    else:
+        return models
 
 
 def one_sample_pca_ivw(x_model, y_model, ci=None):

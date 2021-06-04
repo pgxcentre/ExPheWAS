@@ -3,7 +3,7 @@
 host ?= 127.0.0.1
 
 .PHONY: database
-database: create ensembl uniprot_xref hierarchy external_db populate_available_results
+database: create ensembl uniprot_xref hierarchies external_db n_pcs
 
 
 .PHONY: create
@@ -23,14 +23,9 @@ uniprot_xref:
 	exphewas-db import-external --external-db data/uniprot/external_db.our.csv.gz --xrefs data/uniprot/ensembl_xrefs.our.csv.gz
 
 
-# .PHONY: n_pcs
-# n_pcs:
-# 	exphewas-db import-n-pcs data/exphewas/n_components_all.csv.gz
-
-
-.PHONY: hierarchy
-hierarchy:
-	exphewas-db create-icd10-hierarchy
+.PHONY: n_pcs
+n_pcs:
+	exphewas-db import-n-pcs data/exphewas/pca_metadata.csv.gz
 
 
 .PHONY: external_db
@@ -38,9 +33,9 @@ external_db:
 	exphewas-db import-external --external-db data/ensembl/external_db.csv.gz --xrefs data/ensembl/ensembl_xrefs.csv.gz
 
 
-.PHONY: populate_available_results
-populate_available_results:
-	exphewas-db populate-available-results
+.PHONY: hierarchies
+hierarchies:
+	exphewas-db import-hierarchies data/hierarchies
 
 
 .PHONY: clear_results

@@ -8,11 +8,12 @@ from sqlalchemy.orm import column_property, relationship
 from sqlalchemy import (
     Table, Column, Integer, String, MetaData, ForeignKey, Enum, Float,
     Boolean, Sequence, UniqueConstraint, ForeignKeyConstraint, create_engine,
-    and_, PrimaryKeyConstraint, Date
+    and_, PrimaryKeyConstraint, Date, JSON
 )
 
 import scipy.stats
 import numpy as np
+import pandas as pd
 
 from .engine import ENGINE, Session
 
@@ -120,11 +121,9 @@ class Outcome(Base):
     __tablename__ = "outcomes"
 
     id = Column(String, primary_key=True)
+    analysis_type = Column(AnalysisEnum, primary_key=True)
     label = Column(String, nullable=False)
-
-    analysis_type = Column(AnalysisEnum, nullable=False)
-
-    type = Column(String(20))
+    type = Column(String)
 
     __mapper_args__ = {
         "polymorphic_on": type,
@@ -135,11 +134,19 @@ class Outcome(Base):
 class BinaryOutcome(Outcome):
     __tablename__ = "binary_outcomes"
 
-    id = Column(String, ForeignKey("outcomes.id"), primary_key=True)
+    id = Column(String, primary_key=True)
+    analysis_type = Column(String, primary_key=True)
 
     n_cases = Column(Integer)
     n_controls = Column(Integer)
     n_excluded_from_controls = Column(Integer, default=0)
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            [id, analysis_type],
+            ["outcomes.id", "outcomes.analysis_type"]
+        ),
+    )
 
     __mapper_args__ = {
         "polymorphic_identity": "binary_outcomes"
@@ -149,9 +156,17 @@ class BinaryOutcome(Outcome):
 class ContinuousOutcome(Outcome):
     __tablename__ = "continuous_outcomes"
 
-    id = Column(String, ForeignKey("outcomes.id"), primary_key=True)
+    id = Column(String, primary_key=True)
+    analysis_type = Column(String, primary_key=True)
 
     n = Column(Integer)
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            [id, analysis_type],
+            ["outcomes.id", "outcomes.analysis_type"]
+        ),
+    )
 
     __mapper_args__ = {
         "polymorphic_identity": "continuous_outcomes"
@@ -160,14 +175,17 @@ class ContinuousOutcome(Outcome):
 
 class ResultMixin(object):
     analysis_subset = Column(SexSubsetEnum, primary_key=True)
+    model_fit = Column(JSON)
+
+    outcome_id = Column(String, primary_key=True)
+    analysis_type = Column(String, primary_key=True)
+
+    def model_fit_df(self):
+        return pd.DataFrame(self.model_fit)
 
     @declared_attr
     def gene(cls):
         return Column(String, ForeignKey("genes.ensembl_id"), primary_key=True)
-
-    @declared_attr
-    def outcome_id(cls):
-        return Column(String, ForeignKey("outcomes.id"), primary_key=True)
 
     @declared_attr
     def gene_obj(cls):
@@ -176,6 +194,27 @@ class ResultMixin(object):
     @declared_attr
     def outcome_obj(cls):
         return relationship("Outcome")
+
+    @declared_attr
+    def __table_args__(cls):
+        return (
+            ForeignKeyConstraint(
+                [cls.outcome_id, cls.analysis_type],
+                ["outcomes.id", "outcomes.analysis_type"]
+            ),
+        )
+
+    def p(self):
+        return None
+
+    def __repr__(self):
+        return "<{} - {}:{} / {}; p={:.2g}>".format(
+            self.__class__.__name__,
+            self.analysis_type, 
+            self.outcome_id, 
+            self.gene,
+            self.p()
+        )
 
 
 class ContinuousVariableResult(Base, ResultMixin):
@@ -193,7 +232,7 @@ class ContinuousVariableResult(Base, ResultMixin):
         p1 = self.n_params_base
         p2 = self.n_params_augmented
 
-        f_stat = (rss1 - rss2) / (p2 - p1) * ((n - p2) / rss2)
+        return (rss1 - rss2) / (p2 - p1) * ((n - p2) / rss2)
 
     def p(self):
         return scipy.stats.f.sf(
@@ -219,13 +258,13 @@ class BinaryVariableResult(Base, ResultMixin):
     def p(self):
         # Get the number of PCs (difference in number of parameters).
         return scipy.stats.chi2.sf(
-            self.deviance_augmented - self.deviance_base,
+            self.deviance_base - self.deviance_augmented,
             df=self.gene_obj.n_pcs
         )
 
     def nlog10p(self):
         return scipy.stats.chi2.logsf(
-            self.deviance_augmented - self.deviance_base,
+            self.deviance_base - self.deviance_augmented,
             df=self.gene_obj.n_pcs
         ) / -np.log(10)
 
@@ -242,7 +281,11 @@ class Gene(Base):
     positive_strand = Column(Boolean)
     description = Column(String)
 
-    n_pcs = relationship("GeneNPcs", uselist=False, back_populates="gene")
+    n_pcs_obj = relationship("GeneNPcs", uselist=False, back_populates="gene")
+
+    @property
+    def n_pcs(self):
+        return self.n_pcs_obj.n_pcs_95
 
     def __repr__(self):
         return "<Gene: {} - {}:{}-{} ({})>".format(
@@ -258,7 +301,10 @@ class GeneNPcs(Base):
     ensembl_id = Column(String, ForeignKey("genes.ensembl_id"),
                         primary_key=True)
     n_pcs_95 = Column(Integer, primary_key=True)
-    gene = relationship("Gene", back_populates="n_pcs")
+    n_variants = Column(Integer)
+    pct_explained = Column(Float)
+
+    gene = relationship("Gene", back_populates="n_pcs_obj")
 
 
 class ExternalDB(Base):
