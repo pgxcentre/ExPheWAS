@@ -95,10 +95,11 @@ def check_sex_subset(row, args_sex_subset):
     #    subgroup.
     # 2. The args_sex_subset variable is BOTH in this case we use the value
     #    from row.sex_subset.
-    if args_sex_subset != "BOTH" and row["sex_subset"] != "BOTH":
+    if args_sex_subset != "BOTH":
         if row["sex_subset"] != "BOTH":
             # The phenotype is already sex-stratified.
             raise SkipRow()
+
         return args_sex_subset
 
     # The analysis is not sex-stratified, but the phenotype may be.
@@ -122,14 +123,9 @@ def _process_continuous_result(row, gene, variable_type, args_sex_subset,
             id = row.variable_id,
             label = labels[(row.analysis_type, row.variable_id)],
             analysis_type = row.analysis_type,
-            n = row.n_samples
         )
 
         session.add(outcome)
-
-    # Sanity check that the number of samples is constant across analyses.
-    # This is important given the current implementation of the test statistic.
-    assert row.n_samples == outcome.n
 
     return dict(
         gene = gene,
@@ -138,6 +134,7 @@ def _process_continuous_result(row, gene, variable_type, args_sex_subset,
         analysis_subset = args_sex_subset,
         model_fit = model_fit,
 
+        n = row.n_samples,
         rss_base = row.rss_base,
         rss_augmented = row.rss_augmented,
         n_params_base = row.n_params_base,
@@ -158,9 +155,6 @@ def _process_binary_result(row, gene, variable_type, args_sex_subset,
             id = row.variable_id,
             label = labels[(row.analysis_type, row.variable_id.lstrip("0"))],
             analysis_type = row.analysis_type,
-            n_cases = row.n_cases,
-            n_controls = row.n_controls,
-            n_excluded_from_controls = row.n_excluded_from_controls
         )
 
         session.add(outcome)
@@ -176,6 +170,10 @@ def _process_binary_result(row, gene, variable_type, args_sex_subset,
         analysis_type = row.analysis_type,
         analysis_subset = sex_subset,
         model_fit = model_fit,
+
+        n_cases = row.n_cases,
+        n_controls = row.n_controls,
+        n_excluded_from_controls = row.n_excluded_from_controls,
 
         deviance_base = row.deviance_base,
         deviance_augmented = row.deviance_augmented,

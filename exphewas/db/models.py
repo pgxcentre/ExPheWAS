@@ -137,10 +137,6 @@ class BinaryOutcome(Outcome):
     id = Column(String, primary_key=True)
     analysis_type = Column(String, primary_key=True)
 
-    n_cases = Column(Integer)
-    n_controls = Column(Integer)
-    n_excluded_from_controls = Column(Integer, default=0)
-
     __table_args__ = (
         ForeignKeyConstraint(
             [id, analysis_type],
@@ -158,8 +154,6 @@ class ContinuousOutcome(Outcome):
 
     id = Column(String, primary_key=True)
     analysis_type = Column(String, primary_key=True)
-
-    n = Column(Integer)
 
     __table_args__ = (
         ForeignKeyConstraint(
@@ -210,8 +204,8 @@ class ResultMixin(object):
     def __repr__(self):
         return "<{} - {}:{} / {}; p={:.2g}>".format(
             self.__class__.__name__,
-            self.analysis_type, 
-            self.outcome_id, 
+            self.analysis_type,
+            self.outcome_id,
             self.gene,
             self.p()
         )
@@ -219,6 +213,8 @@ class ResultMixin(object):
 
 class ContinuousVariableResult(Base, ResultMixin):
     __tablename__ = "results_continuous_variables"
+
+    n = Column(Integer, nullable=False)
 
     rss_base = Column(Float)
     rss_augmented = Column(Float)
@@ -228,7 +224,7 @@ class ContinuousVariableResult(Base, ResultMixin):
     def f_stat(self):
         rss1 = self.rss_base
         rss2 = self.rss_augmented
-        n = self.outcome_obj.n
+        n = self.n
         p1 = self.n_params_base
         p2 = self.n_params_augmented
 
@@ -238,19 +234,23 @@ class ContinuousVariableResult(Base, ResultMixin):
         return scipy.stats.f.sf(
             self.f_stat(),
             self.n_params_augmented - self.n_params_base,
-            self.outcome_obj.n - self.n_params_augmented
+            self.n - self.n_params_augmented
         )
 
     def nlog10p(self):
         return scipy.stats.f.logsf(
             self.f_stat(),
             self.n_params_augmented - self.n_params_base,
-            self.outcome_obj.n - self.n_params_augmented
+            self.n - self.n_params_augmented
         ) / -np.log(10)
 
 
 class BinaryVariableResult(Base, ResultMixin):
     __tablename__ = "results_binary_variables"
+
+    n_cases = Column(Integer)
+    n_controls = Column(Integer)
+    n_excluded_from_controls = Column(Integer, default=0)
 
     deviance_base = Column(Float)
     deviance_augmented = Column(Float)
