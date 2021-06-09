@@ -19,7 +19,7 @@ fi
 echo "Importing block using ${n_cpus} CPUs"
 
 
-block=$(echo $tar_file | sed 's/.tar//')
+block=$(basename $tar_file | sed 's/.tar//')
 
 if [ -d $block ]; then
     echo "Directory ${block} already exists and would be overwritten by extraction."
@@ -28,7 +28,7 @@ fi
 
 tar -xf $tar_file
 
-genes=$(ls -1 block_1 | grep results | cut -f 2 -d_ | sort | uniq | head -n 4)
+genes=$(ls -1 $block | grep results | cut -f 2 -d_ | sort | uniq | head -n 4)
 
 
 import_gene() {
