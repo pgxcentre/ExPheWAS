@@ -52,7 +52,8 @@ class Metadata(Base):
 class Enrichment(Base):
     __tablename__ = "enrichment"
 
-    outcome_id = Column(String, ForeignKey("outcomes.id"), primary_key=True)
+    outcome_id = Column(String, primary_key=True)
+    analysis_type = Column(AnalysisEnum, primary_key=True)
 
     # This could be a code from Hierarchy (e.g. ATC codes).
     gene_set_id = Column(String, primary_key=True)
@@ -62,6 +63,13 @@ class Enrichment(Base):
     enrichment_score = Column(Float, nullable=True)
 
     p = Column(Float, nullable=False)
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            [outcome_id, analysis_type],
+            ["outcomes.id", "outcomes.analysis_type"]
+        ),
+    )
 
     def get_data_dict(self):
         return {
@@ -74,7 +82,8 @@ class Enrichment(Base):
 class EnrichmentContingency(Base):
     __tablename__ = "enrichment_contingency"
 
-    outcome_id = Column(String, ForeignKey("outcomes.id"), primary_key=True)
+    outcome_id = Column(String, primary_key=True)
+    analysis_type = Column(AnalysisEnum, primary_key=True)
 
     # This could be a code from Hierarchy (e.g. ATC codes).
     gene_set_id = Column(String, primary_key=True)
@@ -87,6 +96,13 @@ class EnrichmentContingency(Base):
     n11 = Column(Integer, nullable=False)
 
     p = Column(Float, nullable=False)
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            [outcome_id, analysis_type],
+            ["outcomes.id", "outcomes.analysis_type"]
+        ),
+    )
 
     def get_data_dict(self):
         return {
@@ -135,7 +151,7 @@ class BinaryOutcome(Outcome):
     __tablename__ = "binary_outcomes"
 
     id = Column(String, primary_key=True)
-    analysis_type = Column(String, primary_key=True)
+    analysis_type = Column(AnalysisEnum, primary_key=True)
 
     __table_args__ = (
         ForeignKeyConstraint(
@@ -153,7 +169,7 @@ class ContinuousOutcome(Outcome):
     __tablename__ = "continuous_outcomes"
 
     id = Column(String, primary_key=True)
-    analysis_type = Column(String, primary_key=True)
+    analysis_type = Column(AnalysisEnum, primary_key=True)
 
     __table_args__ = (
         ForeignKeyConstraint(
@@ -172,7 +188,7 @@ class ResultMixin(object):
     model_fit = Column(JSON)
 
     outcome_id = Column(String, primary_key=True)
-    analysis_type = Column(String, primary_key=True)
+    analysis_type = Column(AnalysisEnum, primary_key=True)
 
     static_nlog10p = Column(Float)
 
