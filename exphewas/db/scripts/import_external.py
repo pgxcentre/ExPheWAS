@@ -1,7 +1,7 @@
 import gzip
 
 from ..engine import ENGINE, Session
-from ..models import XRefs, ExternalDB
+from ..models import XRefs, ExternalDB, Gene
 
 
 def import_external_databases(fn):
@@ -46,6 +46,10 @@ def import_xrefs(fn):
 
     entries = []
 
+    # Get genes that are in the DB.
+    session = Session()
+    ref_genes = set((tu[0] for tu in session.query(Gene.ensembl_id)))
+
     with reader(fn, "rt") as f:
         header = None
         for line in f:
@@ -59,13 +63,15 @@ def import_xrefs(fn):
             external_db_id = int(row[header["external_db_id"]])
             external_id = row[header["external_id"]]
 
+            if ensembl_id not in ref_genes:
+                continue
+
             entries.append(XRefs(
                 ensembl_id=ensembl_id,
                 external_db_id=external_db_id,
                 external_id=external_id,
             ))
 
-    session = Session()
     session.add_all(entries)
 
     session.commit()
