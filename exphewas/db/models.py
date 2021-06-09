@@ -174,6 +174,8 @@ class ResultMixin(object):
     outcome_id = Column(String, primary_key=True)
     analysis_type = Column(String, primary_key=True)
 
+    static_nlog10p = Column(Float)
+
     def model_fit_df(self):
         return pd.DataFrame(self.model_fit)
 
@@ -189,6 +191,9 @@ class ResultMixin(object):
     def outcome_obj(cls):
         return relationship("Outcome")
 
+    def p(self):
+        return None
+
     @declared_attr
     def __table_args__(cls):
         return (
@@ -198,16 +203,19 @@ class ResultMixin(object):
             ),
         )
 
-    def p(self):
-        return None
-
     def __repr__(self):
-        return "<{} - {}:{} / {}; p={:.2g}>".format(
+        try:
+            p = self.p()
+            p = "{:.2g}".format(p)
+        except:
+            p = "?"
+
+        return "<{} - {}:{} / {}; p={}>".format(
             self.__class__.__name__,
             self.analysis_type,
             self.outcome_id,
             self.gene,
-            self.p()
+            p
         )
 
 
@@ -220,6 +228,9 @@ class ContinuousVariableResult(Base, ResultMixin):
     rss_augmented = Column(Float)
     n_params_base = Column(Integer)
     n_params_augmented = Column(Integer)
+
+    discriminator = Column("type", String(50))
+    __mapper_args__ = {"polymorphic_on": discriminator}
 
     def f_stat(self):
         rss1 = self.rss_base
@@ -254,6 +265,9 @@ class BinaryVariableResult(Base, ResultMixin):
 
     deviance_base = Column(Float)
     deviance_augmented = Column(Float)
+
+    discriminator = Column("type", String(50))
+    __mapper_args__ = {"polymorphic_on": discriminator}
 
     def p(self):
         # Get the number of PCs (difference in number of parameters).

@@ -1,5 +1,6 @@
 import re
 import os
+import itertools
 
 import sqlalchemy.orm.exc
 import pandas as pd
@@ -76,6 +77,21 @@ def main(args):
             result_class,
             objects[chunk:chunk+chunk_size]
         )
+
+    session.commit()
+
+    # Populate the nlog10p
+    all_results = itertools.chain(
+        session.query(ContinuousVariableResult),
+        session.query(BinaryVariableResult) 
+    )
+
+    for o in all_results:
+        try:
+            o.static_nlog10p = o.nlog10p()
+        except Exception as e:
+            print(f"Could not calculate -log10(p) for {o}.")
+            raise e
 
     session.commit()
 
