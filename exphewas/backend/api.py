@@ -9,7 +9,9 @@ from os import path
 
 import numpy as np
 
+from sqlalchemy import distinct, and_
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.exc import MultipleResultsFound
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.expression import func, null
 
@@ -42,6 +44,8 @@ class make_api(object):
             results = f(*args, **kwargs)
         except RessourceNotFoundError as exception:
             return resource_not_found(exception.message)
+        except AmbiguousIdentifierError as exception:
+            return bad_request(exception.message)
 
         return jsonify(results)
 
@@ -60,7 +64,30 @@ class make_api(object):
         return f
 
 
+def _get_outcome(session, id, request):
+    filters = {"id": id}
+    if "analysis_type" in request.args:
+        filters["analysis_type"] = request.args["analysis_type"]
+
+    try:
+        return session.query(models.Outcome).filter_by(**filters).one()
+    except NoResultFound:
+        raise RessourceNotFoundError(
+            f"Could not find outcome '{id}'."
+        )
+    except MultipleResultsFound:
+        raise AmbiguousIdentifierError(
+            f"There are multiple outcomes with id='{id}'. Specifying an "
+            "analysis_type parameter guarantees uniqueness."
+        )
+
+
 class RessourceNotFoundError(Exception):
+    def __init__(self, message):
+        self.message = message
+
+
+class AmbiguousIdentifierError(Exception):
     def __init__(self, message):
         self.message = message
 
@@ -68,6 +95,11 @@ class RessourceNotFoundError(Exception):
 @api.errorhandler(404)
 def resource_not_found(e):
     return jsonify(error=str(e)), 404
+
+
+@api.errorhandler(400)
+def bad_request(e):
+    return jsonify(error=str(e)), 400
 
 
 @make_api("/metadata")
@@ -84,64 +116,79 @@ def get_metadata():
 
 @make_api("/outcome")
 def get_outcomes():
-    subquery = Session.query(
-        models.AvailableOutcomeResult.outcome_id,
-        func.array_agg(models.AvailableOutcomeResult.variance_pct)\
-            .label("available_variances"),
-    ).group_by(models.AvailableOutcomeResult.outcome_id).subquery()
+    session = Session()
 
-    results = Session.query(models.Outcome, subquery)\
-        .join(subquery, isouter=True).all()
+    u = models.all_results_union(session).subquery()
+
+    subq = session.query(
+        u.c.outcome_id,
+        u.c.analysis_type,
+        func.array_agg(u.c.analysis_subset).label("available_subsets")
+    ).group_by(
+        u.c.outcome_id,
+        u.c.analysis_type
+    ).subquery()
+
+    results = session.query(models.Outcome, subq.c.available_subsets)\
+        .join(subq, and_(
+            models.Outcome.id==subq.c.outcome_id,
+            models.Outcome.analysis_type==subq.c.analysis_type
+        ))
 
     return [
         {
-            "id": outcome.id,
-            "label": outcome.label,
-            "analysis_type": outcome.analysis_type,
-            "available_variances": available_variances,
-        } for outcome, outcome_id, available_variances in results
+            "id": o.id,
+            "analysis_type": o.analysis_type,
+            "label": o.label,
+            "available_subsets": availables,
+        } for o, availables in results
     ]
 
 
 @make_api("/outcome/<id>")
 def get_outcome(id):
-    try:
-        outcome = Session.query(models.Outcome).filter_by(id=id).one()
-    except NoResultFound:
-        raise RessourceNotFoundError(f"Could not find outcome '{id}'.")
+    session = Session()
+    outcome = _get_outcome(session, id, request)
 
-    # Extract shared fields.
-    d = {
+    out = {
         "id": outcome.id,
-        "label": outcome.label,
         "analysis_type": outcome.analysis_type,
+        "label": outcome.label,
     }
 
-    if isinstance(outcome, models.BinaryOutcome):
-        d.update({
-            "type": "binary",
-            "n_cases": outcome.n_cases,
-            "n_controls": outcome.n_controls,
-            "n_excluded_from_controls": outcome.n_excluded_from_controls,
-        })
+    # Get appropriate result class.
+    if isinstance(outcome, models.ContinuousOutcome):
+        # Get mean n.
+        out["n_avg"] = int(session.query(
+            func.avg(models.ContinuousVariableResult.n)
+        ).filter_by(
+            outcome_id=outcome.id, analysis_type=outcome.analysis_type
+        ).one()[0])
 
-    elif isinstance(outcome, models.ContinuousOutcome):
-        d.update({
-            "type": "continuous",
-            "n": outcome.n,
-        })
+    else:
+        res = session.query(
+            func.avg(models.BinaryVariableResult.n_cases),
+            func.avg(models.BinaryVariableResult.n_controls),
+            func.avg(models.BinaryVariableResult.n_excluded_from_controls)
+        ).filter_by(
+            outcome_id=outcome.id, analysis_type=outcome.analysis_type
+        ).one()
 
-    return d
+        res = [int(i) for i in res]
+        (
+            out["n_cases_avg"],
+            out["n_controls_avg"],
+            out["n_excluded_from_controls_avg"]
+        ) = res
+
+    return out
 
 
 @make_api("/outcome/<id>/results")
 def get_outcome_results(id):
-    try:
-        outcome = Session.query(models.Outcome).filter_by(id=id).one()
-    except NoResultFound:
-        raise RessourceNotFoundError(f"Could not find outcome '{id}'.")
-
-    variance_pct = request.args.get("variance_pct", 95)
+    session = Session()
+    outcome = _get_outcome(session, id, request)
+    analysis_subset = request.args.get("analysis_subset", "BOTH")
 
     Result = None
     if isinstance(outcome, models.BinaryOutcome):
@@ -151,33 +198,41 @@ def get_outcome_results(id):
 
     results = Session\
         .query(Result)\
-        .filter_by(outcome_id=id, variance_pct=variance_pct)\
+        .filter_by(
+            outcome_id=outcome.id,
+            analysis_type=outcome.analysis_type,
+            analysis_subset=analysis_subset,
+        )\
         .options(joinedload("gene_obj"))\
         .options(joinedload("outcome_obj"))\
-        .options(joinedload("gene_variance_obj"))\
         .all()
 
     # Get the corresponding Q-values.
-    qs = qvalue(np.fromiter((r.p for r in results), dtype=np.float,
-                count=len(results)))
+    nlog10ps = np.fromiter(
+        (r.static_nlog10p for r in results),
+        dtype=np.float, count=len(results)
+    )
+    ps = 10 ** -nlog10ps
+    qs = qvalue(ps)
 
     return [
         {
             "gene": r.gene,
-            "analysis_type": r.outcome_obj.analysis_type,
+            "analysis_type": r.analysis_type,
             "outcome_id": r.outcome_id,
             "outcome_label": r.outcome_obj.label,
-            "variance_pct": r.variance_pct,
-            "p": r.p,
+            "nlog10p": r.static_nlog10p,
+            "p": p,
+            "bonf": p * len(results),
             "q": q,
-            "bonf": r.p * len(results),
             "gene_name": r.gene_obj.name,
-            "n_components": r.gene_variance_obj.n_components
+            "n_components": r.gene_obj.n_pcs
         }
-        for q, r in zip(qs, results)
+        for q, p, r in zip(qs, ps, results)
     ]
 
 
+# HERE TODO
 @make_api("/gene")
 def get_genes():
     from_db = request.args.get("from_db", False)

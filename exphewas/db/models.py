@@ -146,6 +146,14 @@ class Outcome(Base):
         "polymorphic_identity": "outcomes"
     }
 
+    def __repr__(self):
+        return "<{}: '{}' ({}) - {}>".format(
+            self.__class__.__name__,
+            self.id,
+            self.analysis_type,
+            self.label
+        )
+
 
 class BinaryOutcome(Outcome):
     __tablename__ = "binary_outcomes"
@@ -297,6 +305,23 @@ class BinaryVariableResult(Base, ResultMixin):
             self.deviance_base - self.deviance_augmented,
             df=self.gene_obj.n_pcs
         ) / -np.log(10)
+
+
+def all_results_union(session, cols=None):
+    """Returns a sqlalchemy query unioning the binary and continuous results.
+
+    By default, this only uses outcome_id, analysis_type and analysis_subset.
+
+    """
+    if cols is None:
+        cols = ["outcome_id", "analysis_type", "analysis_subset"]
+
+    bin_fields = [getattr(BinaryVariableResult, i).label(i) for i in cols]
+    con_fields = [getattr(ContinuousVariableResult, i).label(i) for i in cols]
+
+    return session.query(*bin_fields).union(
+        session.query(*con_fields)
+    )
 
 
 class Gene(Base):

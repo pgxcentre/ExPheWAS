@@ -43,6 +43,11 @@ clear_results:
 	exphewas-db delete-results
 
 
+.PHONY: ipython
+ipython:
+	ipython -i .ipython_startup
+
+
 .PHONY: serve_dev
 serve_dev:
 	FLASK_ENV=development FLASK_APP=exphewas.backend flask run --port 5001 --host '$(host)'
