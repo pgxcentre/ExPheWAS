@@ -12,8 +12,8 @@ export const ANALYSIS_LABELS = {
 
 export const ANALYSIS_SUBSETS = {
   BOTH: "All",
-  MALE_ONLY: "Male only",
-  FEMALE_ONLY: "Female only"
+  MALE_ONLY: "Male",
+  FEMALE_ONLY: "Female"
 }
 
 

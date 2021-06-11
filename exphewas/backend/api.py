@@ -138,6 +138,7 @@ def get_outcomes():
     return [
         {
             "id": o.id,
+            "type": o.type,
             "analysis_type": o.analysis_type,
             "label": o.label,
             "available_subsets": availables,
@@ -149,21 +150,30 @@ def get_outcomes():
 def get_outcome(id):
     session = Session()
     outcome = _get_outcome(session, id, request)
+    analysis_subset = request.args.get("analysis_subset")
 
     out = {
         "id": outcome.id,
         "analysis_type": outcome.analysis_type,
+        "analysis_subset": analysis_subset,
         "label": outcome.label,
+        "type": outcome.type,
     }
 
     # Get appropriate result class.
+    # We need to also look at analysis subset so that the reported ns are
+    # correct.
     if isinstance(outcome, models.ContinuousOutcome):
         # Get mean n.
-        out["n_avg"] = int(session.query(
+        q = session.query(
             func.avg(models.ContinuousVariableResult.n)
         ).filter_by(
-            outcome_id=outcome.id, analysis_type=outcome.analysis_type
-        ).one()[0])
+            outcome_id=outcome.id,
+            analysis_type=outcome.analysis_type,
+            analysis_subset=analysis_subset
+        )
+
+        out["n_avg"] = int(q.one()[0])
 
     else:
         res = session.query(
@@ -171,7 +181,9 @@ def get_outcome(id):
             func.avg(models.BinaryVariableResult.n_controls),
             func.avg(models.BinaryVariableResult.n_excluded_from_controls)
         ).filter_by(
-            outcome_id=outcome.id, analysis_type=outcome.analysis_type
+            outcome_id=outcome.id,
+            analysis_type=outcome.analysis_type,
+            analysis_subset=analysis_subset
         ).one()
 
         res = [int(i) for i in res]
@@ -310,9 +322,13 @@ def get_gene_results(ensg):
 
     # Get the corresponding Q-values.
     nlog10ps = np.array(nlog10ps)
-    qs = qvalue(10 ** -nlog10ps)
+    ps = 10 ** -nlog10ps
+    bonf_ps = ps * ps.shape[0]
+    qs = qvalue(ps)
 
     for i in range(len(results)):
+        results[i]["p"] = ps[i]
+        results[i]["bonf"] = bonf_ps[i]
         results[i]["q"] = qs[i]
 
     return results

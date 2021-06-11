@@ -70,8 +70,12 @@ async function mainOutcomeResults(id) {
   // Add the ATC tree
   atcTree(id);
 
-  let variance_pct = getUrlParam("variance_pct", 95);
-  let urlParam = variance_pct != 95? `?variance_pct=${variance_pct}`: '';
+  let analysis_subset = getUrlParam("analysis_subset", "BOTH");
+  let analysis_type = getUrlParam("analysis_type", null);
+
+  let urlParam = `?analysis_subset=${analysis_subset}`;
+  if (analysis_type !== null)
+    urlParam += `&analysis_type=${analysis_type}`;
 
   let data = await api_call(`/outcome/${id}/results${urlParam}`);
 
@@ -85,8 +89,7 @@ async function mainOutcomeResults(id) {
         {data: 'p'},            // 2
         {data: 'q'},            // 3
         {data: 'bonf'},         // 4
-        {data: 'n_components'}, // 5
-        {data: 'variance_pct'}  // 6
+        {data: 'n_components'}  // 5
       ],
       columnDefs: [
         {
@@ -102,7 +105,7 @@ async function mainOutcomeResults(id) {
           }
         },
         {
-          targets: [2, 3, 4, 5, 6],
+          targets: [2, 3, 4, 5],
           className: 'dt-body-right'
         }
       ],
@@ -139,8 +142,8 @@ async function mainGeneResults(id) {
     });
   });
 
-  let variance_pct = getUrlParam("variance_pct", 95);
-  let urlParam = variance_pct != 95? `?variance_pct=${variance_pct}`: '';
+  let analysis_subset = getUrlParam("analysis_subset", "BOTH");
+  let urlParam = `?analysis_subset=${analysis_subset}`;
 
   let data = await api_call(`/gene/${id}/results${urlParam}`);
 
@@ -157,29 +160,34 @@ async function mainGeneResults(id) {
       columns: [
         {data: 'outcome_id'},     // 0
         {data: 'outcome_label'},  // 1
-        {data: 'p'},              // 2
-        {data: 'q'},              // 3
-        {data: 'bonf'},           // 4
-        {data: 'gof_meas'},       // 5
-        {data: 'test_statistic'}, // 6
+        {data: 'n'},              // 2
+        {data: 'static_nlog10p'}, // 3
+        {data: 'p'},              // 4 (p)
+        {data: 'bonf'},           // 5 (bonf)
+        {data: 'q'},              // 6
       ],
       columnDefs: [
         {
           targets: 0,
           render: function(outcome, type, row, meta) {
+            urlParam = urlParam + `&analysis_type=CONTINUOUS_VARIABLE`;
             return `<a href="${URL_PREFIX}/outcome/${outcome}${urlParam}">${outcome}</a>`;
           }
         },
         {
-          targets: [2, 3, 4],
-          render: function(p, type, row, meta) {
-            return formatP(p);
+          targets: [4, 5, 6],
+          render: function(p, type, row, meta) { return formatP(p); }
+        },
+        {
+          targets: 3,
+          render: function(numeric_value, type, row, meta) {
+            return numeric_value.toFixed(2);
           }
         },
         {
-          targets: [5, 6],
+          targets: 2,
           render: function(numeric_value, type, row, meta) {
-            return numeric_value.toFixed(1);
+            return numeric_value.toLocaleString();
           }
         },
         {
@@ -187,7 +195,7 @@ async function mainGeneResults(id) {
           className: 'dt-body-right'
         }
       ],
-      order: [[2, 'asc']]
+      order: [[3, 'desc']]
   });
 
   $('#app #geneResultsCVEndpoints')
@@ -195,38 +203,46 @@ async function mainGeneResults(id) {
       deferRender: true,
       data: data.filter(d => d.analysis_type === 'CV_ENDPOINTS'),
       columns: [
-        {data: 'outcome_id'},     // 0
-        {data: 'outcome_label'},  // 1
-        {data: 'p'},              // 2
-        {data: 'q'},              // 3
-        {data: 'bonf'},           // 4
-        {data: 'gof_meas'}        // 5
+        {data: 'outcome_id'},                // 0
+        {data: 'outcome_label'},             // 1
+        {data: 'n_cases'},                   // 2
+        {data: 'n_controls'},                // 3
+        {data: 'n_excluded_from_controls'},  // 4
+        {data: 'static_nlog10p'},            // 5
+        {data: 'p'},                         // 6
+        {data: 'bonf'},                      // 7
+        {data: 'q'},                         // 8
       ],
       columnDefs: [
         {
           targets: 0,
           render: function(outcome, type, row, meta) {
+            urlParam = urlParam + `&analysis_type=CV_ENDPOINTS`;
             return `<a href="${URL_PREFIX}/outcome/${outcome}${urlParam}">${outcome}</a>`;
           }
         },
         {
-          targets: [2, 3, 4],
+          targets: 1,
+          width: "25%"
+        },
+        {
+          targets: [6, 7, 8],
           render: function(p, type, row, meta) {
             return formatP(p);
           }
         },
         {
           targets: 5,
-          render: function(gof_meas, type, row, meta) {
-            return gof_meas.toFixed(1);
+          render: function(nlog10p, type, row, meta) {
+            return nlog10p.toFixed(2);
           }
         },
         {
-          targets: [2, 3, 4, 5],
+          targets: [2, 3, 4, 5, 6, 7, 8],
           className: 'dt-body-right'
         }
       ],
-      order: [[2, 'asc']]
+      order: [[5, 'desc']]
   });
 
   $('#app #geneResultsSelfReported')
@@ -367,31 +383,47 @@ function mainGeneList() {
       processing: true,
       serverSide: true,
       ajax: `${DT_API_URL}/gene`,
+      columns: [
+        {data: "ensembl_id"},             // 0
+        {data: null},                     // 1
+        {data: "name"},                   // 2
+        {data: "description"},            // 3
+        {data: "chrom"},                  // 4
+        {data: "start"},                  // 5
+        {data: "end"},                    // 6
+        {data: "positive_strand"}         // 7
+      ],
       columnDefs: [
         {
           targets: 0,
           render: (ensembl_id, type, row, meta) => {
-            let available_variances = row['1'];
-
-            if (available_variances === null)
-              return ensembl_id;
-
-            let max_variance = Math.max(...available_variances.map(d => d[0]));
-            return `<a title="Results for ${max_variance}%" href="${URL_PREFIX}/gene/${ensembl_id}?variance_pct=${max_variance}">${ensembl_id}</a>`;
+            let a = `<a href="${URL_PREFIX}/gene/${ensembl_id}?analysis_subset=BOTH">`;
+            a += ensembl_id + "</a>";
+            return a;
           }
         },
         {
           targets: 1,
           orderable: false,
           searchable: false,
-          render: (variances, type, row, meta) => {
-            if (variances === null)
-              return '<span class="badge badge-warning">No results</span>';
+          render: (a, type, row, meta) => {
+            let ensembl_id = row.ensembl_id;
+            let baseUrl = `${URL_PREFIX}/gene/${ensembl_id}`;
+            let subsets = ["BOTH", "FEMALE_ONLY", "MALE_ONLY"];
 
-            return variances
-              .sort((a, b) => { return a[0] - b[0]; })
-              .map(d => `<a title="Explained by ${d[1]} components" href="${URL_PREFIX}/gene/${row['0']}?variance_pct=${d[0]}" class="badge badge-primary">${d[0]}%</a>`)
-              .join(' ');
+            let linkForSubset = (subset, href_only) => {
+              let link = `${baseUrl}?analysis_subset=${subset}`;
+              if (href_only === true)
+                return link;
+
+              let a = `<a href="${link}" class="badge analysis-badge analysis-${subset}">`;
+              a += ANALYSIS_SUBSETS[subset];
+              a += "</a>";
+              return a;
+            };
+
+            let badges = subsets.map(linkForSubset);
+            return badges.join(" ");
           }
         },
         {

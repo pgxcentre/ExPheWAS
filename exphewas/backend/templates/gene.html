@@ -8,9 +8,10 @@
 {% block body %}
     <div class="geneHeader">
       <h3>Gene {{ name }}</h3>
-        {%- for value in available_variance|sort %}
-        <a href="{{ url_for('backend_blueprint.get_gene', ensg=ensembl_id, variance_pct=value) }}" class="badge badge-{{ 'danger' if value == variance_pct else 'light'}}{{ ' selected' if value == variance_pct }}">{{ value }}%</a>
-        {%- endfor %}
+      {% if analysis_subset == "BOTH" %}All
+      {% elif analysis_subset == "FEMALE_ONLY" %}Female
+      {% elif analysis_subset == "MALE_ONLY" %}Male
+      {% endif %}
     </div>
 
     <div id="app">
@@ -29,11 +30,8 @@
               <dd class="col-md-8">{{ description }}</dd>
               {%- endif %}
 
-              <dt class="col-md-4">Variance explained:</dt>
-              <dd class="col-md-8">{{ variance_pct }}%</dd>
-
               <dt class="col-md-4">Nb components:</dt>
-              <dd class="col-md-8">{{ n_components }}</dd>
+              <dd class="col-md-8">{{ n_pcs }}</dd>
 
               <dt class="col-md-4">Ensembl:</dt>
               <dd class="col-md-8"><a target="_blank" href="http://grch37.ensembl.org/Homo_sapiens/Gene/Summary?g={{ ensembl_id }}">{{ ensembl_id }}</a></dd>
@@ -81,8 +79,7 @@
                   <a class="dropdown-item" href="#continuous-results-section">Continuous variables</a>
                   <a class="dropdown-item" href="#cardio-endpoints-results-section">Cardiovascular Endpoints</a>
                   <a class="dropdown-item" href="#self-reported-results-section">Self Reported</a>
-                  <a class="dropdown-item" href="#icd10-blocks-results-section">ICD10 Blocks</a>
-                  <a class="dropdown-item" href="#icd10-3char-results-section">ICD10 (3 characters)</a>
+                  <a class="dropdown-item" href="#phecodes-results-section">Phecodes</a>
                 </div>
               </div>
 
@@ -98,11 +95,11 @@
             <tr>
               <th class="dt-head-left">Outcome Id</th>
               <th class="dt-head-left">Description</th>
-              <th class="dt-head-right">P-Value<sup>&nbsp;*</sup></th>
-              <th class="dt-head-right">Q-Value<sup>&nbsp;*</sup></th>
-              <th class="dt-head-right">Bonferroni p<sup>&nbsp;*</sup></th>
-              <th class="dt-head-right">Sum of Square Difference</th>
-              <th class="dt-head-right">F-Statistic</th>
+              <th class="dt-head-right">N</th>
+              <th class="dt-head-right">-log<sub>10</sub>(<i>P</i>)</sup></th>
+              <th class="dt-head-right">P-Value</th>
+              <th class="dt-head-right">P-Value (Bonferroni)</th>
+              <th class="dt-head-right">Q-Value</th>
             </tr>
           </thead>
         </table>
@@ -121,10 +118,13 @@
             <tr>
               <th class="dt-head-left">Outcome Id</th>
               <th class="dt-head-left">Description</th>
-              <th class="dt-head-right">P-Value<sup>&nbsp;*</sup></th>
-              <th class="dt-head-right">Q-Value<sup>&nbsp;*</sup></th>
-              <th class="dt-head-right">Bonferroni p<sup>&nbsp;*</sup></th>
-              <th class="dt-head-right">Deviance Difference</th>
+              <th class="dt-head-right">N cases</th>
+              <th class="dt-head-right">N controls</th>
+              <th class="dt-head-right">N excluded from controls</th>
+              <th class="dt-head-right">-log<sub>10</sub>(<i>P</i>)</sup></th>
+              <th class="dt-head-right">P-Value</th>
+              <th class="dt-head-right">P-Value (Bonferroni)</th>
+              <th class="dt-head-right">Q-Value</th>
             </tr>
           </thead>
         </table>
@@ -158,9 +158,9 @@
         </p>
       </div>
 
-      <div class="geneResults icd10Block">
-        <h4 id="icd10-blocks-results-section">ICD10 Blocks</h4>
-        <table id="geneResultsICD10Block" class="display" style="width:100%">
+      <div class="geneResults phecodes">
+        <h4 id="phecodes-results-section">Phecodes</h4>
+        <table id="geneResultsPhecodes" class="display" style="width:100%">
           <thead>
             <tr>
               <th class="dt-head-left">Outcome Id</th>
@@ -168,29 +168,6 @@
               <th class="dt-head-right">P-Value<sup>&nbsp;*</sup></th>
               <th class="dt-head-right">Q-Value<sup>&nbsp;*</sup></th>
               <th class="dt-head-right">Bonferroni p<sup>&nbsp;*</sup></th>
-              <th class="dt-head-right">Deviance Difference</th>
-            </tr>
-          </thead>
-        </table>
-      </div>
-
-      <div class="footnote">
-        <p>
-          <sup>*&nbsp;</sup>Values noted as 0 represent values smaller than the numerical floating point representation limit (&lt;&nbsp;2e-308 for this analysis).
-        </p>
-      </div>
-
-      <div class="geneResults icd103Char">
-        <h4 id="icd10-3char-results-section">ICD10 (3 characters)</h4>
-        <table id="geneResultsICD103Char" class="display" style="width:100%">
-          <thead>
-            <tr>
-              <th class="dt-head-left">Outcome Id</th>
-              <th class="dt-head-left">Description</th>
-              <th class="dt-head-right">P-Value<sup>&nbsp;*</sup></th>
-              <th class="dt-head-right">Q-Value<sup>&nbsp;*</sup></th>
-              <th class="dt-head-right">Bonferroni p<sup>&nbsp;*</sup></th>
-              <th class="dt-head-right">Deviance Difference</th>
             </tr>
           </thead>
         </table>

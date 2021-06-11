@@ -216,7 +216,7 @@ class ResultMixin(object):
 
     @declared_attr
     def outcome_obj(cls):
-        return relationship("Outcome")
+        return relationship("Outcome", lazy="joined")
 
     def p(self):
         return None
@@ -236,7 +236,8 @@ class ResultMixin(object):
             "gene": self.gene,
             "analysis_subset": self.analysis_subset,
             "static_nlog10p": self.static_nlog10p,
-            "outcome": self.outcome_id,
+            "outcome_id": self.outcome_id,
+            "outcome_label": self.outcome_obj.label,
             "analysis_type": self.analysis_type
         }
 

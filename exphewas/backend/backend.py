@@ -6,7 +6,7 @@ import os
 from collections import defaultdict
 
 from sqlalchemy.orm.exc import NoResultFound
-from flask import Blueprint, render_template, abort, url_for
+from flask import Blueprint, render_template, abort, url_for, request
 
 from . import api
 from ..version import exphewas_version
@@ -73,23 +73,32 @@ def get_outcomes():
 @backend.route("/outcome/<id>")
 def get_outcome(id):
     try:
-        outcome_data = api.get_outcome(id)
+        outcome_obj = api.get_outcome(id)
     except api.RessourceNotFoundError as exception:
         abort(404)
 
     # Checks if there are enrichment results for this outcome
     enrichment_result = Session.query(models.Enrichment)\
-        .filter_by(hierarchy_id="ATC")\
-        .filter_by(outcome_id=id)\
-        .first()
+        .filter_by(hierarchy_id="ATC", outcome_id=id)
+
+    if "analysis_type" in request.args:
+        enrichment_result = enrichment_result\
+            .filter_by(analysis_type=request.args["analysis_type"])
 
     has_atc = enrichment_result is not None
 
+    title = "Outcome '{}' - {}".format(id, outcome_obj["label"])
+    analysis_subset = request.args.get("analysis_subset", "BOTH")
+    if analysis_subset == "FEMALE_ONLY":
+        title += " (Female only)"
+    elif analysis_subset == "MALE_ONLY":
+        title += " (Male only)"
+
     return render_template(
         "outcome.html",
-        page_title=f"Outcome {id}",
+        page_title=title,
         has_atc_enrichment=has_atc,
-        **outcome_data,
+        **outcome_obj,
     )
 
 
@@ -112,18 +121,21 @@ def get_gene(ensg):
         db_names[xref["db_id"]] = xref["db_description"]
         xrefs[xref["db_id"]].append(xref["external_id"])
 
-    # Adding the available variance results
-    available_variance = api.get_gene_available_variance(ensg)
-    available_variance = available_variance["available_variance"]
-
     # Checking if there are any GTEx data
     has_gtex = len(api.get_gene_gtex(ensg)) > 0
 
+    title = "Gene '{}' - {}".format(gene_info["ensembl_id"], gene_info["name"])
+    analysis_subset = request.args.get("analysis_subset", "BOTH")
+    if analysis_subset == "FEMALE_ONLY":
+        title += " (Female only)"
+    elif analysis_subset == "MALE_ONLY":
+        title += " (Male only)"
+
+
     return render_template(
         "gene.html",
-        page_title=f"{ensg} | {gene_info['variance_pct']}%",
+        page_title=title,
         **gene_info,
-        available_variance=available_variance,
         xrefs=xrefs,
         has_gtex=has_gtex,
         db_full_names=db_names,
