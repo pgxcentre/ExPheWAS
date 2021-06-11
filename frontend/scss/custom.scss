@@ -4,6 +4,28 @@
   margin-bottom: 20px;
 }
 
+.analysis-badge {
+  color: #ffffff;
+  opacity: 0.9;
+}
+
+.analysis-badge:hover {
+  color: #eeeeee;
+  opacity: 1;
+}
+
+.analysis-BOTH {
+  background-color: #232D57;
+}
+
+.analysis-MALE_ONLY {
+  background-color: #5E79EB;
+}
+
+.analysis-FEMALE_ONLY {
+  background-color: #EB805F;
+}
+
 .dataTables_filter input[type="search"] {
   border-radius: 4px;
   border: 1px solid #cccccc;

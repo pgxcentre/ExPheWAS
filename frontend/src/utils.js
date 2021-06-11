@@ -6,9 +6,14 @@ export const ANALYSIS_LABELS = {
   SELF_REPORTED: "Self-reported diseases",
   CV_ENDPOINTS: "Algo. defined CV endpoints",
   CONTINUOUS_VARIABLE: "Continuous variables",
-  ICD10_RAW: "Hospit. or death ICD10 code (code as-is)",
-  ICD10_3CHAR: "Hospit. or death ICD10 code (3 chars)",
-  ICD10_BLOCK: "Hospit. or death ICD10 code (blocks)"
+  PHECODES: "Phecodes",
+}
+
+
+export const ANALYSIS_SUBSETS = {
+  BOTH: "All",
+  MALE_ONLY: "Male only",
+  FEMALE_ONLY: "Female only"
 }
 
 

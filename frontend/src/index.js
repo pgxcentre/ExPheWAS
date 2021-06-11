@@ -7,7 +7,7 @@ import 'datatables.net-dt/css/jquery.dataTables.css';
 
 import '../scss/custom.scss';
 import { URL_PREFIX, API_URL, DT_API_URL, ICD10_URL, UNIPROT_URL } from './config';
-import { api_call, formatP, formatNumber, getUrlParam, ANALYSIS_LABELS } from './utils';
+import { api_call, formatP, formatNumber, getUrlParam, ANALYSIS_LABELS, ANALYSIS_SUBSETS } from './utils';
 import radialGTEX from './radial_plot';
 import qq from './qq_plot';
 import atcTree from './atc_tree';
@@ -29,38 +29,36 @@ function mainOutcomeList() {
       },
       columns: [
         {data: 'id'},                   // 0
-        {data: 'available_variances'},  // 1
-        {data: 'analysis_type'},        // 2
+        {data: 'analysis_type'},        // 1
+        {data: 'available_subsets'},    // 2
         {data: 'label'}                 // 3
       ],
       columnDefs: [
         {
           targets: 0,
           render: (outcome, type, row, meta) => {
-            return `<a href="${URL_PREFIX}/outcome/${outcome}">${outcome}</a>`;
-          }
-        },
-        {
-          targets: 1,
-          orderable: false,
-          searchable: false,
-          render: (variances, type, row, meta) => {
-            if (variances === null)
-              return '<span class="badge badge-warning">No results</span>';
-
-            return variances.sort().map(d => {
-
-              return `
-                <a href="${URL_PREFIX}/outcome/${row['id']}?variance_pct=${d}" class="badge badge-primary">
-                  ${d}%
-                </a>
-              `;
-
-            }).join(' ');
+            return `<a href="${URL_PREFIX}/outcome/${outcome}?analysis_type=${row.analysis_type}">${outcome}</a>`;
           }
         },
         {
           targets: 2,
+          orderable: false,
+          searchable: false,
+          render: (subsets, type, row, meta) => {
+            if (subsets === null)
+              return '<span class="badge badge-warning">No results</span>';
+
+            return subsets.sort().map(d => {
+              return `
+                <a href="${URL_PREFIX}/outcome/${row.id}?analysis_subset=${d}&analysis_type=${row.analysis_type}" class="badge analysis-badge analysis-${d}">
+                  ${ANALYSIS_SUBSETS[d]}
+                </a>
+              `;
+            }).join(' ');
+          }
+        },
+        {
+          targets: 1,
           render: (analysis, type, row, meta) => ANALYSIS_LABELS[analysis]
         }
       ]
