@@ -4,7 +4,7 @@ Database models to store the results of ExPheWas analysis.
 
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.sql import select
-from sqlalchemy.orm import column_property, relationship
+from sqlalchemy.orm import column_property, relationship, deferred
 from sqlalchemy import (
     Table, Column, Integer, String, MetaData, ForeignKey, Enum, Float,
     Boolean, Sequence, UniqueConstraint, ForeignKeyConstraint, create_engine,
@@ -193,7 +193,6 @@ class ContinuousOutcome(Outcome):
 
 class ResultMixin(object):
     analysis_subset = Column(SexSubsetEnum, primary_key=True)
-    model_fit = Column(JSON)
 
     outcome_id = Column(String, primary_key=True)
     analysis_type = Column(AnalysisEnum, primary_key=True)
@@ -202,6 +201,10 @@ class ResultMixin(object):
 
     def model_fit_df(self):
         return pd.DataFrame(self.model_fit)
+
+    @declarative_base
+    def model_fit(cls):
+        return deferred(Column(JSON))
 
     @declared_attr
     def gene(cls):
@@ -226,6 +229,16 @@ class ResultMixin(object):
                 ["outcomes.id", "outcomes.analysis_type"]
             ),
         )
+
+    def to_object(self):
+        """Serialize using only primitive types (e.g. to json dump)."""
+        return {
+            "gene": self.gene,
+            "analysis_subset": self.analysis_subset,
+            "static_nlog10p": self.static_nlog10p,
+            "outcome": self.outcome_id,
+            "analysis_type": self.analysis_type
+        }
 
     def __repr__(self):
         try:
@@ -255,6 +268,13 @@ class ContinuousVariableResult(Base, ResultMixin):
 
     discriminator = Column("type", String(50))
     __mapper_args__ = {"polymorphic_on": discriminator}
+
+    def to_object(self):
+        o = super().to_object()
+        keys = ["n", "rss_base", "rss_augmented",
+                "n_params_base", "n_params_augmented"]
+        o.update({k: getattr(self, k) for k in keys})
+        return o
 
     def f_stat(self):
         rss1 = self.rss_base
@@ -292,6 +312,13 @@ class BinaryVariableResult(Base, ResultMixin):
 
     discriminator = Column("type", String(50))
     __mapper_args__ = {"polymorphic_on": discriminator}
+
+    def to_object(self):
+        o = super().to_object()
+        keys = ["n_cases", "n_controls", "n_excluded_from_controls",
+                "deviance_base", "deviance_augmented"]
+        o.update({k: getattr(self, k) for k in keys})
+        return o
 
     def p(self):
         # Get the number of PCs (difference in number of parameters).

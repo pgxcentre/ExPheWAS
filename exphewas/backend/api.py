@@ -232,7 +232,6 @@ def get_outcome_results(id):
     ]
 
 
-# HERE TODO
 @make_api("/gene")
 def get_genes():
     from_db = request.args.get("from_db", False)
@@ -240,13 +239,11 @@ def get_genes():
     if not from_db:
         json_fn = path.join(path.dirname(__file__), "static", "genes.json")
         with open(json_fn) as genes:
-            res = json.loads(genes.read())
+            return json.loads(genes.read())
 
     else:
         genes = Session.query(models.Gene).all()
-        res = [mod_to_dict(gene) for gene in genes]
-
-    return res
+        return [mod_to_dict(gene) for gene in genes]
 
 
 @make_api("/gene/name/<name>")
@@ -263,17 +260,8 @@ def get_gene_by_name(name):
 
 @make_api("/gene/ensembl/<ensg>")
 def get_gene_by_ensembl_id(ensg):
-    variance_pct = request.args.get("variance_pct", 95)
-
     try:
-        gene, gene_variance = Session.query(
-            models.Gene,
-            models.GeneVariance,
-        )\
-        .filter(models.Gene.ensembl_id == ensg)\
-        .filter(models.Gene.ensembl_id == models.GeneVariance.ensembl_id)\
-        .filter(models.GeneVariance.variance_pct == variance_pct)\
-        .one()
+        gene = Session.query(models.Gene).filter_by(ensembl_id=ensg).one()
     except NoResultFound:
         raise RessourceNotFoundError(
             f"Could not find gene (by Ensembl ID) '{ensg}'."
@@ -281,73 +269,51 @@ def get_gene_by_ensembl_id(ensg):
 
     # Creating the final results.
     results = mod_to_dict(gene)
-    results.update(mod_to_dict(gene_variance))
+    results["n_pcs"] = gene.n_pcs
 
     return results
 
 
 @make_api("/gene/<ensg>/results")
 def get_gene_results(ensg):
+    session = Session()
     try:
-        Session.query(models.Gene).filter_by(ensembl_id=ensg).one()
+        session.query(models.Gene).filter_by(ensembl_id=ensg).one()
     except NoResultFound:
         raise RessourceNotFoundError(
             f"Could not find gene (by Ensembl ID) '{ensg}'."
         )
 
-    variance_pct = request.args.get("variance_pct", 95)
+    analysis_subset = request.args.get("analysis_subset", "BOTH")
 
-    # Find all results.
-    fields = ("gene", "analysis_type", "outcome_id", "outcome_label",
-              "variance_pct", "p", "gof_meas", "gene_name", "n_components",
-              "test_statistic")
+    # Outcome.
+    res_cont = session.query(models.ContinuousVariableResult)\
+        .filter_by(
+            gene=ensg,
+            analysis_subset=analysis_subset
+        ).all()
 
-    result_models = (
-        {
-            "model": models.BinaryVariableResult,
-            "gof_meas": models.BinaryVariableResult.deviance,
-            "test_statistic": null(),
-        },
-        {
-            "model": models.ContinuousVariableResult,
-            "gof_meas": models.ContinuousVariableResult.sum_of_sq,
-            "test_statistic": models.ContinuousVariableResult.F_stat,
-        },
-    )
+    res_bin = session.query(models.BinaryVariableResult)\
+        .filter_by(
+            gene=ensg,
+            analysis_subset=analysis_subset
+        ).all()
 
-    binary_results, continuous_results = [
-        Session.query(
-            result_info["model"].gene,
-            models.Outcome.analysis_type,
-            result_info["model"].outcome_id,
-            models.Outcome.label,
-            result_info["model"].variance_pct,
-            result_info["model"].p,
-            result_info["gof_meas"],
-            models.Gene.name,
-            models.GeneVariance.n_components,
-            result_info["test_statistic"],
-        )
-        .filter(models.Outcome.id == result_info["model"].outcome_id)
-        .filter(models.Gene.ensembl_id == result_info["model"].gene)
-        .filter(models.GeneVariance.ensembl_id == models.Gene.ensembl_id)
-        .filter(models.GeneVariance.variance_pct == result_info["model"].variance_pct)
-        .filter(result_info["model"].variance_pct == variance_pct)
-        .filter_by(gene=ensg)
-        for result_info in result_models
-    ]
+    results = []
+    nlog10ps = []
+    for res in itertools.chain(res_cont, res_bin):
+        results.append(res.to_object())
+        nlog10ps.append(res.static_nlog10p)
 
-    results = binary_results.union(continuous_results).all()
-
-    results = [dict(zip(fields, i)) for i in results]
+    if len(results) == 0:
+        raise RessourceNotFoundError(f"No results for gene '{ensg}'.")
 
     # Get the corresponding Q-values.
-    qs = qvalue(np.fromiter((r["p"] for r in results), dtype=float,
-                count=len(results)))
+    nlog10ps = np.array(nlog10ps)
+    qs = qvalue(10 ** -nlog10ps)
 
     for i in range(len(results)):
-        results[i]["q"] = None if qs is None else qs[i]
-        results[i]["bonf"] = results[i]["p"] * len(results)
+        results[i]["q"] = qs[i]
 
     return results
 
@@ -368,30 +334,6 @@ def get_gene_xrefs(ensg):
         }
         for xref, external_db in results
     ]
-
-
-@make_api("/gene/<ensg>/available_variance")
-def get_gene_available_variance(ensg):
-    results = Session.query(
-        models.AvailableGeneResult.ensembl_id,
-        func.array_agg(models.AvailableGeneResult.variance_pct)
-            .label("available_variances"),
-    ).filter_by(ensembl_id=ensg)\
-        .group_by(models.AvailableGeneResult.ensembl_id).one()
-
-    return {"ensembl_id": results[0], "available_variance": results[1]}
-
-
-@make_api("/outcome/<id>/available_variance")
-def get_outcome_available_variance(id):
-    results = Session.query(
-        models.AvailableOutcomeResult.outcome_id,
-        func.array_agg(models.AvailableOutcomeResult.variance_pct)
-            .label("available_variances"),
-    ).filter_by(outcome_id=id)\
-        .group_by(models.AvailableOutcomeResult.outcome_id).one()
-
-    return {"outcome_id": results[0], "available_variance": results[1]}
 
 
 @make_api("/gene/<ensg>/gtex")
