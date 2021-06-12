@@ -402,6 +402,7 @@ def main():
         help="Minimum number of cases for inclusion in the db for binary "
              "variables.",
         default=0,
+        type=int
     )
 
     parser_import_external = subparsers.add_parser("import-external")
