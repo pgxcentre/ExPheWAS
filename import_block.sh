@@ -4,19 +4,13 @@
 # This script assumes the directory structure used for the main analysis.
 
 if [ "$#" -lt 2 ]; then
-    echo "Usage: import_block.sh block_path_tar sex_subset [n_cpus]"
+    echo "Usage: import_block.sh block_path_tar sex_subset"
     exit 1
 fi
 
 
 tar_file=$1
 sex_subset=$2  # BOTH, FEMALE_ONLY, MALE_ONLY
-n_cpus=${3:-0}
-
-if [ "$n_cpus" -eq "0" ]; then
-    n_cpus=$(nproc --all)
-fi
-echo "Importing block using ${n_cpus} CPUs"
 
 
 block=$(basename $tar_file | sed 's/.tar//')
@@ -28,7 +22,7 @@ fi
 
 tar -xf $tar_file
 
-genes=$(ls -1 $block | grep results | cut -f 2 -d_ | sort | uniq | head -n 4)
+genes=$(ls -1 $block | grep results | cut -f 2 -d_ | sort | uniq)
 
 
 import_gene() {
@@ -42,11 +36,12 @@ import_gene() {
     exphewas-db \
         import-results \
         --sex-subset $sex_subset \
+        --min-n-cases 100 \
         $path
 }
 export -f import_gene
 
-parallel -j $n_cpus \
+parallel -j 1 \
     import_gene $block $sex_subset \
     ::: $genes \
     ::: continuous binary

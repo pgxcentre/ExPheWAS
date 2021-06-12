@@ -61,8 +61,8 @@ def main(args):
     for i, row in df.iterrows():
         # Get the model object.
         model_fit = models[(row["analysis_type"], row["variable_id"])]
-        o = create_object(row, gene, variable_type, args.sex_subset, model_fit,
-                          labels, session)
+        o = create_object(row, gene, variable_type, args.sex_subset,
+                          args.min_n_cases, model_fit, labels, session)
 
         if o is not None:
             objects.append(o)
@@ -127,7 +127,7 @@ class SkipRow(Exception):
 
 
 def _process_continuous_result(row, gene, variable_type, args_sex_subset,
-                               model_fit, labels, session):
+                               _min_n_cases, model_fit, labels, session):
     # Get or create outcome.
     try:
         outcome = session.query(ContinuousOutcome)\
@@ -159,7 +159,10 @@ def _process_continuous_result(row, gene, variable_type, args_sex_subset,
 
 
 def _process_binary_result(row, gene, variable_type, args_sex_subset,
-                           model_fit, labels, session):
+                           min_n_cases, model_fit, labels, session):
+    if row.n_cases < min_n_cases:
+        return None
+
     # Get or create outcome.
     try:
         outcome = session.query(BinaryOutcome)\

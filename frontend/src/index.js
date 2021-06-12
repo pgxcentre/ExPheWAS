@@ -157,6 +157,12 @@ function geneResultBinaryOutcomeTable(o) {
           }
         },
         {
+          targets: [2, 3, 4],
+          render: function(n, type, row, meta) {
+            return n.toLocaleString();
+          }
+        },
+        {
           targets: [2, 3, 4, 5, 6, 7, 8],
           className: 'dt-body-right'
         }
