@@ -186,7 +186,7 @@ def get_outcome(id):
             analysis_subset=analysis_subset
         ).one()
 
-        res = [int(i) for i in res]
+        res = [int(i) if i else 0 for i in res]
         (
             out["n_cases_avg"],
             out["n_controls_avg"],

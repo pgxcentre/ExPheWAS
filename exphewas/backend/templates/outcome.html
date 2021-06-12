@@ -2,14 +2,15 @@
 {% block body %}
     <div class="tooltip" id="tooltip-atc-tree"></div>
 
-    <h1>
-      Outcome '{{ label }}' ({{ id }})
-      <!-- TODO Make nice -->
-      {% if analysis_subset == "BOTH" %}All
-      {% elif analysis_subset == "FEMALE_ONLY" %}Female
-      {% elif analysis_subset == "MALE_ONLY" %}Male
-      {% endif %}
-    </h1>
+    <div class="resultsHeader">
+      <h3>Outcome '{{ label }}' ({{ id }}) </h3>
+      {% for subset, label in [('BOTH', 'All'), ('MALE_ONLY', 'Male only'), ('FEMALE_ONLY', 'Female only')] %}
+        <a class="badge{% if analysis_subset == subset %} badge-danger selected{% else %} badge-light{% endif %}"
+           href="{{ url_for('backend_blueprint.get_outcome', id=id, analysis_subset=subset) }}">
+          {{ label }}
+        </a>
+      {% endfor %}
+    </div>
 
     <div id="app">
 

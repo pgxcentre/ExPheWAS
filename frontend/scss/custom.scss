@@ -44,12 +44,16 @@
   margin: 30px 0px 20px 0px;
 }
 
-.geneHeader h3, .geneHeader a {
+.resultsHeader h3, .resultsHeader a {
   display: inline;
 }
 
-.geneHeader a {
+.resultsHeader a {
   margin-left: 5px;
+}
+
+.resultsHeader .selected {
+  pointer-events: none;
 }
 
 .footnote {

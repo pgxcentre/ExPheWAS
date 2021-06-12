@@ -36,6 +36,10 @@ export function formatNumber(num) {
 function getUrlVars() {
   var vars = {};
   var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m, key, value) {
+    if (value.indexOf('#') != -1) {
+      value = value.split('#')[0]
+    }
+
     vars[key] = value;
   });
   return vars;

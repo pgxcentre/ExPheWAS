@@ -136,6 +136,7 @@ def get_gene(ensg):
         "gene.html",
         page_title=title,
         **gene_info,
+        analysis_subset=analysis_subset,
         xrefs=xrefs,
         has_gtex=has_gtex,
         db_full_names=db_names,

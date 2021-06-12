@@ -37,7 +37,7 @@ function mainOutcomeList() {
         {
           targets: 0,
           render: (outcome, type, row, meta) => {
-            return `<a href="${URL_PREFIX}/outcome/${outcome}?analysis_type=${row.analysis_type}">${outcome}</a>`;
+            return `<a href="${URL_PREFIX}/outcome/${outcome}?analysis_type=${row.analysis_type}&analysis_subset=BOTH">${outcome}</a>`;
           }
         },
         {
@@ -114,6 +114,57 @@ async function mainOutcomeResults(id) {
 }
 
 
+function geneResultBinaryOutcomeTable(o) {
+  $(`#app #${o.id}`)
+    .DataTable({
+      deferRender: true,
+      data: o.data.filter(d => d.analysis_type === o.analysis_type),
+      columns: [
+        {'data': 'outcome_id'},                // 0
+        {'data': 'outcome_label'},             // 1
+        {'data': 'n_cases'},                   // 2
+        {'data': 'n_controls'},                // 3
+        {'data': 'n_excluded_from_controls'},  // 4
+        {'data': 'static_nlog10p'},            // 5
+        {'data': 'p'},                         // 6
+        {'data': 'bonf'},                      // 7
+        {'data': 'q'},                         // 8
+      ],
+      columnDefs: [
+        {
+          targets: 0,
+          render: function(outcome, type, row, meta) {
+            let urlParam = `?analysis_subset=${o.analysis_subset}`
+            urlParam += `&analysis_type=${o.analysis_type}`;
+
+            return `<a href="${URL_PREFIX}/outcome/${outcome}${urlParam}">${outcome}</a>`;
+          }
+        },
+        {
+          targets: 1,
+          width: "25%"
+        },
+        {
+          targets: [6, 7, 8],
+          render: function(p, type, row, meta) {
+            return formatP(p);
+          }
+        },
+        {
+          targets: 5,
+          render: function(nlog10p, type, row, meta) {
+            return nlog10p.toFixed(2);
+          }
+        },
+        {
+          targets: [2, 3, 4, 5, 6, 7, 8],
+          className: 'dt-body-right'
+        }
+      ],
+      order: [[5, 'desc']]
+  });
+}
+
 async function mainGeneResults(id) {
   // Add the GTEx radial plot.
   radialGTEX(id);
@@ -158,13 +209,13 @@ async function mainGeneResults(id) {
       deferRender: true,
       data: data.filter(d => d.analysis_type === 'CONTINUOUS_VARIABLE'),
       columns: [
-        {data: 'outcome_id'},     // 0
-        {data: 'outcome_label'},  // 1
-        {data: 'n'},              // 2
-        {data: 'static_nlog10p'}, // 3
-        {data: 'p'},              // 4 (p)
-        {data: 'bonf'},           // 5 (bonf)
-        {data: 'q'},              // 6
+        {'data': 'outcome_id'},     // 0
+        {'data': 'outcome_label'},  // 1
+        {'data': 'n'},              // 2
+        {'data': 'static_nlog10p'}, // 3
+        {'data': 'p'},              // 4 (p)
+        {'data': 'bonf'},           // 5 (bonf)
+        {'data': 'q'},              // 6
       ],
       columnDefs: [
         {
@@ -198,181 +249,25 @@ async function mainGeneResults(id) {
       order: [[3, 'desc']]
   });
 
-  $('#app #geneResultsCVEndpoints')
-    .DataTable({
-      deferRender: true,
-      data: data.filter(d => d.analysis_type === 'CV_ENDPOINTS'),
-      columns: [
-        {data: 'outcome_id'},                // 0
-        {data: 'outcome_label'},             // 1
-        {data: 'n_cases'},                   // 2
-        {data: 'n_controls'},                // 3
-        {data: 'n_excluded_from_controls'},  // 4
-        {data: 'static_nlog10p'},            // 5
-        {data: 'p'},                         // 6
-        {data: 'bonf'},                      // 7
-        {data: 'q'},                         // 8
-      ],
-      columnDefs: [
-        {
-          targets: 0,
-          render: function(outcome, type, row, meta) {
-            urlParam = urlParam + `&analysis_type=CV_ENDPOINTS`;
-            return `<a href="${URL_PREFIX}/outcome/${outcome}${urlParam}">${outcome}</a>`;
-          }
-        },
-        {
-          targets: 1,
-          width: "25%"
-        },
-        {
-          targets: [6, 7, 8],
-          render: function(p, type, row, meta) {
-            return formatP(p);
-          }
-        },
-        {
-          targets: 5,
-          render: function(nlog10p, type, row, meta) {
-            return nlog10p.toFixed(2);
-          }
-        },
-        {
-          targets: [2, 3, 4, 5, 6, 7, 8],
-          className: 'dt-body-right'
-        }
-      ],
-      order: [[5, 'desc']]
+  geneResultBinaryOutcomeTable({
+    id: 'geneResultsCVEndpoints',
+    analysis_type: 'CV_ENDPOINTS',
+    analysis_subset: analysis_subset,
+    data: data,
   });
 
-  $('#app #geneResultsSelfReported')
-    .DataTable({
-      deferRender: true,
-      data: data.filter(d => d.analysis_type === 'SELF_REPORTED'),
-      columns: [
-        {data: 'outcome_id'},     // 0
-        {data: 'outcome_label'},  // 1
-        {data: 'p'},              // 2
-        {data: 'q'},              // 3
-        {data: 'bonf'},           // 4
-        {data: 'gof_meas'}        // 5
-      ],
-      columnDefs: [
-        {
-          targets: 0,
-          render: function(outcome, type, row, meta) {
-            return `<a href="${URL_PREFIX}/outcome/${outcome}${urlParam}">${outcome}</a>`;
-          }
-        },
-        {
-          targets: [2, 3, 4],
-          render: function(p, type, row, meta) {
-            return formatP(p);
-          }
-        },
-        {
-          targets: 5,
-          render: function(gof_meas, type, row, meta) {
-            return gof_meas.toFixed(1);
-          }
-        },
-        {
-          targets: [2, 3, 4, 5],
-          className: 'dt-body-right'
-        }
-      ],
-      order: [[2, 'asc']]
+  geneResultBinaryOutcomeTable({
+    id: 'geneResultsSelfReported',
+    analysis_type: 'SELF_REPORTED',
+    analysis_subset: analysis_subset,
+    data: data,
   });
 
-  $('#app #geneResultsICD10Block')
-    .DataTable({
-      deferRender: true,
-      data: data.filter(d => d.analysis_type === 'ICD10_BLOCK'),
-      columns: [
-        {data: 'outcome_id'},     // 0
-        {data: 'outcome_label'},  // 1
-        {data: 'p'},              // 2
-        {data: 'q'},              // 3
-        {data: 'bonf'},           // 4
-        {data: 'gof_meas'}        // 5
-      ],
-      columnDefs: [
-        {
-          targets: 0,
-          render: function(outcome, type, row, meta) {
-            return `<a href="${URL_PREFIX}/outcome/${outcome}${urlParam}">${outcome}</a>`;
-          }
-        },
-        {
-          targets: 1,
-          render: function(description, type, row, meta) {
-            let icd10Code = row.outcome_id.split("-")[0];
-            return `${description} <small>[<a target="_blank" href="${ICD10_URL}/${icd10Code}">link</a>]</small>`;
-          }
-        },
-        {
-          targets: [2, 3, 4],
-          render: function(p, type, row, meta) {
-            return formatP(p);
-          }
-        },
-        {
-          targets: 5,
-          render: function(gof_meas, type, row, meta) {
-            return gof_meas.toFixed(1);
-          }
-        },
-        {
-          targets: [2, 3, 4, 5],
-          className: 'dt-body-right'
-        }
-      ],
-      order: [[2, 'asc']]
-  });
-
-  $('#app #geneResultsICD103Char')
-    .DataTable({
-      deferRender: true,
-      data: data.filter(d => d.analysis_type === 'ICD10_3CHAR'),
-      columns: [
-        {data: 'outcome_id'},    // 0
-        {data: 'outcome_label'}, // 1
-        {data: 'p'},             // 2
-        {data: 'q'},             // 3
-        {data: 'bonf'},          // 4
-        {data: 'gof_meas'}       // 5
-      ],
-      columnDefs: [
-        {
-          targets: 0,
-          render: function(outcome, type, row, meta) {
-            return `<a href="${URL_PREFIX}/outcome/${outcome}${urlParam}">${outcome}</a>`;
-          }
-        },
-        {
-          targets: 1,
-          render: function(description, type, row, meta) {
-            return `${description} <small>[<a target="_blank" href="${ICD10_URL}/${row.outcome_id}">link</a>]</small>`;
-          }
-        },
-        {
-          targets: [2, 3, 4],
-          render: function(p, type, row, meta) {
-            return formatP(p);
-          }
-        },
-        {
-          targets: 5,
-          render: function(gof_meas, type, row, meta) {
-            return gof_meas.toFixed(1);
-          }
-        },
-        {
-          targets: [2, 3, 4, 5],
-          className: 'dt-body-right'
-        }
-      ],
-      order: [[2, 'asc']]
+  geneResultBinaryOutcomeTable({
+    id: 'geneResultsPhecodes',
+    analysis_type: 'PHECODES',
+    analysis_subset: analysis_subset,
+    data: data,
   });
 }
 

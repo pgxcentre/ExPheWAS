@@ -6,12 +6,14 @@
 {% endblock %}
 
 {% block body %}
-    <div class="geneHeader">
+    <div class="resultsHeader">
       <h3>Gene {{ name }}</h3>
-      {% if analysis_subset == "BOTH" %}All
-      {% elif analysis_subset == "FEMALE_ONLY" %}Female
-      {% elif analysis_subset == "MALE_ONLY" %}Male
-      {% endif %}
+      {% for subset, label in [('BOTH', 'All'), ('MALE_ONLY', 'Male only'), ('FEMALE_ONLY', 'Female only')] %}
+        <a class="badge{% if analysis_subset == subset %} badge-danger selected{% else %} badge-light{% endif %}"
+           href="{{ url_for('backend_blueprint.get_gene', ensg=ensembl_id, analysis_subset=subset) }}">
+          {{ label }}
+        </a>
+      {% endfor %}
     </div>
 
     <div id="app">
@@ -130,12 +132,6 @@
         </table>
       </div>
 
-      <div class="footnote">
-        <p>
-          <sup>*&nbsp;</sup>Values noted as 0 represent values smaller than the numerical floating point representation limit (&lt;&nbsp;2e-308 for this analysis).
-        </p>
-      </div>
-
       <div class="geneResults selfReported">
         <h4 id="self-reported-results-section">Self Reported</h4>
         <table id="geneResultsSelfReported" class="display" style="width:100%">
@@ -143,19 +139,16 @@
             <tr>
               <th class="dt-head-left">Outcome Id</th>
               <th class="dt-head-left">Description</th>
-              <th class="dt-head-right">P-Value<sup>&nbsp;*</sup></th>
-              <th class="dt-head-right">Q-Value<sup>&nbsp;*</sup></th>
-              <th class="dt-head-right">Bonferroni p<sup>&nbsp;*</sup></th>
-              <th class="dt-head-right">Deviance Difference</th>
+              <th class="dt-head-right">N cases</th>
+              <th class="dt-head-right">N controls</th>
+              <th class="dt-head-right">N excluded from controls</th>
+              <th class="dt-head-right">-log<sub>10</sub>(<i>P</i>)</sup></th>
+              <th class="dt-head-right">P-Value</th>
+              <th class="dt-head-right">P-Value (Bonferroni)</th>
+              <th class="dt-head-right">Q-Value</th>
             </tr>
           </thead>
         </table>
-      </div>
-
-      <div class="footnote">
-        <p>
-          <sup>*&nbsp;</sup>Values noted as 0 represent values smaller than the numerical floating point representation limit (&lt;&nbsp;2e-308 for this analysis).
-        </p>
       </div>
 
       <div class="geneResults phecodes">
@@ -165,18 +158,16 @@
             <tr>
               <th class="dt-head-left">Outcome Id</th>
               <th class="dt-head-left">Description</th>
-              <th class="dt-head-right">P-Value<sup>&nbsp;*</sup></th>
-              <th class="dt-head-right">Q-Value<sup>&nbsp;*</sup></th>
-              <th class="dt-head-right">Bonferroni p<sup>&nbsp;*</sup></th>
+              <th class="dt-head-right">N cases</th>
+              <th class="dt-head-right">N controls</th>
+              <th class="dt-head-right">N excluded from controls</th>
+              <th class="dt-head-right">-log<sub>10</sub>(<i>P</i>)</sup></th>
+              <th class="dt-head-right">P-Value</th>
+              <th class="dt-head-right">P-Value (Bonferroni)</th>
+              <th class="dt-head-right">Q-Value</th>
             </tr>
           </thead>
         </table>
-      </div>
-
-      <div class="footnote">
-        <p>
-          <sup>*&nbsp;</sup>Values noted as 0 represent values smaller than the numerical floating point representation limit (&lt;&nbsp;2e-308 for this analysis).
-        </p>
       </div>
 
     </div>
