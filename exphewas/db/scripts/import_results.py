@@ -54,15 +54,12 @@ def main(args):
         create_object = _process_binary_result
         result_class = BinaryVariableResult
 
-    print("read data")
     df = pd.read_csv(summary, dtype={"variable_id": str})
     models = load_ukbphewas_model(model, as_dict=True, fit_df=False)
-    print("ok")
 
     # For every line:
     # 1. Get or create Outcome.
     # 2. Create Result.
-    print("create objects")
     objects = []
     for i, row in df.iterrows():
         # Get the model object.
@@ -75,14 +72,9 @@ def main(args):
             o["static_nlog10p"] = _compute_nlog10p(result_class, o, n_pcs)
             objects.append(o)
 
-    print("ok")
-
-    print("commit outcomes")
     session.commit()
-    print("ok")
 
     # Bulk insert.
-    print("insert")
     n = len(objects)
     chunk_size = 10000
     for chunk in range(0, n, chunk_size):
@@ -92,7 +84,6 @@ def main(args):
         )
 
     session.commit()
-    print("ok")
 
 
 def _compute_nlog10p(result_class, o, n_pcs):

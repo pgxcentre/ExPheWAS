@@ -24,6 +24,7 @@ tar -xf $tar_file
 
 genes=$(ls -1 $block | grep results | cut -f 2 -d_ | sort | uniq)
 
+echo "Importing ${tar_file} (${sex_subset})"
 
 import_gene() {
     block=$1
