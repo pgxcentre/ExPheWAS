@@ -8,6 +8,7 @@ import numpy as np
 
 from ..engine import Session
 from ..models import (
+    Gene,
     ContinuousOutcome, BinaryOutcome,
     ContinuousVariableResult, BinaryVariableResult
 )
@@ -36,6 +37,10 @@ def main(args):
     gene = match["ensg"]
     variable_type = match["type"]
 
+    # Get n_pcs
+    session = Session()
+    n_pcs = session.query(Gene).filter_by(ensembl_id=gene).one().n_pcs
+
     # Check that we can find the model and summary files.
     model = f"{args.prefix}_model.json.gz"
     summary = f"{args.prefix}_summary.csv.gz"
@@ -49,14 +54,15 @@ def main(args):
         create_object = _process_binary_result
         result_class = BinaryVariableResult
 
-    session = Session()
-
+    print("read data")
     df = pd.read_csv(summary, dtype={"variable_id": str})
     models = load_ukbphewas_model(model, as_dict=True, fit_df=False)
+    print("ok")
 
     # For every line:
     # 1. Get or create Outcome.
     # 2. Create Result.
+    print("create objects")
     objects = []
     for i, row in df.iterrows():
         # Get the model object.
@@ -65,11 +71,18 @@ def main(args):
                           args.min_n_cases, model_fit, labels, session)
 
         if o is not None:
+            # Pre-compute the p-value
+            o["static_nlog10p"] = _compute_nlog10p(result_class, o, n_pcs)
             objects.append(o)
 
+    print("ok")
+
+    print("commit outcomes")
     session.commit()
+    print("ok")
 
     # Bulk insert.
+    print("insert")
     n = len(objects)
     chunk_size = 10000
     for chunk in range(0, n, chunk_size):
@@ -79,21 +92,24 @@ def main(args):
         )
 
     session.commit()
+    print("ok")
 
-    # Populate the nlog10p
-    all_results = itertools.chain(
-        session.query(ContinuousVariableResult),
-        session.query(BinaryVariableResult) 
-    )
 
-    for o in all_results:
-        try:
-            o.static_nlog10p = o.nlog10p()
-        except Exception as e:
-            print(f"Could not calculate -log10(p) for {o}.")
-            raise e
+def _compute_nlog10p(result_class, o, n_pcs):
+    if result_class is ContinuousVariableResult:
+        return ContinuousVariableResult.nlog10p_primitive(
+            o["rss_base"], o["rss_augmented"], o["n"],
+            o["n_params_base"], o["n_params_augmented"]
+        )
 
-    session.commit()
+    elif result_class is BinaryVariableResult:
+        return BinaryVariableResult.nlog10p_primitive(
+            o["deviance_base"], o["deviance_augmented"],
+            n_pcs
+        )
+    
+    else:
+        raise ValueError(result_class)
 
 
 def check_files_exist(*args):

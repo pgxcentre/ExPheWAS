@@ -277,14 +277,22 @@ class ContinuousVariableResult(Base, ResultMixin):
         o.update({k: getattr(self, k) for k in keys})
         return o
 
-    def f_stat(self):
-        rss1 = self.rss_base
-        rss2 = self.rss_augmented
-        n = self.n
-        p1 = self.n_params_base
-        p2 = self.n_params_augmented
+    @staticmethod
+    def f_stat_primitive(rss_base, rss_augmented, n, n_params_base,
+                         n_params_augmented):
+        rss1 = rss_base
+        rss2 = rss_augmented
+        p1 = n_params_base
+        p2 = n_params_augmented
 
         return (rss1 - rss2) / (p2 - p1) * ((n - p2) / rss2)
+
+    def f_stat(self):
+        return self.f_stat_static(
+            self.rss_base, self.rss_augmented,
+            self.n,
+            self.n_params_base, self.n_params_augmented
+        )
 
     def p(self):
         return scipy.stats.f.sf(
@@ -293,12 +301,25 @@ class ContinuousVariableResult(Base, ResultMixin):
             self.n - self.n_params_augmented
         )
 
-    def nlog10p(self):
+    @classmethod
+    def nlog10p_primitive(cls, rss_base, rss_augmented, n, n_params_base,
+                          n_params_augmented):
+        f = cls.f_stat_primitive(rss_base, rss_augmented, n, n_params_base,
+                                 n_params_augmented)
+
         return scipy.stats.f.logsf(
-            self.f_stat(),
-            self.n_params_augmented - self.n_params_base,
-            self.n - self.n_params_augmented
+            f,
+            n_params_augmented - n_params_base,
+            n - n_params_augmented
         ) / -np.log(10)
+
+
+    def nlog10p(self):
+        return self.nlog10p_primitive(
+            self.rss_base, self.rss_augmented,
+            self.n,
+            self.n_params_base, self.n_params_augmented
+        )
 
 
 class BinaryVariableResult(Base, ResultMixin):
@@ -328,11 +349,18 @@ class BinaryVariableResult(Base, ResultMixin):
             df=self.gene_obj.n_pcs
         )
 
-    def nlog10p(self):
+    @staticmethod
+    def nlog10p_primitive(deviance_base, deviance_augmented, n_pcs):
         return scipy.stats.chi2.logsf(
-            self.deviance_base - self.deviance_augmented,
-            df=self.gene_obj.n_pcs
+            deviance_base - deviance_augmented,
+            df=n_pcs
         ) / -np.log(10)
+
+    def nlog10p(self):
+        return self.nlog10p_primitive(
+            self.deviance_base, self.deviance_augmented,
+            self.gene_obj.n_pcs
+        )
 
 
 def all_results_union(session, cols=None):
@@ -433,7 +461,8 @@ class ChEMBLDrug(Base):
         ),
         secondaryjoin=(
             "XRefs.ensembl_id == Gene.ensembl_id"
-        )
+        ),
+        viewonly=True
     )
 
 
@@ -445,19 +474,20 @@ class TargetToUniprot(Base):
     __tablename__ = "target_uniprot"
 
     target_atc5 = Column(String, ForeignKey("chembl_drugs.atc5"),
-                    primary_key=True)
+                         primary_key=True)
     uniprot = Column(String, primary_key=True)
 
     action_type = Column(String)
 
-    # genes = relationship(
-    #     "Gene",
-    #     secondary=XRefs.__table__,
-    #     primaryjoin=(
-    #         "and_(XRefs.external_db_id == -1, "
-    #         "XRefs.external_id == TargetToUniprot.uniprot)"
-    #     ),
-    #     secondaryjoin=(
-    #         "XRefs.ensembl_id == Gene.ensembl_id"
-    #     )
-    # )
+    genes = relationship(
+        "Gene",
+        secondary=XRefs.__table__,
+        primaryjoin=(
+            "and_(XRefs.external_db_id == -1, "
+            "XRefs.external_id == TargetToUniprot.uniprot)"
+        ),
+        secondaryjoin=(
+            "XRefs.ensembl_id == Gene.ensembl_id"
+        ),
+        viewonly=True
+    )

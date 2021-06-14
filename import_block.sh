@@ -29,21 +29,29 @@ import_gene() {
     block=$1
     sex_subset=$2
     gene=$3
-    cont_or_bin=$4
 
-    path="${block}/results_${gene}_${cont_or_bin}"
+    path="${block}/results_${gene}"
 
-    exphewas-db \
+    time exphewas-db \
+        import-results \
+        --sex-subset $sex_subset \
+        ${path}_continuous &
+
+    time exphewas-db \
         import-results \
         --sex-subset $sex_subset \
         --min-n-cases 100 \
-        $path
+        ${path}_binary
+
+    wait
 }
 export -f import_gene
 
-parallel -j 1 \
+# for gene in $genes; do
+#     import_gene $block $sex_subset $gene
+# done
+parallel -j 4 \
     import_gene $block $sex_subset \
-    ::: $genes \
-    ::: continuous binary
+    ::: $genes
 
 rm -r $block
