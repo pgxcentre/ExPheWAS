@@ -25,7 +25,7 @@ def parse_line(line):
         start=int(start),
         end=int(end),
         positive_strand=(strand == "+"),
-        biotype=meta.get("biotype")
+        biotype=meta.get("gene_biotype")
     )
 
 

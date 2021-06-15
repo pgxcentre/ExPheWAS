@@ -26,7 +26,7 @@ ANALYSIS_TYPES = [
 AnalysisEnum = Enum(*ANALYSIS_TYPES, name="enum_analysis_type")
 SexSubsetEnum = Enum("BOTH", "FEMALE_ONLY", "MALE_ONLY",
                      name="enum_sex_subset")
-BiotypeEnum = Enum("LincRNA", "protein_coding", name="enum_biotype")
+BiotypeEnum = Enum("lincRNA", "protein_coding", name="enum_biotype")
 
 
 Base = declarative_base()
@@ -203,7 +203,7 @@ class ResultMixin(object):
     def model_fit_df(self):
         return pd.DataFrame(self.model_fit)
 
-    @declarative_base
+    @declared_attr
     def model_fit(cls):
         return deferred(Column(JSON))
 

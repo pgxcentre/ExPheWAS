@@ -18,7 +18,7 @@ export const ANALYSIS_SUBSETS = {
 
 
 export const BIOTYPES = {
-  LincRNA: "LincRNA",
+  LincRNA: "lincRNA",
   protein_coding: "Protein coding",
 }
 

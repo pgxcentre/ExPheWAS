@@ -54,8 +54,6 @@ def load_variable_labels():
     labels = {}
     meta = pd.read_csv(fn)
     for i, row in meta.iterrows():
-        if row.label.startswith("Forced"):
-            print(row.label)
         labels[(row.analysis_type, row.variable_id)] = row.label
 
     return labels
@@ -88,7 +86,7 @@ def load_ukbphewas_model(filename, as_dict=False, fit_df=True):
         return models
 
 
-def one_sample_pca_ivw(x_model, y_model, ci=None):
+def one_sample_ivw_mr(x_model, y_model, ci=None):
     """Compute the IVW estimate of the effect of X on Y using PCs as IVs.
 
     CI needs to be an alpha level.
@@ -104,8 +102,8 @@ def one_sample_pca_ivw(x_model, y_model, ci=None):
         df.columns = [f"{label}_beta", f"{label}_se"]
         return df
 
-    x = _prep_df(x_model["model_fit"], "x")
-    y = _prep_df(y_model["model_fit"], "y")
+    x = _prep_df(x_model, "x")
+    y = _prep_df(y_model, "y")
     df = pd.concat((x, y), axis=1)
 
     # The IVW weight is only valid under relevance, but if we filter out PCs

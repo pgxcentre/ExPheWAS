@@ -12,7 +12,7 @@ import numpy as np
 from sqlalchemy import distinct, and_
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import MultipleResultsFound
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, undefer
 from sqlalchemy.sql.expression import func, null
 
 from flask import Blueprint, jsonify, request, current_app
@@ -21,7 +21,9 @@ from ..db import models
 from ..db.tree import tree_from_hierarchy_id
 from ..db.engine import Session
 from ..db.utils import mod_to_dict
-from ..utils import load_gtex_median_tpm, load_gtex_statistics, qvalue
+from ..utils import (
+    load_gtex_median_tpm, load_gtex_statistics, qvalue, one_sample_ivw_mr
+)
 
 
 
@@ -80,9 +82,13 @@ class cached(object):
         return self.cache
 
 
-def _get_outcome(session, id, request):
+def _get_outcome(session, id, analysis_type=None):
     filters = {"id": id}
-    if "analysis_type" in request.args:
+
+    if analysis_type is not None:
+        filters["analysis_type"] = analysis_type
+
+    elif "analysis_type" in request.args:
         filters["analysis_type"] = request.args["analysis_type"]
 
     try:
@@ -166,7 +172,7 @@ def get_outcomes():
 @make_api("/outcome/<id>")
 def get_outcome(id):
     session = Session()
-    outcome = _get_outcome(session, id, request)
+    outcome = _get_outcome(session, id)
     analysis_subset = request.args.get("analysis_subset")
 
     out = {
@@ -213,11 +219,9 @@ def get_outcome(id):
     return out
 
 
-@make_api("/outcome/<id>/results")
-def get_outcome_results(id):
+def _query_outcome_results(outcome, analysis_subset="BOTH",
+                           preload_model=False):
     session = Session()
-    outcome = _get_outcome(session, id, request)
-    analysis_subset = request.args.get("analysis_subset", "BOTH")
 
     Result = None
     if isinstance(outcome, models.BinaryOutcome):
@@ -225,13 +229,26 @@ def get_outcome_results(id):
     elif isinstance(outcome, models.ContinuousOutcome):
         Result = models.ContinuousVariableResult
 
-    results = Session\
-        .query(Result)\
+    query = session.query(Result)\
         .filter_by(
             outcome_id=outcome.id,
             analysis_type=outcome.analysis_type,
-            analysis_subset=analysis_subset,
-        )\
+            analysis_subset=analysis_subset
+        )
+
+    if preload_model:
+        query.options(undefer("model_fit"))
+
+    return query
+
+
+@make_api("/outcome/<id>/results")
+def get_outcome_results(id):
+    session = Session()
+    outcome = _get_outcome(session, id)
+    analysis_subset = request.args.get("analysis_subset", "BOTH")
+
+    results = _query_outcome_results(outcome, analysis_subset)\
         .options(joinedload("gene_obj"))\
         .options(joinedload("outcome_obj"))\
         .all()
@@ -433,6 +450,43 @@ def get_tree(id):
     tree["code"] = id
 
     return tree
+
+
+@make_api("/cisMR")
+def cis_mendelian_randomization():
+    """Performs cis-MR using the IVW estimator and the PCs as IVs."""
+    gene = request.args["ensembl_id"]
+    analysis_subset = request.args.get("analysis_subset", "BOTH")
+
+    exposure_id = request.args.get("exposure_id", None)
+    exposure_type = request.args.get("exposure_type", None)
+
+    outcome_id = request.args.get("outcome_id", None)
+    outcome_type = request.args.get("outcome_type", None)
+
+    session = Session()
+    exposure = _get_outcome(session, exposure_id, exposure_type)
+    outcome = _get_outcome(session, outcome_id, outcome_type)
+
+    exposure_result = _query_outcome_results(
+        exposure,
+        analysis_subset,
+        preload_model=True
+    ).filter_by(gene=gene).one()
+
+    outcome_result = _query_outcome_results(
+        outcome,
+        analysis_subset,
+        preload_model=True
+    ).filter_by(gene=gene).one()
+
+    mr_results = one_sample_ivw_mr(
+        exposure_result.model_fit_df(),
+        outcome_result.model_fit_df(),
+        ci=0.05
+    )
+
+    return mr_results
 
 
 @make_api("/enrichment/atc/fgsea/<outcome_id>")
