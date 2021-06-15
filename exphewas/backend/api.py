@@ -64,6 +64,22 @@ class make_api(object):
         return f
 
 
+class cached(object):
+    """Simple decorator to cache functions."""
+    def __init__(self, f):
+        self.f = f
+        self.__name__ = f.__name__
+        self.clear_cache()
+
+    def clear_cache(self):
+        self.cache = None
+
+    def __call__(self):
+        if self.cache is None:
+            self.cache = self.f()
+        return self.cache
+
+
 def _get_outcome(session, id, request):
     filters = {"id": id}
     if "analysis_type" in request.args:
@@ -115,6 +131,7 @@ def get_metadata():
 
 
 @make_api("/outcome")
+@cached
 def get_outcomes():
     session = Session()
 

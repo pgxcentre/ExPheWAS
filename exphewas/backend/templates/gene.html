@@ -32,6 +32,14 @@
               <dd class="col-md-8">{{ description }}</dd>
               {%- endif %}
 
+              <dt class="col-md-4">Biotype</dt>
+              <dd class="col-md-8">
+                {% if biotype == "protein_coding" %}Protein coding
+                {% elif biotype == "LincRNA" %}LincRNA
+                {% else %}Unknown
+                {% endif %}
+              </dd>
+
               <dt class="col-md-4">Nb components:</dt>
               <dd class="col-md-8">{{ n_pcs }}</dd>
 

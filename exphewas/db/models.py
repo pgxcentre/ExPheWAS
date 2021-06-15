@@ -26,6 +26,7 @@ ANALYSIS_TYPES = [
 AnalysisEnum = Enum(*ANALYSIS_TYPES, name="enum_analysis_type")
 SexSubsetEnum = Enum("BOTH", "FEMALE_ONLY", "MALE_ONLY",
                      name="enum_sex_subset")
+BiotypeEnum = Enum("LincRNA", "protein_coding", name="enum_biotype")
 
 
 Base = declarative_base()
@@ -391,6 +392,7 @@ class Gene(Base):
     end = Column(Integer)
     positive_strand = Column(Boolean)
     description = Column(String)
+    biotype = Column(BiotypeEnum)
 
     n_pcs_obj = relationship("GeneNPcs", uselist=False, back_populates="gene")
 

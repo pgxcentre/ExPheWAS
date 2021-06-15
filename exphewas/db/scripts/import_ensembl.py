@@ -24,7 +24,8 @@ def parse_line(line):
         chrom=chrom,
         start=int(start),
         end=int(end),
-        positive_strand=(strand == "+")
+        positive_strand=(strand == "+"),
+        biotype=meta.get("biotype")
     )
 
 

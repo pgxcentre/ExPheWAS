@@ -18,21 +18,29 @@ from ..db.engine import Session
 dt_api = Blueprint("dt_api_blueprint", __name__)
 
 
+_gene_cache = None
+def get_genes_with_results():
+    global _gene_cache
+
+    if _gene_cache is None:
+        session = Session()
+
+        cont = session.query(models.ContinuousVariableResult.gene)
+        bin = session.query(models.BinaryVariableResult.gene)
+
+        _gene_cache = [tu[0] for tu in cont.union(bin).all()]
+
+    return _gene_cache
+get_genes_with_results()  # Preload cache
+
+
 # Datatables serverprocessing endpoints.
 @dt_api.route("/gene")
 def dt_gene():
     session = Session()
-    cont = session.query(
-        models.ContinuousVariableResult.gene
-    )
-    bin = session.query(
-        models.BinaryVariableResult.gene
-    )
-
-    genes_with_results = cont.union(bin)
 
     q = session.query(models.Gene)\
-        .filter(models.Gene.ensembl_id.in_(genes_with_results))
+        .filter(models.Gene.ensembl_id.in_(get_genes_with_results()))
 
     table = DataTable(
         request.args,
@@ -42,6 +50,7 @@ def dt_gene():
             "ensembl_id",
             "name",
             "description",
+            "biotype",
             "chrom",
             "start",
             "end",

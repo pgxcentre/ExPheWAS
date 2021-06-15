@@ -52,13 +52,11 @@ def load_variable_labels():
     fn = resource_filename(__name__, path.join("db", "scripts", "data", fn))
 
     labels = {}
-    with gzip.open(fn, "rt") as f:
-        csv_reader = csv.reader(f)
-        next(csv_reader)  # skip header.
-
-        for row in csv_reader:
-            analysis_type, variable_id, label = row
-            labels[(analysis_type, variable_id)] = label
+    meta = pd.read_csv(fn)
+    for i, row in meta.iterrows():
+        if row.label.startswith("Forced"):
+            print(row.label)
+        labels[(row.analysis_type, row.variable_id)] = row.label
 
     return labels
 

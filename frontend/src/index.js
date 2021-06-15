@@ -7,7 +7,10 @@ import 'datatables.net-dt/css/jquery.dataTables.css';
 
 import '../scss/custom.scss';
 import { URL_PREFIX, API_URL, DT_API_URL, ICD10_URL, UNIPROT_URL } from './config';
-import { api_call, formatP, formatNumber, getUrlParam, ANALYSIS_LABELS, ANALYSIS_SUBSETS } from './utils';
+import {
+  api_call, formatP, formatNumber, getUrlParam, ANALYSIS_LABELS,
+  ANALYSIS_SUBSETS, BIOTYPES
+} from './utils';
 import radialGTEX from './radial_plot';
 import qq from './qq_plot';
 import atcTree from './atc_tree';
@@ -296,10 +299,11 @@ function mainGeneList() {
         {data: null},                     // 1
         {data: "name"},                   // 2
         {data: "description"},            // 3
-        {data: "chrom"},                  // 4
-        {data: "start"},                  // 5
-        {data: "end"},                    // 6
-        {data: "positive_strand"}         // 7
+        {data: "biotype"},                // 4
+        {data: "chrom"},                  // 5
+        {data: "start"},                  // 6
+        {data: "end"},                    // 7
+        {data: "positive_strand"}         // 8
       ],
       columnDefs: [
         {
@@ -334,22 +338,23 @@ function mainGeneList() {
             return badges.join(" ");
           }
         },
+        { targets: 4, render: biotype => BIOTYPES[biotype] },
         {
-          targets: [5, 6],
+          targets: [6, 7],
           render: (position, type, row, meta) => formatNumber(position)
         },
         {
-          targets: [4, 5, 6],
+          targets: [5, 6, 7],
           searchable: false,
           className: 'dt-body-right'
         },
         {
-          targets: 7,
+          targets: 8,
           searchable: false,
           render: (pstrand, type, row, meta) => pstrand? '+': '-'
         }
       ],
-      order: [[4, 'asc'], [5, 'asc']]
+      order: [[5, 'asc'], [6, 'asc']]
   });
 }
 

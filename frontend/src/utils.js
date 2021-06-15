@@ -17,6 +17,12 @@ export const ANALYSIS_SUBSETS = {
 }
 
 
+export const BIOTYPES = {
+  LincRNA: "LincRNA",
+  protein_coding: "Protein coding",
+}
+
+
 export function formatP(p) {
   if (p === null || p === undefined) {
     return 'NA';
