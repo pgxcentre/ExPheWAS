@@ -48,11 +48,11 @@ import_gene() {
 }
 export -f import_gene
 
-# for gene in $genes; do
-#     import_gene $block $sex_subset $gene
-# done
-parallel -j 4 \
-    import_gene $block $sex_subset \
-    ::: $genes
+for gene in $genes; do
+    import_gene $block $sex_subset $gene
+done
+# parallel -j 4 \
+#     import_gene $block $sex_subset \
+#     ::: $genes
 
 rm -r $block

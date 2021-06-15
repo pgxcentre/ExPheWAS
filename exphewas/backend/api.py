@@ -224,6 +224,10 @@ def get_outcome_results(id):
         (r.static_nlog10p for r in results),
         dtype=np.float, count=len(results)
     )
+
+    # We clamp everything at 10^-500
+    nlog10ps[~np.isfinite(nlog10ps) | (nlog10ps >= 500)] = 500
+
     ps = 10 ** -nlog10ps
     qs = qvalue(ps)
 
@@ -233,14 +237,14 @@ def get_outcome_results(id):
             "analysis_type": r.analysis_type,
             "outcome_id": r.outcome_id,
             "outcome_label": r.outcome_obj.label,
-            "nlog10p": r.static_nlog10p,
+            "nlog10p": nlog10p,
             "p": p,
             "bonf": p * len(results),
             "q": q,
             "gene_name": r.gene_obj.name,
             "n_components": r.gene_obj.n_pcs
         }
-        for q, p, r in zip(qs, ps, results)
+        for nlog10p, q, p, r in zip(nlog10ps, qs, ps, results)
     ]
 
 
@@ -323,10 +327,15 @@ def get_gene_results(ensg):
     # Get the corresponding Q-values.
     nlog10ps = np.array(nlog10ps)
     ps = 10 ** -nlog10ps
+
+    # We clamp everything at 10^-500
+    nlog10ps[~np.isfinite(nlog10ps) | (nlog10ps >= 500)] = 500
+
     bonf_ps = ps * ps.shape[0]
     qs = qvalue(ps)
 
     for i in range(len(results)):
+        results[i]["nlog10p"] = nlog10ps[i]
         results[i]["p"] = ps[i]
         results[i]["bonf"] = bonf_ps[i]
         results[i]["q"] = qs[i]

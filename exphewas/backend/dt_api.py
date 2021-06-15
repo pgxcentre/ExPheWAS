@@ -29,7 +29,7 @@ def dt_gene():
         models.BinaryVariableResult.gene
     )
 
-    genes_with_results = cont.union(bin).subquery()
+    genes_with_results = cont.union(bin)
 
     q = session.query(models.Gene)\
         .filter(models.Gene.ensembl_id.in_(genes_with_results))

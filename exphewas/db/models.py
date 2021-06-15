@@ -235,7 +235,7 @@ class ResultMixin(object):
         return {
             "gene": self.gene,
             "analysis_subset": self.analysis_subset,
-            "static_nlog10p": self.static_nlog10p,
+            "nlog10p": self.static_nlog10p,
             "outcome_id": self.outcome_id,
             "outcome_label": self.outcome_obj.label,
             "analysis_type": self.analysis_type

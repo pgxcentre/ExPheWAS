@@ -85,7 +85,7 @@ export default async function qq(data) {
       outcomeId: cur.outcome_id,
       outcomeLabel: cur.outcome_label,
       x: -Math.log10((i + 1) / n),  // Expected
-      y: cur.static_nlog10p,  // Observed
+      y: cur.nlog10p,  // Observed
       p: cur.p,
       c975: -Math.log10(qbeta(0.975, i + 1, n - i)),
       c025: -Math.log10(qbeta(0.025, i + 1, n - i)),

@@ -84,12 +84,13 @@ async function mainOutcomeResults(id) {
       data: data,
       deferRender: true,
       columns: [
-        {data: 'gene'},         // 0
-        {data: 'gene_name'},    // 1
-        {data: 'p'},            // 2
-        {data: 'q'},            // 3
-        {data: 'bonf'},         // 4
-        {data: 'n_components'}  // 5
+        {data: 'gene'},            // 0
+        {data: 'gene_name'},       // 1
+        {data: 'nlog10p'},         // 2
+        {data: 'p'},               // 3
+        {data: 'bonf'},            // 4
+        {data: 'q'},               // 5
+        {data: 'n_components'}     // 6
       ],
       columnDefs: [
         {
@@ -99,17 +100,23 @@ async function mainOutcomeResults(id) {
           }
         },
         {
-          targets: [2, 3, 4],
+          targets: 2,
+          render: function(nlog10p, type, row, meta) {
+            return nlog10p.toFixed(2);
+          }
+        },
+        {
+          targets: [3, 4, 5],
           render: function(p, type, row, meta) {
             return formatP(p);
           }
         },
         {
-          targets: [2, 3, 4, 5],
+          targets: [2, 3, 4, 5, 6],
           className: 'dt-body-right'
         }
       ],
-      order: [[2, 'asc']]
+      order: [[2, 'desc']]
   });
 }
 
@@ -125,7 +132,7 @@ function geneResultBinaryOutcomeTable(o) {
         {'data': 'n_cases'},                   // 2
         {'data': 'n_controls'},                // 3
         {'data': 'n_excluded_from_controls'},  // 4
-        {'data': 'static_nlog10p'},            // 5
+        {'data': 'nlog10p'},                   // 5
         {'data': 'p'},                         // 6
         {'data': 'bonf'},                      // 7
         {'data': 'q'},                         // 8
@@ -218,7 +225,7 @@ async function mainGeneResults(id) {
         {'data': 'outcome_id'},     // 0
         {'data': 'outcome_label'},  // 1
         {'data': 'n'},              // 2
-        {'data': 'static_nlog10p'}, // 3
+        {'data': 'nlog10p'},        // 3
         {'data': 'p'},              // 4 (p)
         {'data': 'bonf'},           // 5 (bonf)
         {'data': 'q'},              // 6
