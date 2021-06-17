@@ -15,6 +15,7 @@ import radialGTEX from './radial_plot';
 import qq from './qq_plot';
 import atcTree from './atc_tree';
 import documentation from './documentation';
+import cisMR from './cis_mr';
 
 
 // This is a shim for d3 events to work with webpack
@@ -364,5 +365,6 @@ window.pages = {
   mainOutcomeResults,
   mainGeneResults,
   mainGeneList,
-  documentation
+  documentation,
+  cisMR
 }

@@ -131,3 +131,16 @@
     margin-left: 10px;
     margin-bottom: auto;
 }
+
+.cisMRgenes {
+  font-size: 10pt;
+}
+
+#genes_wrapper {
+  margin-bottom: 30px;
+}
+
+.cisMRgenes tbody th, .cisMRgenes tbody td {
+  padding: 2px 8px !important;
+  cursor: pointer;
+}

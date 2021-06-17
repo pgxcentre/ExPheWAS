@@ -154,6 +154,7 @@ def tree_from_hierarchy_id(id):
     hierarchies = Session()\
         .query(Hierarchy)\
         .filter_by(id=id)\
+        .order_by(Hierarchy.code)\
         .all()
 
     return tree_from_hierarchies(hierarchies)

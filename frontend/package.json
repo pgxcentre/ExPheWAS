@@ -31,6 +31,8 @@
     "@babel/polyfill": "^7.12.1",
     "@stdlib/stdlib": "^0.0.93",
     "bootstrap": "^4.6.0",
+    "bootstrap4c-chosen": "^1.1.1",
+    "chosen-js": "^1.8.7",
     "d3": "^5.16.0",
     "d3-delaunay": "^5.3.0",
     "d3-save-svg": "0.0.2",

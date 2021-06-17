@@ -107,6 +107,11 @@ def get_genes():
     return render_template("gene_list.html", page_title="Genes")
 
 
+@backend.route("/cisMR")
+def cis_mr():
+    return render_template("cis_mr.html", page_title="cisMR")
+
+
 @backend.route("/gene/<ensg>")
 def get_gene(ensg):
     try:

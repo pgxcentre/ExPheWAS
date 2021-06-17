@@ -483,7 +483,7 @@ def cis_mendelian_randomization():
     mr_results = one_sample_ivw_mr(
         exposure_result.model_fit_df(),
         outcome_result.model_fit_df(),
-        ci=0.05
+        alpha=0.05
     )
 
     return mr_results

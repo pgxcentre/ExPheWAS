@@ -86,7 +86,7 @@ def load_ukbphewas_model(filename, as_dict=False, fit_df=True):
         return models
 
 
-def one_sample_ivw_mr(x_model, y_model, ci=None):
+def one_sample_ivw_mr(x_model, y_model, alpha=None):
     """Compute the IVW estimate of the effect of X on Y using PCs as IVs.
 
     CI needs to be an alpha level.
@@ -119,16 +119,30 @@ def one_sample_ivw_mr(x_model, y_model, ci=None):
     # for now.
     se = np.sqrt(1 / ivw_denum)
 
+    summary_stats = []
+    for i, row in df.iterrows():
+        summary_stats.append({
+            "term": i,
+            "exposure_beta": row.x_beta,
+            "exposure_se": row.x_se,
+            "outcome_beta": row.y_beta,
+            "outcome_se": row.y_se,
+        })
+
     out = {
         "ivw_beta": ivw,
-        "ivw_se": se
+        "ivw_se": se,
+        "summary_stats": summary_stats
     }
 
-    if ci:
-        z = scipy.stats.norm.ppf(ci / 2)
-        ci = str(int(ci * 100))
-        out[f"lower_ci{ci}"] = ivw + z * se
-        out[f"upper_ci{ci}"] = ivw - z * se
+    if alpha:
+        z = scipy.stats.norm.ppf((1 - alpha) / 2)
+        ci_pct = str(int((1 - alpha) * 100))
+        out[f"lower_ci{ci_pct}"] = ivw + z * se
+        out[f"upper_ci{ci_pct}"] = ivw - z * se
+
+        # 2 * pnorm(-abs(wald))
+        out["wald_p"] = 2 * scipy.stats.norm.cdf(-np.abs(ivw / se))
 
     return out
 

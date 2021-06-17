@@ -36,6 +36,9 @@
             <li class="nav-item genes">
               <a class="nav-link{% if request.url_rule.endpoint == 'backend_blueprint.get_genes' %} active{% endif %}" href="{{ url_for("backend_blueprint.get_genes") }}">Genes</a>
             </li>
+            <li class="nav-item genes">
+              <a class="nav-link{% if request.url_rule.endpoint == 'backend_blueprint.cis_mr' %} active{% endif %}" href="{{ url_for("backend_blueprint.cis_mr") }}">cis-MR</a>
+            </li>
             <li class="nav-item docs">
               <a class="nav-link{% if request.url_rule.endpoint == 'backend_blueprint.get_docs' %} active{% endif %}" href="{{ url_for("backend_blueprint.get_docs") }}">Documentation</a>
             </li>
