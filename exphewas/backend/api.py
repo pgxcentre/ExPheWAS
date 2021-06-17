@@ -10,8 +10,7 @@ from os import path
 import numpy as np
 
 from sqlalchemy import distinct, and_
-from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.exc import MultipleResultsFound
+from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.orm import joinedload, undefer
 from sqlalchemy.sql.expression import func, null
 
@@ -253,6 +252,9 @@ def get_outcome_results(id):
         .options(joinedload("outcome_obj"))\
         .all()
 
+    if len(results) == 0:
+        raise NoResultFound(f"Could not find results for outcome '{id}'.")
+
     # Get the corresponding Q-values.
     nlog10ps = np.fromiter(
         (r.static_nlog10p for r in results),
@@ -468,23 +470,47 @@ def cis_mendelian_randomization():
     exposure = _get_outcome(session, exposure_id, exposure_type)
     outcome = _get_outcome(session, outcome_id, outcome_type)
 
-    exposure_result = _query_outcome_results(
-        exposure,
-        analysis_subset,
-        preload_model=True
-    ).filter_by(gene=gene).one()
+    not_found = []
+    try:
+        exposure_result = _query_outcome_results(
+            exposure,
+            analysis_subset,
+            preload_model=True
+        ).filter_by(gene=gene).one()
+    except NoResultFound:
+        not_found.append(
+            f"'{exposure_type} - {exposure.label} ({exposure_id})'"
+        )
 
-    outcome_result = _query_outcome_results(
-        outcome,
-        analysis_subset,
-        preload_model=True
-    ).filter_by(gene=gene).one()
+    try:
+        outcome_result = _query_outcome_results(
+            outcome,
+            analysis_subset,
+            preload_model=True
+        ).filter_by(gene=gene).one()
+    except NoResultFound:
+        not_found.append(f"'{outcome_type} - {outcome.label} ({outcome_id})'")
+
+    if not_found:
+        raise RessourceNotFoundError(
+            "Could not find results for the following outcome(s): {} in "
+            "subset {}."
+            "".format(", ".join(not_found), analysis_subset)
+        )
 
     mr_results = one_sample_ivw_mr(
         exposure_result.model_fit_df(),
         outcome_result.model_fit_df(),
         alpha=0.05
     )
+
+    mr_results["outcome_is_binary"] = not (
+        outcome_type == "CONTINUOUS_VARIABLE"
+    )
+
+    mr_results["exposure_nlog10p"] = exposure_result.static_nlog10p
+    if not np.isfinite(mr_results["exposure_nlog10p"]):
+        mr_results["exposure_nlog10p"] = 500
 
     return mr_results
 

@@ -79,7 +79,14 @@
 
   <hr />
 
-  <div><pre id="results"></pre></div>
+  <div>
+    <div><p><ul id="errors"></ul></p></div>
+    <div id="results"></div>
+    <div>
+      <div id="mr_plot"></div>
+      <div id="mr_plot_legend" style="display: none">Plot of the effect of the PCs from a joint model of the exposure and outcomes. The red line shows the IVW estimate of the causal effect. Note that in the IVW estimator, the regression is weighted by the precision of the estimates and so PCs with smaller error bars are given a larger weight.</div>
+    </div>
+  </div>
 
 </div>
 

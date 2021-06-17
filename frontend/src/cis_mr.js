@@ -1,8 +1,10 @@
 import 'chosen-js';
 import 'bootstrap4c-chosen/dist/css/component-chosen.min.css'
 
-import { ANALYSIS_LABELS, BIOTYPES, api_call, formatNumber } from './utils';
+import { ANALYSIS_LABELS, BIOTYPES, api_call, formatNumber, formatP,
+         formatEffect } from './utils';
 import { DT_API_URL } from './config';
+import scatter_plot from './scatter_plot';
 
 
 function createGeneTable() {
@@ -82,18 +84,31 @@ function handleVariableTypeChange(all_outcomes, e) {
 async function handleSubmit(event) {
   event.preventDefault();
 
+  // Clear old errors and results.
+  document.getElementById('errors').innerHTML = '';
+  document.getElementById('results').innerHTML = '';
+  document.getElementById('mr_plot').innerHTML = '';
+  document.getElementById("mr_plot_legend").style.display = 'none';
+
+  let errors = [];
+  let error = (name, message) => { errors.push({name, message}); };
   let formData = new FormData(document.getElementById('cisMRForm'));
 
   // Get the selected gene.
+  let gene;
   let selectedRow = document.getElementsByClassName('selected');
   if (selectedRow.length > 1) {
     throw 'More than one element with class selected.'
   }
   else if (selectedRow.length == 0) {
-    console.log('No gene selected...');
+    error(
+      'NoGeneSelected',
+      'No gene was selected for cis-MR analysis. Select a gene by clicking ' +
+      'in the gene table.'
+    );
+  } else {
+    gene = selectedRow[0].querySelector('.ensembl-id').innerHTML;
   }
-
-  let gene = selectedRow[0].querySelector('.ensembl-id').innerHTML;
 
   let config = {
     analysis_subset: formData.get('analysisSubset'),
@@ -104,6 +119,19 @@ async function handleSubmit(event) {
     ensembl_id: gene
   };
 
+  // Client side validation.
+  if (config.exposure_type == config.outcome_type &&
+      config.exposure_id == config.outcome_id) {
+    error(
+      'ExposureIsOutcome',
+      'The exposure and outcome are the same phenotype.'
+    );
+  }
+
+  if (errors.length) {
+    throw errors;
+  }
+
   // URI encode.
   let queryParams = Object.entries(config).map(
     ([k, v]) => `${k}=${encodeURIComponent(v)}`
@@ -111,10 +139,93 @@ async function handleSubmit(event) {
 
   let results = await api_call(`/cisMR?${queryParams}`);
 
-  document.getElementById('results').innerHTML = JSON.stringify(
-    results, null, 2
+  if (results.error) {
+    error('ServerSideError', results.error);
+    throw errors;
+  } else {
+    displayMRResults(results)
+  }
+
+  document.getElementById("results").scrollIntoView({'behavior': 'smooth'});
+}
+
+
+function displayMRResults(results) {
+  let resultsDiv = document.getElementById('results');
+  let effect = formatEffect(
+    results.ivw_beta,
+    results.ivw_se,
+    false,  // flip
+    results.outcome_is_binary  // to_odds_ratio
   );
 
+  let content = (
+    `<h2>cis-MR Results</h2>
+     <p>Inverse variance weighted (IVW) effect and 95% confidence interval:</p>
+       <p><span id="ivw-effect">${effect}</span></p>
+     <p>MR P-value : <span id="ivw-p">${formatP(results.wald_p)}</span></p>
+     <p>
+       The association P-value for the exposure is
+       <b>${formatP(Math.pow(10, -results.exposure_nlog10p))}</b>. The strength of this
+       association is one of the MR assumptions. In general, <u>values above
+       ${formatP(0.05 / 2000)} should be met with skepticism </u>unless supported by prior data.
+       This suggested threshold accounts for 2,000 association tests which is
+       approximately the number of phenotypes included in ExPheWas.
+     </p>
+     <p>
+       <small>If the selected outcome is binary, the MR estimate is presented
+       on the odds ratio scale.</small>
+     </p>`
+  );
+  resultsDiv.innerHTML = content;
+
+  let plot = scatter_plot(
+    document.getElementById("mr_plot"),
+    results.summary_stats.map(d => { return {
+      x: d.exposure_beta,
+      xerr: 1.96 * d.exposure_se,
+      y: d.outcome_beta,
+      yerr: 1.96 * d.outcome_se,
+      id: d.term
+    }}),
+    { xLabel: 'Effect of PC on exposure', yLabel: 'Effect of PC on outcome' }
+  );
+
+  // Add the IVW fit line.
+  plot.svg.append('line')
+    .attr('x1', plot.scales.x(plot.scales.minX))
+    .attr('x2', plot.scales.x(plot.scales.maxX))
+    .attr('y1', plot.scales.y(results.ivw_beta * plot.scales.minX))
+    .attr('y2', plot.scales.y(results.ivw_beta * plot.scales.maxX))
+    .attr('stroke', 'red')
+
+  // Add the null lines.
+  plot.svg.append('line')
+    .attr('x1', plot.scales.x(plot.scales.minX))
+    .attr('x2', plot.scales.x(plot.scales.maxX))
+    .attr('y1', plot.scales.y(0))
+    .attr('y2', plot.scales.y(0))
+    .attr('stroke', '#888888')
+    .attr('stroke-dasharray', '4');
+
+  plot.svg.append('line')
+    .attr('x1', plot.scales.x(0))
+    .attr('x2', plot.scales.x(0))
+    .attr('y1', plot.scales.y(plot.scales.minY))
+    .attr('y2', plot.scales.y(plot.scales.maxY))
+    .attr('stroke', '#888888')
+    .attr('stroke-dasharray', '4');
+
+  document.getElementById("mr_plot_legend").style.display = 'block';
+}
+
+
+function displayErrors(errors) {
+  console.log(errors);
+  let errorP = document.getElementById('errors');
+  for (let i = 0; i < errors.length; i++) {
+    errorP.innerHTML += `<li>${errors[i].message}</li>`;
+  }
 }
 
 
@@ -138,5 +249,10 @@ export default async function cisMR() {
   $('#outcomeType').trigger('change');
 
   // Form submit handler.
-  document.getElementById("cisMRForm").addEventListener('submit', handleSubmit);
+  document.getElementById("cisMRForm").addEventListener(
+    'submit',
+    (...args) => {
+      handleSubmit(...args).catch((errors) => displayErrors(errors));
+    }
+  );
 }

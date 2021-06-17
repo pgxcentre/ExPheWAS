@@ -144,3 +144,15 @@
   padding: 2px 8px !important;
   cursor: pointer;
 }
+
+#errors {
+  color: red;
+}
+
+#ivw-p, #ivw-effect {
+  display: inline-block;
+  font-weight: 700;
+  padding: 7px 12px;
+  border: 1px solid #aaaaaa;
+  border-radius: 5px;
+}

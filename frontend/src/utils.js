@@ -23,6 +23,27 @@ export const BIOTYPES = {
 }
 
 
+export function formatEffect(beta, se, flip=false, to_odds_ratio=false, prec=2) {
+  if (flip)
+    beta = -1 * beta;
+
+  let z = 1.959964;
+
+  let effect = beta;
+  let lower = beta - z * se;
+  let upper = beta + z * se;
+
+  if (to_odds_ratio) {
+    effect = Math.exp(effect);
+    lower = Math.exp(lower);
+    upper = Math.exp(upper);
+  }
+
+  return `${effect.toFixed(prec)} (${lower.toFixed(prec)}, ${upper.toFixed(prec)})`;
+
+}
+
+
 export function formatP(p) {
   if (p === null || p === undefined) {
     return 'NA';
@@ -67,7 +88,7 @@ export async function api_call(endpoint) {
     results = await response.json();
   }
   catch (err) {
-    console.log(err);
+    console.log('API call error: ', err);
   }
 
   return results;
