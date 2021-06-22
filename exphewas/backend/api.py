@@ -16,6 +16,7 @@ from sqlalchemy.sql.expression import func, null
 
 from flask import Blueprint, jsonify, request, current_app
 
+from .cache import Cache
 from ..db import models
 from ..db.tree import tree_from_hierarchy_id
 from ..db.engine import Session
@@ -63,22 +64,6 @@ class make_api(object):
         )
 
         return f
-
-
-class cached(object):
-    """Simple decorator to cache functions."""
-    def __init__(self, f):
-        self.f = f
-        self.__name__ = f.__name__
-        self.clear_cache()
-
-    def clear_cache(self):
-        self.cache = None
-
-    def __call__(self):
-        if self.cache is None:
-            self.cache = self.f()
-        return self.cache
 
 
 def _get_outcome(session, id, analysis_type=None):
@@ -136,36 +121,8 @@ def get_metadata():
 
 
 @make_api("/outcome")
-@cached
 def get_outcomes():
-    session = Session()
-
-    u = models.all_results_union(session).subquery()
-
-    subq = session.query(
-        u.c.outcome_id,
-        u.c.analysis_type,
-        func.array_agg(u.c.analysis_subset).label("available_subsets")
-    ).group_by(
-        u.c.outcome_id,
-        u.c.analysis_type
-    ).subquery()
-
-    results = session.query(models.Outcome, subq.c.available_subsets)\
-        .join(subq, and_(
-            models.Outcome.id==subq.c.outcome_id,
-            models.Outcome.analysis_type==subq.c.analysis_type
-        ))
-
-    return [
-        {
-            "id": o.id,
-            "type": o.type,
-            "analysis_type": o.analysis_type,
-            "label": o.label,
-            "available_subsets": availables,
-        } for o, availables in results
-    ]
+    return Cache().get("outcomes")
 
 
 @make_api("/outcome/<id>")

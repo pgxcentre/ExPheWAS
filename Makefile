@@ -56,3 +56,7 @@ serve_dev:
 .PHONY: serve
 serve:
 	FLASK_APP=exphewas.backend flask run --port 5001
+
+.PHONY: clear_cache
+clear_cache:
+	python -c 'import exphewas.backend.cache; exphewas.backend.cache.Cache().clear()'
