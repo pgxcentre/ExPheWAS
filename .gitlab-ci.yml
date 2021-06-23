@@ -27,6 +27,7 @@ build:staging:frontend:ukbiobank:
     - deploy
   before_script:
     - cd frontend
+    - rm -r node_modules/*
     - npm install
     - export EXPHEWAS_URL_ROOT=/exphewas/ukbiobank
     - export WEBPACK_OUTPUT_PATH=dist/ukbiobank
