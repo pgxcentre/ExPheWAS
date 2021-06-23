@@ -3,63 +3,56 @@
 # Bash script used to import blocks of results into the exPheWAS database.
 # This script assumes the directory structure used for the main analysis.
 
-if [ "$#" -ne 2 ]; then
-    echo "Usage: import_block.sh block_path variance_explained"
+if [ "$#" -lt 2 ]; then
+    echo "Usage: import_block.sh block_path_tar sex_subset"
     exit 1
 fi
 
 
-root=$1
-export pct_var=$2
+tar_file=$1
+sex_subset=$2  # BOTH, FEMALE_ONLY, MALE_ONLY
 
 
-# Remove trailing slash if needed.
-root=$(echo $root | sed 's-/$--')
+block=$(basename $tar_file | sed 's/.tar//')
 
+if [ -d $block ]; then
+    echo "Directory ${block} already exists and would be overwritten by extraction."
+    exit 1
+fi
 
-import_file() {
-    path=$1
+tar -xf $tar_file
 
-    # Infer metadata from path.
-    filename=$(basename $path)
+genes=$(ls -1 $block | grep results | cut -f 2 -d_ | sort | uniq)
 
-    gene=$(echo $filename | cut -d_ -f 2)
+echo "Importing ${tar_file} (${sex_subset})"
 
-    analysis=$(echo $filename | cut -d_ -f 3- | sed 's/.csv//')
+import_gene() {
+    block=$1
+    sex_subset=$2
+    gene=$3
 
-    case $analysis in
-        cv_endpoints)
-            analysis_val=CV_ENDPOINTS
-            ;;
-        icd10_blocks)
-            analysis_val=ICD10_BLOCK
-            ;;
-        linear)
-            analysis_val=CONTINUOUS_VARIABLE
-            ;;
-        icd10_three_chars)
-            analysis_val=ICD10_3CHAR
-            ;;
-        icd10_raw)
-            analysis_val=ICD10_RAW
-            ;;
-        self_reported_diseases)
-            analysis_val=SELF_REPORTED
-            ;;
-        *)
-            echo "Invalid analysis type: $analysis"
-            exit 1
-    esac
+    path="${block}/results_${gene}"
 
-
-    exphewas-db \
+    time exphewas-db \
         import-results \
-        --gene $gene \
-        --analysis $analysis_val \
-        --pct-variance $pct_var \
-        $path
+        --sex-subset $sex_subset \
+        ${path}_continuous &
 
+    time exphewas-db \
+        import-results \
+        --sex-subset $sex_subset \
+        --min-n-cases 100 \
+        ${path}_binary
+
+    wait
 }
-export -f import_file
+export -f import_gene
 
-find $root -type f -name 'phewas_*' -print0 | xargs -0 -n 1 -I% bash -c 'import_file "%"'
+for gene in $genes; do
+    import_gene $block $sex_subset $gene
+done
+# parallel -j 4 \
+#     import_gene $block $sex_subset \
+#     ::: $genes
+
+rm -r $block

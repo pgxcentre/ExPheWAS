@@ -3,7 +3,7 @@
 host ?= 127.0.0.1
 
 .PHONY: database
-database: create ensembl uniprot_xref n_pcs hierarchy external_db populate_available_results
+database: create ensembl uniprot_xref hierarchies external_db n_pcs
 
 
 .PHONY: create
@@ -13,7 +13,9 @@ create:
 
 .PHONY: ensembl
 ensembl:
-	exphewas-db import-ensembl data/ensembl/human_protein_coding_genes.gtf.gz --description data/ensembl/gene_descrtiption.csv.gz
+	exphewas-db import-ensembl data/ensembl/Homo_sapiens.GRCh37.87.protein_coding_lincRNA.gtf.gz \
+	   --description data/ensembl/gene_description.csv.gz \
+	   --included-genes data/exphewas/pca_metadata.csv.gz
 
 
 .PHONY: uniprot_xref
@@ -23,12 +25,7 @@ uniprot_xref:
 
 .PHONY: n_pcs
 n_pcs:
-	exphewas-db import-n-pcs data/exphewas/n_components_all.csv.gz
-
-
-.PHONY: hierarchy
-hierarchy:
-	exphewas-db create-icd10-hierarchy
+	exphewas-db import-n-pcs data/exphewas/pca_metadata.csv.gz
 
 
 .PHONY: external_db
@@ -36,14 +33,19 @@ external_db:
 	exphewas-db import-external --external-db data/ensembl/external_db.csv.gz --xrefs data/ensembl/ensembl_xrefs.csv.gz
 
 
-.PHONY: populate_available_results
-populate_available_results:
-	exphewas-db populate-available-results
+.PHONY: hierarchies
+hierarchies:
+	exphewas-db import-hierarchies data/hierarchies
 
 
 .PHONY: clear_results
 clear_results:
 	exphewas-db delete-results
+
+
+.PHONY: ipython
+ipython:
+	ipython -i .ipython_startup
 
 
 .PHONY: serve_dev
@@ -54,3 +56,7 @@ serve_dev:
 .PHONY: serve
 serve:
 	FLASK_APP=exphewas.backend flask run --port 5001
+
+.PHONY: clear_cache
+clear_cache:
+	python -c 'import exphewas.backend.cache; exphewas.backend.cache.Cache().clear()'

@@ -9,9 +9,7 @@ import * as qchi2 from '@stdlib/stats/base/dists/chisquare/quantile';
 
 
 const analysisTypeToColor = {
-  "ICD10_3CHAR": "#3E5CBD",
-  "ICD10_BLOCK": "#3E5CBD",
-  "ICD10_RAW": "#3E5CBD",
+  "PHECODE": "#3E5CBD",
   "CONTINUOUS_VARIABLE": "#339C62",
   "SELF_REPORTED": "#FCB605",
   "CV_ENDPOINTS": "#FF5E54"
@@ -61,6 +59,12 @@ function medianAssumeSorted(li, accessor) {
 }
 
 
+function makeId(d) {
+  let cleanOutcome = d.outcomeId.replace(/\./g, '_');
+  return `${d.analysisType}-${cleanOutcome}`
+}
+
+
 export default async function qq(data) {
 
   // Try to infer available width.
@@ -80,8 +84,8 @@ export default async function qq(data) {
       analysisType: cur.analysis_type,
       outcomeId: cur.outcome_id,
       outcomeLabel: cur.outcome_label,
-      x: -Math.log10((i + 1) / n),  // Exoected
-      y: -Math.log10(cur.p == 0? 1e-300: cur.p),  // Observed
+      x: -Math.log10((i + 1) / n),  // Expected
+      y: cur.nlog10p,  // Observed
       p: cur.p,
       c975: -Math.log10(qbeta(0.975, i + 1, n - i)),
       c025: -Math.log10(qbeta(0.025, i + 1, n - i)),
@@ -260,7 +264,7 @@ export default async function qq(data) {
       `)
     let ttRect = tooltip.node().getBoundingClientRect();
 
-    let curCircle = d3.select(`#qqid-${datum.analysisType}-${datum.outcomeId}`)
+    let curCircle = d3.select(`#qqid-${makeId(datum)}`)
       .node();
 
     var matrix = curCircle.getScreenCTM()
@@ -324,7 +328,7 @@ export default async function qq(data) {
     .data(xy)
     .enter()
     .append('circle')
-    .attr('id', d => `qqid-${d.analysisType}-${d.outcomeId}`)
+    .attr('id', d => `qqid-${makeId(d)}`)
     .attr('class', 'pt')
     .attr('fill', d => d.color)
     .attr('cx', d => xScale(d.x))

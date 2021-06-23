@@ -11,10 +11,15 @@ from .. import __version__
 
 from .config import URL_ROOT, STATIC_FOLDER
 from .api import api as api_blueprint
+from .cache import create_or_load_startup_caches
 from .backend import backend as backend_blueprint
 from .dt_api import dt_api as dt_api_blueprint
 
 from ..db.engine import Session
+
+
+# Build the cache if needed.
+create_or_load_startup_caches()
 
 
 app = Flask(
@@ -34,7 +39,6 @@ app.register_blueprint(api_blueprint, url_prefix=URL_ROOT.rstrip("/") + "/api")
 app.register_blueprint(backend_blueprint, url_prefix=URL_ROOT)
 app.register_blueprint(dt_api_blueprint,
                        url_prefix=URL_ROOT.rstrip("/") + "/dt")
-
 
 @app.teardown_appcontext
 def shutdown_session(exception=None):

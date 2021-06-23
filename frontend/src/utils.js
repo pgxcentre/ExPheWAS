@@ -6,9 +6,41 @@ export const ANALYSIS_LABELS = {
   SELF_REPORTED: "Self-reported diseases",
   CV_ENDPOINTS: "Algo. defined CV endpoints",
   CONTINUOUS_VARIABLE: "Continuous variables",
-  ICD10_RAW: "Hospit. or death ICD10 code (code as-is)",
-  ICD10_3CHAR: "Hospit. or death ICD10 code (3 chars)",
-  ICD10_BLOCK: "Hospit. or death ICD10 code (blocks)"
+  PHECODES: "Phecodes",
+}
+
+
+export const ANALYSIS_SUBSETS = {
+  BOTH: "All",
+  MALE_ONLY: "Male",
+  FEMALE_ONLY: "Female"
+}
+
+
+export const BIOTYPES = {
+  lincRNA: "lincRNA",
+  protein_coding: "Protein coding",
+}
+
+
+export function formatEffect(beta, se, flip=false, to_odds_ratio=false, prec=2) {
+  if (flip)
+    beta = -1 * beta;
+
+  let z = 1.959964;
+
+  let effect = beta;
+  let lower = beta - z * se;
+  let upper = beta + z * se;
+
+  if (to_odds_ratio) {
+    effect = Math.exp(effect);
+    lower = Math.exp(lower);
+    upper = Math.exp(upper);
+  }
+
+  return `${effect.toFixed(prec)} (${lower.toFixed(prec)}, ${upper.toFixed(prec)})`;
+
 }
 
 
@@ -31,6 +63,10 @@ export function formatNumber(num) {
 function getUrlVars() {
   var vars = {};
   var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m, key, value) {
+    if (value.indexOf('#') != -1) {
+      value = value.split('#')[0]
+    }
+
     vars[key] = value;
   });
   return vars;
@@ -52,7 +88,7 @@ export async function api_call(endpoint) {
     results = await response.json();
   }
   catch (err) {
-    console.log(err);
+    console.log('API call error: ', err);
   }
 
   return results;

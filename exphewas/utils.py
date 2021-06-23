@@ -2,9 +2,13 @@
 
 
 from os import path
+import gzip
+import json
+import csv
 
 import pandas as pd
 import numpy as np
+import scipy.stats
 from scipy.interpolate import UnivariateSpline
 
 from pkg_resources import resource_filename
@@ -40,6 +44,107 @@ def load_gtex_statistics():
     df = pd.read_csv(fn).set_index("Tissue", verify_integrity=True)
 
     return dict(df["# RNASeq Samples"].iteritems())
+
+
+def load_variable_labels():
+    """Load the label for UKBPheWAS IDs."""
+    fn = "variable_labels.csv.gz"
+    fn = resource_filename(__name__, path.join("db", "scripts", "data", fn))
+
+    labels = {}
+    meta = pd.read_csv(fn)
+    for i, row in meta.iterrows():
+        labels[(row.analysis_type, row.variable_id)] = row.label
+
+    return labels
+
+
+def load_ukbphewas_model(filename, as_dict=False, fit_df=True):
+    """Load the full model fit as serialized by UKBPheWAS.
+
+    It's one phenotype per row. Every row is a valid JSON.
+
+    """
+    models = []
+    with gzip.open(filename, "rt") as f:
+        for line in f:
+            model = json.loads(line)
+            model["variable_id"] = str(model["variable_id"])
+            if fit_df:
+                fit = model.pop("model_fit")
+                fit = pd.DataFrame(fit)
+                model["model_fit"] = fit
+
+            models.append(model)
+
+    if as_dict:
+        return {
+            (i["analysis_type"], i["variable_id"]): i["model_fit"]
+            for i in models
+        }
+    else:
+        return models
+
+
+def one_sample_ivw_mr(x_model, y_model, alpha=None):
+    """Compute the IVW estimate of the effect of X on Y using PCs as IVs.
+
+    CI needs to be an alpha level.
+
+    """
+    def _prep_df(df, label):
+        term_column = "term" if "term" in df.columns else "variable"
+        cols = [term_column, "beta", "se"]
+
+        # Keep only PCs and the relevant columns.
+        df = df.loc[df[term_column].str.startswith("XPC"), cols].copy()
+        df = df.set_index(term_column)
+        df.columns = [f"{label}_beta", f"{label}_se"]
+        return df
+
+    x = _prep_df(x_model, "x")
+    y = _prep_df(y_model, "y")
+    df = pd.concat((x, y), axis=1)
+
+    # The IVW weight is only valid under relevance, but if we filter out PCs
+    # with a null effect, then we're subject to Winner's curse.
+    precisions = df["y_se"] ** -2
+    ivw_denum = np.sum(df["x_beta"] ** 2 * precisions)
+    ivw = (
+        np.sum(df["x_beta"] * df["y_beta"] * precisions) /
+        ivw_denum
+    )
+
+    # We use the first order approximation as in Burgess 2013 (Genetic Epi.)
+    # for now.
+    se = np.sqrt(1 / ivw_denum)
+
+    summary_stats = []
+    for i, row in df.iterrows():
+        summary_stats.append({
+            "term": i,
+            "exposure_beta": row.x_beta,
+            "exposure_se": row.x_se,
+            "outcome_beta": row.y_beta,
+            "outcome_se": row.y_se,
+        })
+
+    out = {
+        "ivw_beta": ivw,
+        "ivw_se": se,
+        "summary_stats": summary_stats
+    }
+
+    if alpha:
+        z = scipy.stats.norm.ppf((1 - alpha) / 2)
+        ci_pct = str(int((1 - alpha) * 100))
+        out[f"lower_ci{ci_pct}"] = ivw + z * se
+        out[f"upper_ci{ci_pct}"] = ivw - z * se
+
+        # 2 * pnorm(-abs(wald))
+        out["wald_p"] = 2 * scipy.stats.norm.cdf(-np.abs(ivw / se))
+
+    return out
 
 
 def _pi_0(ps, l=0.5):

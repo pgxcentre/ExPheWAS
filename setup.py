@@ -12,9 +12,9 @@ import os
 from setuptools import setup, find_packages
 
 
-MAJOR = 0
-MINOR = 3
-MICRO = 3
+MAJOR = 1
+MINOR = 0
+MICRO = 0
 VERSION = "{0}.{1}.{2}".format(MAJOR, MINOR, MICRO)
 
 
@@ -53,6 +53,7 @@ def setup_package():
         packages=find_packages(),
         package_data={
             "exphewas.backend": ["templates/*", "static/*", "data/*"],
+            "exphewas.db.scripts": ["data/*"],
         },
         classifiers=["Development Status :: 4 - Beta",
                      "Intended Audience :: Science/Research",
