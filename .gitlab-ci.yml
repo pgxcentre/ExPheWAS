@@ -22,12 +22,11 @@ build:backend:
 
 build:staging:frontend:ukbiobank:
   stage: build:frontend
-  image: node:latest
+  image: node:14
   tags:
     - deploy
   before_script:
     - cd frontend
-    - rm -r node_modules/*
     - npm install
     - export EXPHEWAS_URL_ROOT=/exphewas/ukbiobank
     - export WEBPACK_OUTPUT_PATH=dist/ukbiobank
@@ -56,7 +55,6 @@ build:production:frontend:
     - export EXPHEWAS_MAJOR_VERSION=v$(ls dist/exphewas-*.tar.gz | sort -V | tail -n1 | grep -o -E "[0-9]+\.[0-9]+\.[0-9]+" | cut -d. -f1)
     - echo Building for $EXPHEWAS_MAJOR_VERSION
     - cd frontend
-    - rm -r node_modules/*
     - npm install
     - export EXPHEWAS_URL_ROOT=/$EXPHEWAS_MAJOR_VERSION
   script:
