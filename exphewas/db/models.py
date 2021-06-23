@@ -394,7 +394,10 @@ class Gene(Base):
     description = Column(String)
     biotype = Column(BiotypeEnum)
 
-    n_pcs_obj = relationship("GeneNPcs", uselist=False, back_populates="gene")
+    n_pcs_obj = relationship(
+        "GeneNPcs", uselist=False, back_populates="gene",
+        lazy="joined"
+    )
 
     @property
     def n_pcs(self):

@@ -71,9 +71,6 @@ function mainOutcomeList() {
 
 
 async function mainOutcomeResults(id) {
-  // Add the ATC tree
-  atcTree(id);
-
   let analysis_subset = getUrlParam("analysis_subset", "BOTH");
   let analysis_type = getUrlParam("analysis_type", null);
 
@@ -81,7 +78,10 @@ async function mainOutcomeResults(id) {
   if (analysis_type !== null)
     urlParam += `&analysis_type=${analysis_type}`;
 
-  let data = await api_call(`/outcome/${id}/results${urlParam}`);
+  let data = api_call(`/outcome/${id}/results${urlParam}`);
+  // Add the ATC tree
+  atcTree(id);
+  data = await data;
 
   $('#app #outcomeResults')
     .DataTable({

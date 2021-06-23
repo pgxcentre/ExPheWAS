@@ -6,6 +6,7 @@
       integrity="sha256-slogkvB1K3VOkzAI8QITxV3VzpOnkeNVsKvtkYLMjfk="
       crossorigin="anonymous">
     </script>
+    <script type="text/javascript" src="{{ url_for('static', filename='main.js') }}?{{ config.EXPHEWAS_VERSION }}"></script>
 
     <title>ExPheWAS Browser{{ " | " + page_title if page_title is not none }}</title>
 
@@ -57,7 +58,6 @@
       {% block body %}{% endblock %}
     </div>
 
-    <script type="text/javascript" src="{{ url_for('static', filename='main.js') }}?{{ config.EXPHEWAS_VERSION }}"></script>
     {% block other_script %}{% endblock %}
 
   </body>
