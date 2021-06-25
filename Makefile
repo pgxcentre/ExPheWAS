@@ -63,4 +63,4 @@ clear_cache:
 
 .PHONY: cache
 cache:
-	python -c 'import exphewas.backend.cache; exphewas.backend.cache.Cache()'
+	python -c 'import exphewas.backend.cache; exphewas.backend.cache.create_or_load_startup_caches()'
