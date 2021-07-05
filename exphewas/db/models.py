@@ -2,8 +2,10 @@
 Database models to store the results of ExPheWas analysis.
 """
 
+from itertools import chain
+
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy.sql import select
+from sqlalchemy.sql import select, literal, union_all
 from sqlalchemy.orm import column_property, relationship, deferred
 from sqlalchemy import (
     Table, Column, Integer, String, MetaData, ForeignKey, Enum, Float,
@@ -22,9 +24,11 @@ ANALYSIS_TYPES = [
     "PHECODES", "CONTINUOUS_VARIABLE", "SELF_REPORTED", "CV_ENDPOINTS"
 ]
 
+ANALYSIS_SUBSETS = ["BOTH", "FEMALE_ONLY", "MALE_ONLY"]
+
 
 AnalysisEnum = Enum(*ANALYSIS_TYPES, name="enum_analysis_type")
-SexSubsetEnum = Enum("BOTH", "FEMALE_ONLY", "MALE_ONLY",
+SexSubsetEnum = Enum(*ANALYSIS_SUBSETS,
                      name="enum_sex_subset")
 BiotypeEnum = Enum("lincRNA", "protein_coding", name="enum_biotype")
 
@@ -193,8 +197,6 @@ class ContinuousOutcome(Outcome):
 
 
 class ResultMixin(object):
-    analysis_subset = Column(SexSubsetEnum, primary_key=True)
-
     outcome_id = Column(String, primary_key=True)
     analysis_type = Column(AnalysisEnum, primary_key=True)
 
@@ -235,11 +237,9 @@ class ResultMixin(object):
         """Serialize using only primitive types (e.g. to json dump)."""
         return {
             "gene": self.gene,
-            "analysis_subset": self.analysis_subset,
             "nlog10p": self.static_nlog10p,
             "outcome_id": self.outcome_id,
             "outcome_label": self.outcome_obj.label,
-            "analysis_type": self.analysis_type
         }
 
     def __repr__(self):
@@ -258,9 +258,7 @@ class ResultMixin(object):
         )
 
 
-class ContinuousVariableResult(Base, ResultMixin):
-    __tablename__ = "results_continuous_variables"
-
+class ContinuousResult():
     n = Column(Integer, nullable=False)
 
     rss_base = Column(Float)
@@ -270,6 +268,8 @@ class ContinuousVariableResult(Base, ResultMixin):
 
     discriminator = Column("type", String(50))
     __mapper_args__ = {"polymorphic_on": discriminator}
+
+    analysis_type = "CONTINUOUS_VARIABLE"
 
     def to_object(self):
         o = super().to_object()
@@ -323,9 +323,19 @@ class ContinuousVariableResult(Base, ResultMixin):
         )
 
 
-class BinaryVariableResult(Base, ResultMixin):
-    __tablename__ = "results_binary_variables"
+class BothContinuousResult(Base, ResultMixin, ContinuousResult):
+    __tablename__ = "results_both_continuous_variables"
 
+
+class FemaleContinuousResult(Base, ResultMixin, ContinuousResult):
+    __tablename__ = "results_female_continuous_variables"
+
+
+class MaleContinuousResult(Base, ResultMixin, ContinuousResult):
+    __tablename__ = "results_male_continuous_variables"
+
+
+class BinaryResult():
     n_cases = Column(Integer)
     n_controls = Column(Integer)
     n_excluded_from_controls = Column(Integer, default=0)
@@ -335,6 +345,8 @@ class BinaryVariableResult(Base, ResultMixin):
 
     discriminator = Column("type", String(50))
     __mapper_args__ = {"polymorphic_on": discriminator}
+
+    analysis_type = "BINARY_VARIABLE"
 
     def to_object(self):
         o = super().to_object()
@@ -364,21 +376,72 @@ class BinaryVariableResult(Base, ResultMixin):
         )
 
 
+class BothPhecodesResult(Base, ResultMixin, BinaryResult):
+    __tablename__ = "results_both_phecodes"
+
+
+class FemalePhecodesResult(Base, ResultMixin, BinaryResult):
+    __tablename__ = "results_female_phecodes"
+
+
+class MalePhecodesResult(Base, ResultMixin, BinaryResult):
+    __tablename__ = "results_male_phecodes"
+
+
+class BothSelfReportedResult(Base, ResultMixin, BinaryResult):
+    __tablename__ = "results_both_self_reported"
+
+
+class FemaleSelfReportedResult(Base, ResultMixin, BinaryResult):
+    __tablename__ = "results_female_self_reported"
+
+
+class MaleSelfReportedResult(Base, ResultMixin, BinaryResult):
+    __tablename__ = "results_male_self_reported"
+
+
+class BothCVEndpointsResult(Base, ResultMixin, BinaryResult):
+    __tablename__ = "results_both_cv_endpoints"
+
+
+class FemaleCVEndpointsResult(Base, ResultMixin, BinaryResult):
+    __tablename__ = "results_female_cv_endpoints"
+
+
+class MaleCVEndpointsResult(Base, ResultMixin, BinaryResult):
+    __tablename__ = "results_male_cv_endpoints"
+
+
 def all_results_union(session, cols=None):
     """Returns a sqlalchemy query unioning the binary and continuous results.
 
     By default, this only uses outcome_id, analysis_type and analysis_subset.
+    Note that analysis subset always get added to the list of columns.
 
     """
     if cols is None:
-        cols = ["outcome_id", "analysis_type", "analysis_subset"]
+        cols = ["outcome_id", "analysis_type"]
 
-    bin_fields = [getattr(BinaryVariableResult, i).label(i) for i in cols]
-    con_fields = [getattr(ContinuousVariableResult, i).label(i) for i in cols]
+    # Making sure analysis_subset isn't in the list
+    cols = [col for col in cols if col != "analysis_subset"]
 
-    return session.query(*bin_fields).union(
-        session.query(*con_fields)
-    )
+    # The list of queries
+    queries = []
+
+    # The binary and continuous variables
+    result_objects = [
+        BothPhecodesResult, FemalePhecodesResult, MalePhecodesResult,
+        BothCVEndpointsResult, FemaleCVEndpointsResult, MaleCVEndpointsResult,
+        BothSelfReportedResult, FemaleSelfReportedResult, MaleSelfReportedResult,
+        BothContinuousResult, FemaleContinuousResult, MaleContinuousResult,
+    ]
+    for analysis_subset, res_obj in zip(ANALYSIS_SUBSETS*3, result_objects):
+        queries.append(session.query(
+            *[getattr(res_obj, col).label(col) for col in cols],
+            literal(analysis_subset).label("analysis_subset"),
+        ))
+
+    return union_all(*queries)
 
 
 class Gene(Base):

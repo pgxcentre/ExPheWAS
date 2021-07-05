@@ -13,6 +13,22 @@ from ..db import models
 from ..db.engine import Session
 
 
+RESULT_CLASSES = [
+    models.BothContinuousResult,
+    models.FemaleContinuousResult,
+    models.MaleContinuousResult,
+    models.BothPhecodesResult,
+    models.FemalePhecodesResult,
+    models.MalePhecodesResult,
+    models.BothSelfReportedResult,
+    models.FemaleSelfReportedResult,
+    models.MaleSelfReportedResult,
+    models.BothCVEndpointsResult,
+    models.FemaleCVEndpointsResult,
+    models.MaleCVEndpointsResult,
+]
+
+
 def path_to(name):
     return os.path.join(CACHE_DIR, name)
 
@@ -89,6 +105,7 @@ def cache_outcomes(cache, session):
 
 
 def cache_gene_with_results(cache, session):
-    cont = session.query(models.ContinuousVariableResult.gene)
-    bin = session.query(models.BinaryVariableResult.gene)
-    cache.put("genes_with_results", [tu[0] for tu in cont.union(bin).all()])
+    all_genes = session.query(RESULT_CLASSES[0].gene)
+    for result_obj in RESULT_CLASSES[1:]:
+        all_genes = all_genes.union(session.query(result_obj.gene))
+    cache.put("genes_with_results", [tu[0] for tu in all_genes.all()])

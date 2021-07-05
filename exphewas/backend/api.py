@@ -35,6 +35,28 @@ GTEX_MEDIAN_TPM = load_gtex_median_tpm()
 GTEX_STATS = load_gtex_statistics()
 
 
+RESULT_CLASS_MAP = {
+    "BOTH": {
+        "CONTINUOUS": models.BothContinuousResult,
+        "PHECODES": models.BothPhecodesResult,
+        "SELF_REPORTED": models.BothSelfReportedResult,
+        "CV_ENDPOINTS": models.BothCVEndpointsResult,
+    },
+    "FEMALE_ONLY": {
+        "CONTINUOUS": models.FemaleContinuousResult,
+        "PHECODES": models.FemalePhecodesResult,
+        "SELF_REPORTED": models.FemaleSelfReportedResult,
+        "CV_ENDPOINTS": models.FemaleCVEndpointsResult,
+    },
+    "MALE_ONLY": {
+        "CONTINUOUS": models.MaleContinuousResult,
+        "PHECODES": models.MalePhecodesResult,
+        "SELF_REPORTED": models.MaleSelfReportedResult,
+        "CV_ENDPOINTS": models.MaleCVEndpointsResult,
+    },
+}
+
+
 class make_api(object):
     def __init__(self, rule, handler=None):
         self.rule = rule
@@ -139,30 +161,34 @@ def get_outcome(id):
         "type": outcome.type,
     }
 
+    result_class_map = RESULT_CLASS_MAP[analysis_subset]
+
     # Get appropriate result class.
     # We need to also look at analysis subset so that the reported ns are
     # correct.
     if isinstance(outcome, models.ContinuousOutcome):
+        result_obj = result_class_map["CONTINUOUS"]
+
         # Get mean n.
         q = session.query(
-            func.avg(models.ContinuousVariableResult.n)
+            func.avg(result_obj.n)
         ).filter_by(
             outcome_id=outcome.id,
             analysis_type=outcome.analysis_type,
-            analysis_subset=analysis_subset
         )
 
         out["n_avg"] = int(q.one()[0])
 
     else:
+        result_obj = result_class_map[outcome.analysis_type]
+
         res = session.query(
-            func.avg(models.BinaryVariableResult.n_cases),
-            func.avg(models.BinaryVariableResult.n_controls),
-            func.avg(models.BinaryVariableResult.n_excluded_from_controls)
+            func.avg(result_obj.n_cases),
+            func.avg(result_obj.n_controls),
+            func.avg(result_obj.n_excluded_from_controls)
         ).filter_by(
             outcome_id=outcome.id,
             analysis_type=outcome.analysis_type,
-            analysis_subset=analysis_subset
         ).one()
 
         res = [int(i) if i else 0 for i in res]
@@ -179,17 +205,18 @@ def _query_outcome_results(outcome, analysis_subset="BOTH",
                            preload_model=False):
     session = Session()
 
+    result_class_map = RESULT_CLASS_MAP[analysis_subset]
+
     Result = None
     if isinstance(outcome, models.BinaryOutcome):
-        Result = models.BinaryVariableResult
+        Result = result_class_map[outcome.analysis_type]
     elif isinstance(outcome, models.ContinuousOutcome):
-        Result = models.ContinuousVariableResult
+        Result = result_class_map["CONTINUOUS"]
 
     query = session.query(Result)\
         .filter_by(
             outcome_id=outcome.id,
             analysis_type=outcome.analysis_type,
-            analysis_subset=analysis_subset
         )
 
     if preload_model:
@@ -295,18 +322,22 @@ def get_gene_results(ensg):
 
     analysis_subset = request.args.get("analysis_subset", "BOTH")
 
+    result_class_map = RESULT_CLASS_MAP[analysis_subset]
+
     # Outcome.
-    res_cont = session.query(models.ContinuousVariableResult)\
+    res_cont = session.query(result_class_map["CONTINUOUS"])\
         .filter_by(
             gene=ensg,
-            analysis_subset=analysis_subset
         ).all()
 
-    res_bin = session.query(models.BinaryVariableResult)\
-        .filter_by(
-            gene=ensg,
-            analysis_subset=analysis_subset
-        ).all()
+    res_bin = []
+    for analysis_type in ("PHECODES", "SELF_REPORTED", "CV_ENDPOINTS"):
+        res_bin.extend(
+            session.query(result_class_map[analysis_type])\
+                .filter_by(
+                    gene=ensg,
+                ).all()
+        )
 
     results = []
     nlog10ps = []

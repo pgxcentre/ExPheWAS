@@ -1,6 +1,7 @@
+"""Import data into the database."""
+
 import re
 import os
-import itertools
 
 import sqlalchemy.orm.exc
 import pandas as pd
@@ -10,7 +11,11 @@ from ..engine import Session
 from ..models import (
     Gene,
     ContinuousOutcome, BinaryOutcome,
-    ContinuousVariableResult, BinaryVariableResult
+    ContinuousResult, BinaryResult,
+    BothContinuousResult, FemaleContinuousResult, MaleContinuousResult,
+    BothPhecodesResult, FemalePhecodesResult, MalePhecodesResult,
+    BothSelfReportedResult, FemaleSelfReportedResult, MaleSelfReportedResult,
+    BothCVEndpointsResult, FemaleCVEndpointsResult, MaleCVEndpointsResult,
 )
 from ...utils import load_ukbphewas_model, load_variable_labels
 
@@ -18,6 +23,30 @@ from ...utils import load_ukbphewas_model, load_variable_labels
 PREFIX_PAT = re.compile(
     r"results_(?P<ensg>ENSG[0-9]+)_(?P<type>binary|continuous)"
 )
+
+
+RESULT_CLASS_MAP = {
+    "CONTINUOUS_VARIABLE": {
+        "BOTH": BothContinuousResult,
+        "FEMALE_ONLY": FemaleContinuousResult,
+        "MALE_ONLY": MaleContinuousResult,
+    },
+    "PHECODES": {
+        "BOTH": BothPhecodesResult,
+        "FEMALE_ONLY": FemalePhecodesResult,
+        "MALE_ONLY": MalePhecodesResult,
+    },
+    "SELF_REPORTED": {
+        "BOTH": BothSelfReportedResult,
+        "FEMALE_ONLY": FemaleSelfReportedResult,
+        "MALE_ONLY": MaleSelfReportedResult,
+    },
+    "CV_ENDPOINTS": {
+        "BOTH": BothCVEndpointsResult,
+        "FEMALE_ONLY": FemaleCVEndpointsResult,
+        "MALE_ONLY": MaleCVEndpointsResult,
+    },
+}
 
 
 # import-results prefix --sex-subset
@@ -48,11 +77,9 @@ def main(args):
 
     if variable_type == "continuous":
         create_object = _process_continuous_result
-        result_class = ContinuousVariableResult
 
     elif variable_type == "binary":
         create_object = _process_binary_result
-        result_class = BinaryVariableResult
 
     df = pd.read_csv(summary, dtype={"variable_id": str})
     models = load_ukbphewas_model(model, as_dict=True, fit_df=False)
@@ -60,7 +87,29 @@ def main(args):
     # For every line:
     # 1. Get or create Outcome.
     # 2. Create Result.
-    objects = []
+    objects = {
+        "CONTINUOUS_VARIABLE": {
+            "BOTH": [],
+            "FEMALE_ONLY": [],
+            "MALE_ONLY": [],
+        },
+        "PHECODES": {
+            "BOTH": [],
+            "FEMALE_ONLY": [],
+            "MALE_ONLY": [],
+        },
+        "SELF_REPORTED": {
+            "BOTH": [],
+            "FEMALE_ONLY": [],
+            "MALE_ONLY": [],
+        },
+        "CV_ENDPOINTS": {
+            "BOTH": [],
+            "FEMALE_ONLY": [],
+            "MALE_ONLY": [],
+        },
+    }
+
     for i, row in df.iterrows():
         # Get the model object.
         model_fit = models[(row["analysis_type"], row["variable_id"])]
@@ -69,36 +118,44 @@ def main(args):
 
         if o is not None:
             # Pre-compute the p-value
-            o["static_nlog10p"] = _compute_nlog10p(result_class, o, n_pcs)
-            objects.append(o)
+            result_class = RESULT_CLASS_MAP[row.analysis_type][o["analysis_subset"]]
+            o["static_nlog10p"] = _compute_nlog10p(
+                result_class, o, n_pcs,
+            )
+            objects[row.analysis_type][o["analysis_subset"]].append(o)
 
     session.commit()
 
     # Bulk insert.
     n = len(objects)
     chunk_size = 10000
-    for chunk in range(0, n, chunk_size):
-        session.bulk_insert_mappings(
-            result_class,
-            objects[chunk:chunk+chunk_size]
-        )
+    for analysis_type in RESULT_CLASS_MAP.keys():
+        for sex_subset in ("BOTH", "FEMALE_ONLY", "MALE_ONLY"):
+            to_insert = objects[analysis_type][sex_subset]
+            result_class = RESULT_CLASS_MAP[analysis_type][sex_subset]
+
+            for chunk in range(0, n, chunk_size):
+                session.bulk_insert_mappings(
+                    result_class,
+                    to_insert[chunk:chunk+chunk_size]
+                )
 
     session.commit()
 
 
 def _compute_nlog10p(result_class, o, n_pcs):
-    if result_class is ContinuousVariableResult:
-        return ContinuousVariableResult.nlog10p_primitive(
+    if issubclass(result_class, ContinuousResult):
+        return ContinuousResult.nlog10p_primitive(
             o["rss_base"], o["rss_augmented"], o["n"],
             o["n_params_base"], o["n_params_augmented"]
         )
 
-    elif result_class is BinaryVariableResult:
-        return BinaryVariableResult.nlog10p_primitive(
+    elif issubclass(result_class, BinaryResult):
+        return BinaryResult.nlog10p_primitive(
             o["deviance_base"], o["deviance_augmented"],
             n_pcs
         )
-    
+
     else:
         raise ValueError(result_class)
 
