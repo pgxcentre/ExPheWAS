@@ -253,6 +253,7 @@ class Result():
             "outcome_id": self.outcome_id,
             "outcome_label": self.outcome_obj.label,
             "analysis_type": self.analysis_type,
+            "analysis_subset": self.analysis_subset,
         }
 
 
@@ -323,14 +324,17 @@ class ContinuousResult(Result):
 
 class BothContinuousResult(Base, ResultMixin, ContinuousResult):
     __tablename__ = "results_both_continuous_variables"
+    analysis_subset = "BOTH"
 
 
 class FemaleContinuousResult(Base, ResultMixin, ContinuousResult):
     __tablename__ = "results_female_continuous_variables"
+    analysis_subset = "FEMALE_ONLY"
 
 
 class MaleContinuousResult(Base, ResultMixin, ContinuousResult):
     __tablename__ = "results_male_continuous_variables"
+    analysis_subset = "MALE_ONLY"
 
 
 class BinaryResult(Result):
@@ -376,38 +380,47 @@ class BinaryResult(Result):
 
 class BothPhecodesResult(Base, ResultMixin, BinaryResult):
     __tablename__ = "results_both_phecodes"
+    analysis_subset = "BOTH"
 
 
 class FemalePhecodesResult(Base, ResultMixin, BinaryResult):
     __tablename__ = "results_female_phecodes"
+    analysis_subset = "FEMALE_ONLY"
 
 
 class MalePhecodesResult(Base, ResultMixin, BinaryResult):
     __tablename__ = "results_male_phecodes"
+    analysis_subset = "MALE_ONLY"
 
 
 class BothSelfReportedResult(Base, ResultMixin, BinaryResult):
     __tablename__ = "results_both_self_reported"
+    analysis_subset = "BOTH"
 
 
 class FemaleSelfReportedResult(Base, ResultMixin, BinaryResult):
     __tablename__ = "results_female_self_reported"
+    analysis_subset = "FEMALE_ONLY"
 
 
 class MaleSelfReportedResult(Base, ResultMixin, BinaryResult):
     __tablename__ = "results_male_self_reported"
+    analysis_subset = "MALE_ONLY"
 
 
 class BothCVEndpointsResult(Base, ResultMixin, BinaryResult):
     __tablename__ = "results_both_cv_endpoints"
+    analysis_subset = "BOTH"
 
 
 class FemaleCVEndpointsResult(Base, ResultMixin, BinaryResult):
     __tablename__ = "results_female_cv_endpoints"
+    analysis_subset = "FEMALE_ONLY"
 
 
 class MaleCVEndpointsResult(Base, ResultMixin, BinaryResult):
     __tablename__ = "results_male_cv_endpoints"
+    analysis_subset = "MALE_ONLY"
 
 
 def all_results_union(session, cols=None):
