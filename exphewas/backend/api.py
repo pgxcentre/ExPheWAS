@@ -3,18 +3,16 @@ Flask-based REST API for the results of the ExPheWAS analysis.
 """
 
 import json
-import itertools
 import functools
 from os import path
 
 import numpy as np
 
-from sqlalchemy import distinct, and_
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.orm import joinedload, undefer
-from sqlalchemy.sql.expression import func, null
+from sqlalchemy.sql.expression import func
 
-from flask import Blueprint, jsonify, request, current_app
+from flask import Blueprint, jsonify, request
 
 from .cache import Cache
 from ..db import models
@@ -321,29 +319,23 @@ def get_gene_results(ensg):
         )
 
     analysis_subset = request.args.get("analysis_subset", "BOTH")
+    analysis_type = request.args.get("analysis_type", None)
 
     result_class_map = RESULT_CLASS_MAP[analysis_subset]
 
-    # Outcome.
-    res_cont = session.query(result_class_map["CONTINUOUS"])\
-        .filter_by(
-            gene=ensg,
-        ).all()
-
-    res_bin = []
-    for analysis_type in ("PHECODES", "SELF_REPORTED", "CV_ENDPOINTS"):
-        res_bin.extend(
-            session.query(result_class_map[analysis_type])\
-                .filter_by(
-                    gene=ensg,
-                ).all()
-        )
-
     results = []
     nlog10ps = []
-    for res in itertools.chain(res_cont, res_bin):
-        results.append(res.to_object())
-        nlog10ps.append(res.static_nlog10p)
+
+    analysis_types = ["CONTINUOUS", "PHECODES", "SELF_REPORTED",
+                      "CV_ENDPOINTS"]
+    if analysis_type is not None:
+        analysis_types = [analysis_type]
+
+    for analysis_type in analysis_types:
+        result_class = result_class_map[analysis_type]
+        for res in session.query(result_class).filter_by(gene=ensg).all():
+            results.append(res.to_object())
+            nlog10ps.append(res.static_nlog10p)
 
     if len(results) == 0:
         raise RessourceNotFoundError(f"No results for gene '{ensg}'.")
