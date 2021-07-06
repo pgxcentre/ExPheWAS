@@ -2,22 +2,17 @@
 Database models to store the results of ExPheWas analysis.
 """
 
-from itertools import chain
-
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy.sql import select, literal, union_all
-from sqlalchemy.orm import column_property, relationship, deferred
+from sqlalchemy.sql import literal, union_all
+from sqlalchemy.orm import relationship, deferred
 from sqlalchemy import (
-    Table, Column, Integer, String, MetaData, ForeignKey, Enum, Float,
-    Boolean, Sequence, UniqueConstraint, ForeignKeyConstraint, create_engine,
-    and_, PrimaryKeyConstraint, Date, JSON
+    Column, Integer, String, ForeignKey, Enum, Float, Boolean,
+    ForeignKeyConstraint, Date, JSON
 )
 
 import scipy.stats
 import numpy as np
 import pandas as pd
-
-from .engine import ENGINE, Session
 
 
 ANALYSIS_TYPES = [
@@ -233,15 +228,6 @@ class ResultMixin(object):
             ),
         )
 
-    def to_object(self):
-        """Serialize using only primitive types (e.g. to json dump)."""
-        return {
-            "gene": self.gene,
-            "nlog10p": self.static_nlog10p,
-            "outcome_id": self.outcome_id,
-            "outcome_label": self.outcome_obj.label,
-        }
-
     def __repr__(self):
         try:
             p = self.p()
@@ -258,7 +244,19 @@ class ResultMixin(object):
         )
 
 
-class ContinuousResult():
+class Result():
+    def to_object(self):
+        """Serialize using only primitive types (e.g. to json dump)."""
+        return {
+            "gene": self.gene,
+            "nlog10p": self.static_nlog10p,
+            "outcome_id": self.outcome_id,
+            "outcome_label": self.outcome_obj.label,
+            "analysis_type": self.analysis_type,
+        }
+
+
+class ContinuousResult(Result):
     n = Column(Integer, nullable=False)
 
     rss_base = Column(Float)
@@ -335,7 +333,7 @@ class MaleContinuousResult(Base, ResultMixin, ContinuousResult):
     __tablename__ = "results_male_continuous_variables"
 
 
-class BinaryResult():
+class BinaryResult(Result):
     n_cases = Column(Integer)
     n_controls = Column(Integer)
     n_excluded_from_controls = Column(Integer, default=0)
