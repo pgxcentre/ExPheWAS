@@ -45,10 +45,10 @@
             <td>
               <ul class="list-group list-group-flush">
                 <li class="list-group-item"><span class="badge badge-pill badge-dark">id</span> The outcome identifier</li>
-                <li class="list-group-item"><span class="badge badge-pill badge-dark">variance_pct</span> Percentage of variance explained by the PCs (default: 95)</li>
+                <li class="list-group-item"><span class="badge badge-pill badge-dark">analysis_subset</span> Sample subset (either <code>BOTH</code>, <code>FEMALE_ONLY</code> or <code>MALE_ONLY</code>, default is <code>BOTH</code>).</li>
               </ul>
             </td>
-            <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/outcome/<id>/results" data-params='{"id": 1092, "variance_pct": 95}'>Example</button></td> <!-- e.g. //-->
+            <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/outcome/<id>/results" data-params='{"id": 1092, "analysis_subset": "MALE_ONLY"}'>Example</button></td> <!-- e.g. //-->
           </tr>
           <tr>
             <td class="dt-left">GET /outcome/venn</td>
