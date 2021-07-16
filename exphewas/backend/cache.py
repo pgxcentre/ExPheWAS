@@ -6,7 +6,7 @@ import os
 import json
 
 from sqlalchemy.sql.expression import func
-from sqlalchemy import and_, distinct
+from sqlalchemy import and_
 
 from .config import CACHE_DIR
 from ..db import models
@@ -79,7 +79,7 @@ def cache_outcomes(cache, session):
     subq = session.query(
         u.c.outcome_id,
         u.c.analysis_type,
-        func.array_agg(distinct(u.c.analysis_subset)).label("available_subsets")
+        func.array_agg(u.c.analysis_subset).label("available_subsets")
     ).group_by(
         u.c.outcome_id,
         u.c.analysis_type

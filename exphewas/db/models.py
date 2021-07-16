@@ -2,8 +2,10 @@
 Database models to store the results of ExPheWas analysis.
 """
 
+from itertools import cycle
+
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy.sql import literal, union_all
+from sqlalchemy.sql import literal, union
 from sqlalchemy.orm import relationship, deferred
 from sqlalchemy import (
     Column, Integer, String, ForeignKey, Enum, Float, Boolean,
@@ -446,13 +448,13 @@ def all_results_union(session, cols=None):
         BothSelfReportedResult, FemaleSelfReportedResult, MaleSelfReportedResult,
         BothContinuousResult, FemaleContinuousResult, MaleContinuousResult,
     ]
-    for analysis_subset, res_obj in zip(ANALYSIS_SUBSETS*3, result_objects):
+    for analysis_subset, res_obj in zip(cycle(ANALYSIS_SUBSETS), result_objects):
         queries.append(session.query(
             *[getattr(res_obj, col).label(col) for col in cols],
             literal(analysis_subset).label("analysis_subset"),
         ))
 
-    return union_all(*queries)
+    return union(*queries)
 
 
 class Gene(Base):
