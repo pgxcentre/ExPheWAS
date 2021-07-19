@@ -111,6 +111,9 @@ def main(args):
     }
 
     for i, row in df.iterrows():
+        if np.isnan(row["p"]) or np.isnan(row["F_stat"]):
+            continue
+
         # Get the model object.
         model_fit = models[(row["analysis_type"], row["variable_id"])]
         o = create_object(row, gene, variable_type, args.sex_subset,
