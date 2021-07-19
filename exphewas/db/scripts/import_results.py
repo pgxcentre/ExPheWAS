@@ -111,7 +111,7 @@ def main(args):
     }
 
     for i, row in df.iterrows():
-        if np.isnan(row["p"]) or np.isnan(row["F_stat"]):
+        if np.isnan(row["p"]):
             continue
 
         # Get the model object.
