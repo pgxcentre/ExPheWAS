@@ -55,6 +55,9 @@ RESULT_CLASS_MAP = {
 }
 
 
+OUTCOMES = Cache().get("outcomes")
+
+
 class make_api(object):
     def __init__(self, rule, handler=None):
         self.rule = rule
@@ -142,7 +145,7 @@ def get_metadata():
 
 @make_api("/outcome")
 def get_outcomes():
-    return Cache().get("outcomes")
+    return OUTCOMES
 
 
 @make_api("/outcome/<id>")
