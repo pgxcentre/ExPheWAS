@@ -214,6 +214,13 @@ async function mainGeneResults(id) {
   let urlParam = `?analysis_subset=${analysis_subset}`;
 
   let data = await api_call(`/gene/${id}/results${urlParam}`);
+//  let data = await Promise.all([
+//    api_call(`/gene/${id}/results${urlParam}&analysis_type=CONTINUOUS`),
+//    api_call(`/gene/${id}/results${urlParam}&analysis_type=PHECODES`),
+//    api_call(`/gene/${id}/results${urlParam}&analysis_type=SELF_REPORTED`),
+//    api_call(`/gene/${id}/results${urlParam}&analysis_type=CV_ENDPOINTS`)
+//  ]);
+//  data = [].concat.apply([], data);
 
   // Add the gene QQ plot as a measure of pleiotropy.
   qq(data);
