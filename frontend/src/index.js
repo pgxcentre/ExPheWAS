@@ -41,7 +41,12 @@ function mainOutcomeList() {
         {
           targets: 0,
           render: (outcome, type, row, meta) => {
-            return `<a href="${URL_PREFIX}/outcome/${outcome}?analysis_type=${row.analysis_type}&analysis_subset=BOTH">${outcome}</a>`;
+            // Making sure to add the proper analysis subset in the link (if BOTH doesn't exist)
+            let analysis_subset = "BOTH";
+            if (!row.available_subsets.includes(analysis_subset))
+              analysis_subset = row.available_subsets[0];
+
+            return `<a href="${URL_PREFIX}/outcome/${outcome}?analysis_type=${row.analysis_type}&analysis_subset=${analysis_subset}">${outcome}</a>`;
           }
         },
         {

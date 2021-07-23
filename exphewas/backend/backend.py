@@ -32,6 +32,14 @@ EXTERNAL_DB_URL = {
 EXTERNAL_DB_TO_SHOW = ("HGNC", "WikiGene", "MIM_GENE", "MIM_MORBID",
                        "our_uniprot")
 
+
+OUTCOMES = {
+    (outcome["id"], outcome["analysis_type"]): tuple(outcome["available_subsets"])
+    for outcome in api.OUTCOMES
+}
+assert len(OUTCOMES) == len(api.OUTCOMES)
+
+
 @backend.context_processor
 def inject_db_metadata():
     metadata = {
@@ -98,6 +106,7 @@ def get_outcome(id):
         "outcome.html",
         page_title=title,
         has_atc_enrichment=has_atc,
+        available_subsets=OUTCOMES[(id, outcome_obj["analysis_type"])],
         **outcome_obj,
     )
 
