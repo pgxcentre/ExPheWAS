@@ -7,7 +7,7 @@
       {% for subset, label in [('BOTH', 'All'), ('MALE_ONLY', 'Male only'), ('FEMALE_ONLY', 'Female only')] %}
       {% if subset in available_subsets %}
         <a class="badge{% if analysis_subset == subset %} badge-danger selected{% else %} badge-light{% endif %}"
-           href="{{ url_for('backend_blueprint.get_outcome', id=id, analysis_subset=subset) }}">
+           href="{{ url_for('backend_blueprint.get_outcome', id=id, analysis_subset=subset, analysis_type=analysis_type) }}">
           {{ label }}
         </a>
       {% endif %}
