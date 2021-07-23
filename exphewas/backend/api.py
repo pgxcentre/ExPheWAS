@@ -71,6 +71,8 @@ class make_api(object):
             return resource_not_found(exception.message)
         except AmbiguousIdentifierError as exception:
             return bad_request(exception.message)
+        except ValueError as exception:
+            return bad_request(str(exception))
 
         return jsonify(results)
 
@@ -97,6 +99,12 @@ def _get_outcome(session, id, analysis_type=None):
 
     elif "analysis_type" in request.args:
         filters["analysis_type"] = request.args["analysis_type"]
+
+    if "analysis_type" in filters:
+        if filters["analysis_type"] not in models.ANALYSIS_TYPES:
+            raise ValueError(
+                f"{filters['analysis_type']}: not a valid analysis type"
+            )
 
     try:
         return session.query(models.Outcome).filter_by(**filters).one()
@@ -152,7 +160,10 @@ def get_outcomes():
 def get_outcome(id):
     session = Session()
     outcome = _get_outcome(session, id)
-    analysis_subset = request.args.get("analysis_subset")
+    analysis_subset = request.args.get("analysis_subset", "BOTH")
+
+    if analysis_subset not in models.ANALYSIS_SUBSETS:
+        raise ValueError(f"{analysis_subset}: not a valid analysis subset")
 
     out = {
         "id": outcome.id,
@@ -231,6 +242,9 @@ def get_outcome_results(id):
     session = Session()
     outcome = _get_outcome(session, id)
     analysis_subset = request.args.get("analysis_subset", "BOTH")
+
+    if analysis_subset not in models.ANALYSIS_SUBSETS:
+        raise ValueError(f"{analysis_subset}: not a valid analysis subset")
 
     results = _query_outcome_results(outcome, analysis_subset)\
         .options(joinedload("gene_obj"))\
@@ -322,6 +336,10 @@ def get_gene_results(ensg):
         )
 
     analysis_subset = request.args.get("analysis_subset", "BOTH")
+
+    if analysis_subset not in models.ANALYSIS_SUBSETS:
+        raise ValueError(f"{analysis_subset}: not a valid analysis subset")
+
     analysis_type = request.args.get("analysis_type", None)
 
     result_class_map = RESULT_CLASS_MAP[analysis_subset]
