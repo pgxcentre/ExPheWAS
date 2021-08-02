@@ -11,7 +11,7 @@ import numpy as np
 
 from sqlalchemy import distinct, and_
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound
-from sqlalchemy.orm import joinedload, undefer
+from sqlalchemy.orm import joinedload, subqueryload, undefer
 from sqlalchemy.sql.expression import func, null
 
 from flask import Blueprint, jsonify, request, current_app
@@ -195,6 +195,9 @@ def _query_outcome_results(outcome, analysis_subset="BOTH",
     if preload_model:
         query.options(undefer("model_fit"))
 
+    query.options(joinedload(Result.outcome_obj))
+    query.options(joinedload(Result.gene_obj))
+
     return query
 
 
@@ -205,8 +208,6 @@ def get_outcome_results(id):
     analysis_subset = request.args.get("analysis_subset", "BOTH")
 
     results = _query_outcome_results(outcome, analysis_subset)\
-        .options(joinedload("gene_obj"))\
-        .options(joinedload("outcome_obj"))\
         .all()
 
     if len(results) == 0:

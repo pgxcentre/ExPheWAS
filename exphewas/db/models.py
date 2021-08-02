@@ -162,6 +162,10 @@ class BinaryOutcome(Outcome):
     id = Column(String, primary_key=True)
     analysis_type = Column(AnalysisEnum, primary_key=True)
 
+    results = relationship("BinaryVariableResult",
+        back_populates="outcome_obj"
+    )
+
     __table_args__ = (
         ForeignKeyConstraint(
             [id, analysis_type],
@@ -179,6 +183,10 @@ class ContinuousOutcome(Outcome):
 
     id = Column(String, primary_key=True)
     analysis_type = Column(AnalysisEnum, primary_key=True)
+
+    results = relationship("ContinuousVariableResult",
+        back_populates="outcome_obj"
+    )
 
     __table_args__ = (
         ForeignKeyConstraint(
@@ -213,11 +221,8 @@ class ResultMixin(object):
 
     @declared_attr
     def gene_obj(cls):
-        return relationship("Gene")
-
-    @declared_attr
-    def outcome_obj(cls):
-        return relationship("Outcome", lazy="joined")
+        # TODO back_populates
+        return relationship("Gene", lazy="joined")
 
     def p(self):
         return None
@@ -267,6 +272,10 @@ class ContinuousVariableResult(Base, ResultMixin):
     rss_augmented = Column(Float)
     n_params_base = Column(Integer)
     n_params_augmented = Column(Integer)
+
+    outcome_obj = relationship(
+        "ContinuousOutcome", lazy="joined", back_populates="results"
+    )
 
     discriminator = Column("type", String(50))
     __mapper_args__ = {"polymorphic_on": discriminator}
@@ -332,6 +341,10 @@ class BinaryVariableResult(Base, ResultMixin):
 
     deviance_base = Column(Float)
     deviance_augmented = Column(Float)
+
+    outcome_obj = relationship(
+        "BinaryOutcome", lazy="joined", back_populates="results"
+    )
 
     discriminator = Column("type", String(50))
     __mapper_args__ = {"polymorphic_on": discriminator}
