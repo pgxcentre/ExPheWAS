@@ -23,10 +23,40 @@ def create():
 def delete_results():
     session = Session()
 
-    session.query(models.ContinuousVariableResult)\
+    session.query(models.BothContinuousVariableResult)\
         .delete(synchronize_session=False)
 
-    session.query(models.BinaryVariableResult)\
+    session.query(models.FemaleContinuousVariableResult)\
+        .delete(synchronize_session=False)
+
+    session.query(models.MaleContinuousVariableResult)\
+        .delete(synchronize_session=False)
+
+    session.query(models.BothPhecodesResult)\
+        .delete(synchronize_session=False)
+
+    session.query(models.FemaePhecodesResult)\
+        .delete(synchronize_session=False)
+
+    session.query(models.MalePhecodesResult)\
+        .delete(synchronize_session=False)
+
+    session.query(models.BothSelfReportedResult)\
+        .delete(synchronize_session=False)
+
+    session.query(models.FemaleSelfReportedResult)\
+        .delete(synchronize_session=False)
+
+    session.query(models.MaleSelfReportedResult)\
+        .delete(synchronize_session=False)
+
+    session.query(models.BothCVEndpointsResult)\
+        .delete(synchronize_session=False)
+
+    session.query(models.FemaleCVEndpointsResult)\
+        .delete(synchronize_session=False)
+
+    session.query(models.MaleCVEndpointsResult)\
         .delete(synchronize_session=False)
 
     session.commit()

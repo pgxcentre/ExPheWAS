@@ -18,7 +18,7 @@ async function modalCallback(event) {
     let params = button.data('params');
 
     let method = button.data('method') || 'GET';
-    
+
     let modal = $(this);
 
     // Reset results if needed.
