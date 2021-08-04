@@ -58,7 +58,6 @@ class Cache(object):
         print("Cache cleared.")
 
 
-
 # Create the data caches.
 def create_or_load_startup_caches():
     cache = Cache()

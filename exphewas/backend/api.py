@@ -24,7 +24,6 @@ from ..utils import (
 )
 
 
-
 api = Blueprint("api_blueprint", __name__)
 
 
@@ -53,9 +52,6 @@ RESULT_CLASS_MAP = {
         "CV_ENDPOINTS": models.MaleCVEndpointsResult,
     },
 }
-
-
-OUTCOMES = Cache().get("outcomes")
 
 
 class make_api(object):
@@ -153,7 +149,7 @@ def get_metadata():
 
 @make_api("/outcome")
 def get_outcomes():
-    return OUTCOMES
+    return Cache().get("outcomes")
 
 
 @make_api("/outcome/<id>")
@@ -170,7 +166,7 @@ def get_outcome(id):
         "analysis_type": outcome.analysis_type,
         "analysis_subset": analysis_subset,
         "label": outcome.label,
-        "type": outcome.type,
+        "type": "continuous_outcomes" if outcome.is_continuous() else "binary_outcomes"
     }
 
     result_class_map = RESULT_CLASS_MAP[analysis_subset]
@@ -178,37 +174,39 @@ def get_outcome(id):
     # Get appropriate result class.
     # We need to also look at analysis subset so that the reported ns are
     # correct.
-    if isinstance(outcome, models.ContinuousOutcome):
+    if outcome.is_continuous():
         result_obj = result_class_map["CONTINUOUS"]
 
         # Get mean n.
-        q = session.query(
-            func.avg(result_obj.n)
+        ns = session.query(
+            result_obj.n
         ).filter_by(
             outcome_id=outcome.id,
             analysis_type=outcome.analysis_type,
-        )
+        ).limit(100).all()
 
-        out["n_avg"] = int(q.one()[0])
+        out["n_avg"] = np.mean(ns)
 
     else:
         result_obj = result_class_map[outcome.analysis_type]
 
         res = session.query(
-            func.avg(result_obj.n_cases),
-            func.avg(result_obj.n_controls),
-            func.avg(result_obj.n_excluded_from_controls)
+            result_obj.n_cases,
+            result_obj.n_controls,
+            result_obj.n_excluded_from_controls
         ).filter_by(
             outcome_id=outcome.id,
             analysis_type=outcome.analysis_type,
-        ).one()
+        ).limit(100).all()
 
-        res = [int(i) if i else 0 for i in res]
+        res = np.array(res)
+        avgs = [int(round(i)) for i in np.mean(res, axis=0)]
+
         (
             out["n_cases_avg"],
             out["n_controls_avg"],
             out["n_excluded_from_controls_avg"]
-        ) = res
+        ) = avgs
 
     return out
 
@@ -220,9 +218,9 @@ def _query_outcome_results(outcome, analysis_subset="BOTH",
     result_class_map = RESULT_CLASS_MAP[analysis_subset]
 
     Result = None
-    if isinstance(outcome, models.BinaryOutcome):
+    if outcome.is_binary():
         Result = result_class_map[outcome.analysis_type]
-    elif isinstance(outcome, models.ContinuousOutcome):
+    elif outcome.is_continuous():
         Result = result_class_map["CONTINUOUS"]
 
     query = session.query(Result)\

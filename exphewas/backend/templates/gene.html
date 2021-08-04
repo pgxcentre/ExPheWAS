@@ -35,8 +35,8 @@
               <dt class="col-md-4">Biotype</dt>
               <dd class="col-md-8">
                 {% if biotype == "protein_coding" %}Protein coding
-                {% elif biotype == "LincRNA" %}LincRNA
-                {% else %}Unknown
+                {% elif biotype == "lincRNA" %}LincRNA
+                {% else %}{{ biotype }}
                 {% endif %}
               </dd>
 
