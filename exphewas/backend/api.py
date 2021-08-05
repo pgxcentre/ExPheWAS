@@ -470,6 +470,8 @@ def cis_mendelian_randomization():
     exposure = _get_outcome(session, exposure_id, exposure_type)
     outcome = _get_outcome(session, outcome_id, outcome_type)
 
+    disable_pruning = request.args.get("disable_pruning") == "true"
+
     not_found = []
     try:
         exposure_result = _query_outcome_results(
@@ -501,7 +503,8 @@ def cis_mendelian_randomization():
     mr_results = one_sample_ivw_mr(
         exposure_result.model_fit_df(),
         outcome_result.model_fit_df(),
-        alpha=0.05
+        alpha=0.05,
+        instrument_prune=not disable_pruning
     )
 
     mr_results["outcome_is_binary"] = not (

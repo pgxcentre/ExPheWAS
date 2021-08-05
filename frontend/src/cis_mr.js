@@ -135,6 +135,10 @@ async function handleSubmit(event) {
     ensembl_id: gene
   };
 
+  if (formData.get('disablePCPruning') === "on") {
+    config['disable_pruning'] = true;
+  }
+
   // Client side validation.
   if (config.exposure_type == config.outcome_type &&
       config.exposure_id == config.outcome_id) {
@@ -195,7 +199,8 @@ function displayMRResults(results, geneSymbol) {
      </p>
      <p>
        <small>If the selected outcome is binary, the MR estimate is presented
-       on the odds ratio scale.</small>
+       on the odds ratio scale by exponentiating the estimate from the log-odds
+       scale.</small>
      </p>`
   );
   resultsDiv.innerHTML = content;
@@ -208,7 +213,8 @@ function displayMRResults(results, geneSymbol) {
       y: d.outcome_beta,
       yerr: 1.96 * d.outcome_se,
       // color: d.weight,
-      id: d.term
+      id: d.term,
+      markerSize: d.pruned? 1: 3
     }}),
     { xLabel: 'Effect of PC on exposure', yLabel: 'Effect of PC on outcome' }
   );

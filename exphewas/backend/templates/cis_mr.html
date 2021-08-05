@@ -57,6 +57,15 @@
       </div>
     </div>
 
+    <div class="form-row" style="margin-bottom: 30px">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="disablePCPruning" id="disablePCPruning">
+        <label class="form-check-label" for="disablePCPruning">
+          Disable the exclusion of principal components not associated with the exposure.
+        </label>
+      </div>
+    </div>
+
     <div>
       <h5>Gene selection</h5>
       <table id="genes" class="display cisMRgenes" style="width:100%">
@@ -84,7 +93,10 @@
     <div class="row">
       <div class="col-md-7">
         <div id="mr_plot"></div>
-        <div id="mr_plot_legend" style="display: none">Plot of the effect of the PCs on the selected exposure and outcome. The red line shows the IVW estimate for the causal effect. Note that in the IVW estimator, the regression is weighted by the precision of the estimates and so PCs with smaller error bars are given a larger weight.</div>
+        <div id="mr_plot_legend" style="display: none">
+          <p>Plot of the effect of the PCs on the selected exposure and outcome. The red line shows the IVW estimate for the causal effect. Note that in the IVW estimator, the regression is weighted by the precision of the estimates and so PCs with smaller error bars are given a larger weight.</p>
+          <p>Small circles represent the effect of principal components that are excluded from the analysis because they are not associated with the exposure (to comply with the relevance assumption of MR).</p>
+        </div>
       </div>
       <div class="col-md-5">
         <div id="results"></div>

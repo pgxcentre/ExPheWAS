@@ -88,7 +88,7 @@ export default function scatter_plot(parent, data, config={}) {
     .attr('cx', d => scales.x(d.x))
     .attr('cy', d => scales.y(d.y))
     .attr('stroke', '#000000')
-    .attr('r', 3)
+    .attr('r', d => d.markerSize === undefined? 3: d.markerSize)
 
   return {svg, scales, config};
 
