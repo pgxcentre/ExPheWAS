@@ -24,10 +24,11 @@ dt_api = Blueprint("dt_api_blueprint", __name__)
 @dt_api.route("/gene")
 def dt_gene():
     session = Session()
-    genes_with_results = Cache().get("genes_with_results")
 
-    q = session.query(models.Gene)\
-        .filter(models.Gene.ensembl_id.in_(genes_with_results))
+    # genes_with_results = Cache().get("genes_with_results")
+    # q = session.query(models.Gene)\
+    #     .filter(models.Gene.ensembl_id.in_(genes_with_results))
+    q = session.query(models.Gene)
 
     table = DataTable(
         request.args,

@@ -6,20 +6,25 @@ import * as d3 from 'd3';
  *
  **/
 export default function scatter_plot(parent, data, config={}) {
-
   const fullWidth = parent.clientWidth;
-  const width = 0.45 * fullWidth;
-  const height = 0.3 * fullWidth;
+  const width = 0.9 * fullWidth;
+  const height = 0.6 * fullWidth;
   config.width = width;
   config.height = height;
 
+  const COLOR = 'color' in data[0];
+
   let margins = {
     top: 10,
-    right: 30,
+    right: 70,
     bottom: 40,
     left: 60
   };
   config.margins = margins;  // TODO Update instead.
+
+  // Add space for a color legend if needed.
+  if (COLOR)
+    margins.top += 30;
 
   const svgElem = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   
@@ -31,7 +36,7 @@ export default function scatter_plot(parent, data, config={}) {
     .append('g')
       .attr('transform', `translate(${margins.left}, ${margins.top})`);
 
-  const scales = buildScales(data, width, height);
+  const scales = buildScales(data, width, height, COLOR);
 
   // Axes
   addAxes(svg, scales, config);
@@ -75,10 +80,15 @@ export default function scatter_plot(parent, data, config={}) {
     .append('circle')
     .attr('id', d => d.id? d.id: null)
     .attr('class', 'pt')
-    .attr('fill', '#000000')
+    .attr('fill', d => {
+      if (COLOR) {
+        return scales.color(d.color);
+      } else { return '#ffffff'; }
+    })
     .attr('cx', d => scales.x(d.x))
     .attr('cy', d => scales.y(d.y))
-    .attr('r', 2)
+    .attr('stroke', '#000000')
+    .attr('r', d => d.markerSize === undefined? 3: d.markerSize)
 
   return {svg, scales, config};
 
@@ -117,7 +127,7 @@ function addAxes(svg, scales, config) {
 }
 
 
-function buildScales(data, width, height) {
+function buildScales(data, width, height, color) {
   // Find extremums.
   let minX = 0;
   let maxX = 0;
@@ -157,5 +167,11 @@ function buildScales(data, width, height) {
     .range([height, 0])
     .domain([minY, maxY]);
 
-  return {x: xScale, y: yScale, minX, maxX, minY, maxY};
+  let output = {x: xScale, y: yScale, minX, maxX, minY, maxY}
+
+  if (color) {
+    output.color = d3.scaleSequential(d3.interpolateOrRd).domain([0, 1]);
+  }
+
+  return output;
 }

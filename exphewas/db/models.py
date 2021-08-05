@@ -2,26 +2,24 @@
 Database models to store the results of ExPheWas analysis.
 """
 
-from itertools import cycle
+from itertools import cycle, product
 
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.sql import literal, union
-from sqlalchemy.orm import relationship, deferred
+from sqlalchemy.orm import relationship, deferred, foreign
 from sqlalchemy import (
     Column, Integer, String, ForeignKey, Enum, Float, Boolean,
-    ForeignKeyConstraint, Date, JSON
+    ForeignKeyConstraint, Date, JSON, and_
 )
 
 import scipy.stats
 import numpy as np
 import pandas as pd
 
-
-ANALYSIS_TYPES = [
-    "PHECODES", "CONTINUOUS_VARIABLE", "SELF_REPORTED", "CV_ENDPOINTS"
-]
-
-ANALYSIS_SUBSETS = ["BOTH", "FEMALE_ONLY", "MALE_ONLY"]
+from .engine import Session
+from .utils import (
+    ANALYSIS_SUBSETS, ANALYSIS_TYPES, _get_table_name, _get_class_name
+)
 
 
 AnalysisEnum = Enum(*ANALYSIS_TYPES, name="enum_analysis_type")
@@ -141,12 +139,6 @@ class Outcome(Base):
     id = Column(String, primary_key=True)
     analysis_type = Column(AnalysisEnum, primary_key=True)
     label = Column(String, nullable=False)
-    type = Column(String)
-
-    __mapper_args__ = {
-        "polymorphic_on": type,
-        "polymorphic_identity": "outcomes"
-    }
 
     def __repr__(self):
         return "<{}: '{}' ({}) - {}>".format(
@@ -156,48 +148,23 @@ class Outcome(Base):
             self.label
         )
 
+    def is_continuous(self):
+        return self.analysis_type == "CONTINUOUS_VARIABLE"
 
-class BinaryOutcome(Outcome):
-    __tablename__ = "binary_outcomes"
-
-    id = Column(String, primary_key=True)
-    analysis_type = Column(AnalysisEnum, primary_key=True)
-
-    __table_args__ = (
-        ForeignKeyConstraint(
-            [id, analysis_type],
-            ["outcomes.id", "outcomes.analysis_type"]
-        ),
-    )
-
-    __mapper_args__ = {
-        "polymorphic_identity": "binary_outcomes"
-    }
-
-
-class ContinuousOutcome(Outcome):
-    __tablename__ = "continuous_outcomes"
-
-    id = Column(String, primary_key=True)
-    analysis_type = Column(AnalysisEnum, primary_key=True)
-
-    __table_args__ = (
-        ForeignKeyConstraint(
-            [id, analysis_type],
-            ["outcomes.id", "outcomes.analysis_type"]
-        ),
-    )
-
-    __mapper_args__ = {
-        "polymorphic_identity": "continuous_outcomes"
-    }
+    def is_binary(self):
+        return not self.is_continuous()
 
 
 class ResultMixin(object):
-    outcome_id = Column(String, primary_key=True)
-    analysis_type = Column(AnalysisEnum, primary_key=True)
-
     static_nlog10p = Column(Float)
+
+    # This is not a FK because the pair of (outcome_id, analysis_type) forms
+    # the key, but analysis type is not stored in the DB for performance
+    # reasons.
+    # Also note that analysis_type is defined by subclasses.
+    # There is no formal relationship between subclasses of ResultMixin and
+    # Outcome, but we do provide utilities to join with outcomes.
+    outcome_id = Column(String, primary_key=True)
 
     def model_fit_df(self):
         return pd.DataFrame(self.model_fit)
@@ -212,23 +179,22 @@ class ResultMixin(object):
 
     @declared_attr
     def gene_obj(cls):
-        return relationship("Gene")
+        # TODO back_populates
+        return relationship("Gene", lazy="joined")
 
     @declared_attr
     def outcome_obj(cls):
-        return relationship("Outcome", lazy="joined")
+        return relationship(
+            "Outcome",
+            lazy="joined",
+            primaryjoin=lambda: and_(
+                foreign(cls.outcome_id) == Outcome.id,
+                cls.analysis_type == Outcome.analysis_type
+            )
+        )
 
     def p(self):
         return None
-
-    @declared_attr
-    def __table_args__(cls):
-        return (
-            ForeignKeyConstraint(
-                [cls.outcome_id, cls.analysis_type],
-                ["outcomes.id", "outcomes.analysis_type"]
-            ),
-        )
 
     def __repr__(self):
         try:
@@ -245,8 +211,6 @@ class ResultMixin(object):
             p
         )
 
-
-class Result():
     def to_object(self):
         """Serialize using only primitive types (e.g. to json dump)."""
         return {
@@ -259,7 +223,7 @@ class Result():
         }
 
 
-class ContinuousResult(Result):
+class ContinuousResult(ResultMixin):
     n = Column(Integer, nullable=False)
 
     rss_base = Column(Float)
@@ -269,8 +233,6 @@ class ContinuousResult(Result):
 
     discriminator = Column("type", String(50))
     __mapper_args__ = {"polymorphic_on": discriminator}
-
-    analysis_type = "CONTINUOUS_VARIABLE"
 
     def to_object(self):
         o = super().to_object()
@@ -290,7 +252,7 @@ class ContinuousResult(Result):
         return (rss1 - rss2) / (p2 - p1) * ((n - p2) / rss2)
 
     def f_stat(self):
-        return self.f_stat_static(
+        return self.f_stat_primitive(
             self.rss_base, self.rss_augmented,
             self.n,
             self.n_params_base, self.n_params_augmented
@@ -324,22 +286,7 @@ class ContinuousResult(Result):
         )
 
 
-class BothContinuousResult(Base, ResultMixin, ContinuousResult):
-    __tablename__ = "results_both_continuous_variables"
-    analysis_subset = "BOTH"
-
-
-class FemaleContinuousResult(Base, ResultMixin, ContinuousResult):
-    __tablename__ = "results_female_continuous_variables"
-    analysis_subset = "FEMALE_ONLY"
-
-
-class MaleContinuousResult(Base, ResultMixin, ContinuousResult):
-    __tablename__ = "results_male_continuous_variables"
-    analysis_subset = "MALE_ONLY"
-
-
-class BinaryResult(Result):
+class BinaryResult(ResultMixin):
     n_cases = Column(Integer)
     n_controls = Column(Integer)
     n_excluded_from_controls = Column(Integer, default=0)
@@ -349,8 +296,6 @@ class BinaryResult(Result):
 
     discriminator = Column("type", String(50))
     __mapper_args__ = {"polymorphic_on": discriminator}
-
-    analysis_type = "BINARY_VARIABLE"
 
     def to_object(self):
         o = super().to_object()
@@ -380,49 +325,29 @@ class BinaryResult(Result):
         )
 
 
-class BothPhecodesResult(Base, ResultMixin, BinaryResult):
-    __tablename__ = "results_both_phecodes"
-    analysis_subset = "BOTH"
+# Dynamically create results classes.
+RESULTS_CLASSES = []
+for analysis_type, analysis_subset in product(ANALYSIS_TYPES, ANALYSIS_SUBSETS):
+    class_name = _get_class_name(analysis_subset, analysis_type)
+    table_name = _get_table_name(analysis_subset, analysis_type)
 
+    if analysis_type == "CONTINUOUS_VARIABLE":
+        parent_class = ContinuousResult
+    else:
+        parent_class = BinaryResult
 
-class FemalePhecodesResult(Base, ResultMixin, BinaryResult):
-    __tablename__ = "results_female_phecodes"
-    analysis_subset = "FEMALE_ONLY"
+    cls = type(
+        class_name,
+        (parent_class, Base),
+        {
+            "__tablename__": table_name,
+            "analysis_subset": analysis_subset,
+            "analysis_type": analysis_type
+        }
+    )
 
-
-class MalePhecodesResult(Base, ResultMixin, BinaryResult):
-    __tablename__ = "results_male_phecodes"
-    analysis_subset = "MALE_ONLY"
-
-
-class BothSelfReportedResult(Base, ResultMixin, BinaryResult):
-    __tablename__ = "results_both_self_reported"
-    analysis_subset = "BOTH"
-
-
-class FemaleSelfReportedResult(Base, ResultMixin, BinaryResult):
-    __tablename__ = "results_female_self_reported"
-    analysis_subset = "FEMALE_ONLY"
-
-
-class MaleSelfReportedResult(Base, ResultMixin, BinaryResult):
-    __tablename__ = "results_male_self_reported"
-    analysis_subset = "MALE_ONLY"
-
-
-class BothCVEndpointsResult(Base, ResultMixin, BinaryResult):
-    __tablename__ = "results_both_cv_endpoints"
-    analysis_subset = "BOTH"
-
-
-class FemaleCVEndpointsResult(Base, ResultMixin, BinaryResult):
-    __tablename__ = "results_female_cv_endpoints"
-    analysis_subset = "FEMALE_ONLY"
-
-
-class MaleCVEndpointsResult(Base, ResultMixin, BinaryResult):
-    __tablename__ = "results_male_cv_endpoints"
-    analysis_subset = "MALE_ONLY"
+    globals()[class_name] = cls
+    RESULTS_CLASSES.append(cls)
 
 
 def all_results_union(session, cols=None):
@@ -442,16 +367,10 @@ def all_results_union(session, cols=None):
     queries = []
 
     # The binary and continuous variables
-    result_objects = [
-        BothPhecodesResult, FemalePhecodesResult, MalePhecodesResult,
-        BothCVEndpointsResult, FemaleCVEndpointsResult, MaleCVEndpointsResult,
-        BothSelfReportedResult, FemaleSelfReportedResult, MaleSelfReportedResult,
-        BothContinuousResult, FemaleContinuousResult, MaleContinuousResult,
-    ]
-    for analysis_subset, res_obj in zip(cycle(ANALYSIS_SUBSETS), result_objects):
+    for res_obj in RESULTS_CLASSES:
         queries.append(session.query(
             *[getattr(res_obj, col).label(col) for col in cols],
-            literal(analysis_subset).label("analysis_subset"),
+            literal(res_obj.analysis_subset).label("analysis_subset"),
         ))
 
     return union(*queries)

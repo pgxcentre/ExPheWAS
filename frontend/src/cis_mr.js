@@ -7,6 +7,9 @@ import { DT_API_URL } from './config';
 import scatter_plot from './scatter_plot';
 
 
+let lastEvent = Date.now();
+
+
 function createGeneTable() {
   let table = $('#genes')
     .DataTable({
@@ -24,7 +27,11 @@ function createGeneTable() {
       ],
       columnDefs: [
         { targets: 0, className: 'ensembl-id' },
-        { targets: 1, width: '12%' },
+        { 
+          targets: 1,
+          width: '12%',
+          className: 'symbol'
+        },
         {
           targets: 3,
           render: biotype => BIOTYPES[biotype],
@@ -84,11 +91,18 @@ function handleVariableTypeChange(all_outcomes, e) {
 async function handleSubmit(event) {
   event.preventDefault();
 
+  let curEvent = Date.now();
+  if (curEvent - lastEvent < 1000) {
+    // 1s cooldown for for submission.
+    return false;
+  }
+  lastEvent = curEvent;
+
   // Clear old errors and results.
   document.getElementById('errors').innerHTML = '';
   document.getElementById('results').innerHTML = '';
   document.getElementById('mr_plot').innerHTML = '';
-  document.getElementById("mr_plot_legend").style.display = 'none';
+  document.getElementById('mr_plot_legend').style.display = 'none';
 
   let errors = [];
   let error = (name, message) => { errors.push({name, message}); };
@@ -96,6 +110,7 @@ async function handleSubmit(event) {
 
   // Get the selected gene.
   let gene;
+  let geneSymbol;
   let selectedRow = document.getElementsByClassName('selected');
   if (selectedRow.length > 1) {
     throw 'More than one element with class selected.'
@@ -108,6 +123,7 @@ async function handleSubmit(event) {
     );
   } else {
     gene = selectedRow[0].querySelector('.ensembl-id').innerHTML;
+    geneSymbol = selectedRow[0].querySelector('.symbol').innerHTML;
   }
 
   let config = {
@@ -118,6 +134,10 @@ async function handleSubmit(event) {
     outcome_id: formData.get('outcomeId'),
     ensembl_id: gene
   };
+
+  if (formData.get('disablePCPruning') === "on") {
+    config['disable_pruning'] = true;
+  }
 
   // Client side validation.
   if (config.exposure_type == config.outcome_type &&
@@ -143,14 +163,14 @@ async function handleSubmit(event) {
     error('ServerSideError', results.error);
     throw errors;
   } else {
-    displayMRResults(results)
+    displayMRResults(results, geneSymbol)
   }
 
   document.getElementById("results").scrollIntoView({'behavior': 'smooth'});
 }
 
 
-function displayMRResults(results) {
+function displayMRResults(results, geneSymbol) {
   let resultsDiv = document.getElementById('results');
   let effect = formatEffect(
     results.ivw_beta,
@@ -161,6 +181,11 @@ function displayMRResults(results) {
 
   let content = (
     `<h2>cis-MR Results</h2>
+     <p>
+      MR estimate of the effect of '${results.exposure_label}' on 
+      '${results.outcome_label}' based on genetic variants close to the gene 
+      <i>${geneSymbol}</i>.
+     </p>
      <p>Inverse variance weighted (IVW) effect and 95% confidence interval:</p>
        <p><span id="ivw-effect">${effect}</span></p>
      <p>MR P-value : <span id="ivw-p">${formatP(results.wald_p)}</span></p>
@@ -174,7 +199,8 @@ function displayMRResults(results) {
      </p>
      <p>
        <small>If the selected outcome is binary, the MR estimate is presented
-       on the odds ratio scale.</small>
+       on the odds ratio scale by exponentiating the estimate from the log-odds
+       scale.</small>
      </p>`
   );
   resultsDiv.innerHTML = content;
@@ -186,7 +212,9 @@ function displayMRResults(results) {
       xerr: 1.96 * d.exposure_se,
       y: d.outcome_beta,
       yerr: 1.96 * d.outcome_se,
-      id: d.term
+      // color: d.weight,
+      id: d.term,
+      markerSize: d.pruned? 1: 3
     }}),
     { xLabel: 'Effect of PC on exposure', yLabel: 'Effect of PC on outcome' }
   );

@@ -9,6 +9,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from flask import Blueprint, render_template, abort, url_for, request
 
 from . import api
+from .cache import Cache
 from ..version import exphewas_version
 from ..db import models
 from ..db.engine import Session
@@ -31,13 +32,6 @@ EXTERNAL_DB_URL = {
 
 EXTERNAL_DB_TO_SHOW = ("HGNC", "WikiGene", "MIM_GENE", "MIM_MORBID",
                        "our_uniprot")
-
-
-OUTCOMES = {
-    (outcome["id"], outcome["analysis_type"]): tuple(outcome["available_subsets"])
-    for outcome in api.OUTCOMES
-}
-assert len(OUTCOMES) == len(api.OUTCOMES)
 
 
 @backend.context_processor
@@ -102,11 +96,21 @@ def get_outcome(id):
     elif analysis_subset == "MALE_ONLY":
         title += " (Male only)"
 
+    available_subsets = list(filter(
+        lambda o: (
+            o["id"] == id and
+            o["analysis_type"] == outcome_obj["analysis_type"]
+        ),
+        Cache().get("outcomes")
+    ))
+    assert len(available_subsets) == 1
+    available_subsets = available_subsets[0]["available_subsets"]
+
     return render_template(
         "outcome.html",
         page_title=title,
         has_atc_enrichment=has_atc,
-        available_subsets=OUTCOMES[(id, outcome_obj["analysis_type"])],
+        available_subsets=list(available_subsets),
         **outcome_obj,
     )
 

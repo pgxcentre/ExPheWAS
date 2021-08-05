@@ -9,8 +9,8 @@ from os import path
 import numpy as np
 
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound
-from sqlalchemy.orm import joinedload, undefer
-from sqlalchemy.sql.expression import func
+from sqlalchemy.orm import joinedload, subqueryload, undefer
+from sqlalchemy.sql.expression import func, null
 
 from flask import Blueprint, jsonify, request
 
@@ -22,7 +22,6 @@ from ..db.utils import mod_to_dict
 from ..utils import (
     load_gtex_median_tpm, load_gtex_statistics, qvalue, one_sample_ivw_mr
 )
-
 
 
 api = Blueprint("api_blueprint", __name__)
@@ -53,9 +52,6 @@ RESULT_CLASS_MAP = {
         "CV_ENDPOINTS": models.MaleCVEndpointsResult,
     },
 }
-
-
-OUTCOMES = Cache().get("outcomes")
 
 
 class make_api(object):
@@ -153,7 +149,7 @@ def get_metadata():
 
 @make_api("/outcome")
 def get_outcomes():
-    return OUTCOMES
+    return Cache().get("outcomes")
 
 
 @make_api("/outcome/<id>")
@@ -170,7 +166,7 @@ def get_outcome(id):
         "analysis_type": outcome.analysis_type,
         "analysis_subset": analysis_subset,
         "label": outcome.label,
-        "type": outcome.type,
+        "type": "continuous_outcomes" if outcome.is_continuous() else "binary_outcomes"
     }
 
     result_class_map = RESULT_CLASS_MAP[analysis_subset]
@@ -178,37 +174,39 @@ def get_outcome(id):
     # Get appropriate result class.
     # We need to also look at analysis subset so that the reported ns are
     # correct.
-    if isinstance(outcome, models.ContinuousOutcome):
+    if outcome.is_continuous():
         result_obj = result_class_map["CONTINUOUS"]
 
         # Get mean n.
-        q = session.query(
-            func.avg(result_obj.n)
+        ns = session.query(
+            result_obj.n
         ).filter_by(
             outcome_id=outcome.id,
             analysis_type=outcome.analysis_type,
-        )
+        ).limit(100).all()
 
-        out["n_avg"] = int(q.one()[0])
+        out["n_avg"] = np.mean(ns)
 
     else:
         result_obj = result_class_map[outcome.analysis_type]
 
         res = session.query(
-            func.avg(result_obj.n_cases),
-            func.avg(result_obj.n_controls),
-            func.avg(result_obj.n_excluded_from_controls)
+            result_obj.n_cases,
+            result_obj.n_controls,
+            result_obj.n_excluded_from_controls
         ).filter_by(
             outcome_id=outcome.id,
             analysis_type=outcome.analysis_type,
-        ).one()
+        ).limit(100).all()
 
-        res = [int(i) if i else 0 for i in res]
+        res = np.array(res)
+        avgs = [int(round(i)) for i in np.mean(res, axis=0)]
+
         (
             out["n_cases_avg"],
             out["n_controls_avg"],
             out["n_excluded_from_controls_avg"]
-        ) = res
+        ) = avgs
 
     return out
 
@@ -220,9 +218,9 @@ def _query_outcome_results(outcome, analysis_subset="BOTH",
     result_class_map = RESULT_CLASS_MAP[analysis_subset]
 
     Result = None
-    if isinstance(outcome, models.BinaryOutcome):
+    if outcome.is_binary():
         Result = result_class_map[outcome.analysis_type]
-    elif isinstance(outcome, models.ContinuousOutcome):
+    elif outcome.is_continuous():
         Result = result_class_map["CONTINUOUS"]
 
     query = session.query(Result)\
@@ -233,6 +231,9 @@ def _query_outcome_results(outcome, analysis_subset="BOTH",
 
     if preload_model:
         query.options(undefer("model_fit"))
+
+    query.options(joinedload(Result.outcome_obj))
+    query.options(joinedload(Result.gene_obj))
 
     return query
 
@@ -247,8 +248,6 @@ def get_outcome_results(id):
         raise ValueError(f"{analysis_subset}: not a valid analysis subset")
 
     results = _query_outcome_results(outcome, analysis_subset)\
-        .options(joinedload("gene_obj"))\
-        .options(joinedload("outcome_obj"))\
         .all()
 
     if len(results) == 0:
@@ -471,6 +470,8 @@ def cis_mendelian_randomization():
     exposure = _get_outcome(session, exposure_id, exposure_type)
     outcome = _get_outcome(session, outcome_id, outcome_type)
 
+    disable_pruning = request.args.get("disable_pruning") == "true"
+
     not_found = []
     try:
         exposure_result = _query_outcome_results(
@@ -502,7 +503,8 @@ def cis_mendelian_randomization():
     mr_results = one_sample_ivw_mr(
         exposure_result.model_fit_df(),
         outcome_result.model_fit_df(),
-        alpha=0.05
+        alpha=0.05,
+        instrument_prune=not disable_pruning
     )
 
     mr_results["outcome_is_binary"] = not (
@@ -512,6 +514,9 @@ def cis_mendelian_randomization():
     mr_results["exposure_nlog10p"] = exposure_result.static_nlog10p
     if not np.isfinite(mr_results["exposure_nlog10p"]):
         mr_results["exposure_nlog10p"] = 500
+
+    mr_results["exposure_label"] = exposure.label
+    mr_results["outcome_label"] = outcome.label
 
     return mr_results
 

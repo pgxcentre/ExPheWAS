@@ -86,10 +86,8 @@ def load_ukbphewas_model(filename, as_dict=False, fit_df=True):
         return models
 
 
-def one_sample_ivw_mr(x_model, y_model, alpha=None):
+def one_sample_ivw_mr(x_model, y_model, alpha=None, instrument_prune=True):
     """Compute the IVW estimate of the effect of X on Y using PCs as IVs.
-
-    CI needs to be an alpha level.
 
     """
     def _prep_df(df, label):
@@ -106,12 +104,26 @@ def one_sample_ivw_mr(x_model, y_model, alpha=None):
     y = _prep_df(y_model, "y")
     df = pd.concat((x, y), axis=1)
 
+    # If instrument prune, we drop PCs with no marginally significant effect
+    # on the exposure.
+    # Based on the chi2 statistic at 0.05.
+    if instrument_prune:
+        df["pruned"] = (df["x_beta"] / df["x_se"]) ** 2 < 3.841459
+    else:
+        df["pruned"] = False
+
+    analysis_df = df.loc[~df["pruned"], :]
+
+    if analysis_df.shape[0] == 0:
+        raise ValueError("No relevant instrument after pruning.")
+
     # The IVW weight is only valid under relevance, but if we filter out PCs
     # with a null effect, then we're subject to Winner's curse.
-    precisions = df["y_se"] ** -2
-    ivw_denum = np.sum(df["x_beta"] ** 2 * precisions)
+    precisions = analysis_df["y_se"] ** -2
+    df.loc[~df["pruned"], "ivw_weight"] = precisions / np.sum(precisions)
+    ivw_denum = np.sum(analysis_df["x_beta"] ** 2 * precisions)
     ivw = (
-        np.sum(df["x_beta"] * df["y_beta"] * precisions) /
+        np.sum(analysis_df["x_beta"] * analysis_df["y_beta"] * precisions) /
         ivw_denum
     )
 
@@ -121,13 +133,18 @@ def one_sample_ivw_mr(x_model, y_model, alpha=None):
 
     summary_stats = []
     for i, row in df.iterrows():
-        summary_stats.append({
+        d = {
             "term": i,
             "exposure_beta": row.x_beta,
             "exposure_se": row.x_se,
             "outcome_beta": row.y_beta,
             "outcome_se": row.y_se,
-        })
+            "pruned": row.pruned
+        }
+        if not np.isnan(row.ivw_weight):
+            d["weight"] = row.ivw_weight
+
+        summary_stats.append(d)
 
     out = {
         "ivw_beta": ivw,
