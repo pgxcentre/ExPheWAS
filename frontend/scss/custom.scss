@@ -79,18 +79,18 @@
 
 #qqLoading {
   width: 80%;
-  height: 80%;
-  text-align: center;
-  opacity: 0.5
+  opacity: 0.5;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 #qqLoading .spinner-border {
   width: 3rem;
   height: 3rem;
-  position: absolute;
-  top: 40%
+  display: flex;
 }
-
 
 #atc-tree {
   width: 100%;
@@ -167,9 +167,7 @@
 #ivw-p, #ivw-effect {
   display: inline-block;
   font-weight: 700;
-  padding: 7px 12px;
-  border: 1px solid #aaaaaa;
-  border-radius: 5px;
+  text-decoration: underline;
 }
 
 .table-loading > td {

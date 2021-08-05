@@ -89,8 +89,6 @@ def load_ukbphewas_model(filename, as_dict=False, fit_df=True):
 def one_sample_ivw_mr(x_model, y_model, alpha=None):
     """Compute the IVW estimate of the effect of X on Y using PCs as IVs.
 
-    CI needs to be an alpha level.
-
     """
     def _prep_df(df, label):
         term_column = "term" if "term" in df.columns else "variable"
@@ -109,6 +107,7 @@ def one_sample_ivw_mr(x_model, y_model, alpha=None):
     # The IVW weight is only valid under relevance, but if we filter out PCs
     # with a null effect, then we're subject to Winner's curse.
     precisions = df["y_se"] ** -2
+    df["ivw_weight"] = precisions / np.sum(precisions)
     ivw_denum = np.sum(df["x_beta"] ** 2 * precisions)
     ivw = (
         np.sum(df["x_beta"] * df["y_beta"] * precisions) /
@@ -127,6 +126,7 @@ def one_sample_ivw_mr(x_model, y_model, alpha=None):
             "exposure_se": row.x_se,
             "outcome_beta": row.y_beta,
             "outcome_se": row.y_se,
+            "weight": row.ivw_weight
         })
 
     out = {

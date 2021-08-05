@@ -512,6 +512,9 @@ def cis_mendelian_randomization():
     if not np.isfinite(mr_results["exposure_nlog10p"]):
         mr_results["exposure_nlog10p"] = 500
 
+    mr_results["exposure_label"] = exposure.label
+    mr_results["outcome_label"] = outcome.label
+
     return mr_results
 
 
