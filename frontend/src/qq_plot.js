@@ -121,8 +121,14 @@ export default async function qq(data) {
     left: 40
   };
 
+  // Remove the loading box.
+  let qqLoading = document.getElementById("qqLoading");
+  if (qqLoading)
+    qqLoading.remove();
+
   // Create SVG for plot.
   const svg = d3.select('#geneQQ')
+      .style('display', 'block')
       .on('mouseout', () => {
         d3.select('#tooltipQQ')
           .style('opacity', 0);

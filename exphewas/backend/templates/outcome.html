@@ -46,7 +46,7 @@
               <dd class="col-8">{{ '{:,d}'.format(n_avg) if n_avg is not none else '?' }}</dt>
               {%- endif %}
             </dl>
-            <sup>*</sup> Average across genes.
+            <sup>*</sup> Estimated average across genes.
           </div>
         </div>
         </div>
@@ -81,6 +81,15 @@
               <th class="dt-head-right">Nb Components</th>
             </tr>
           </thead>
+          <tbody>
+            <tr class="table-loading">
+              <td colspan="7">
+                <div class="spinner-border text-secondary" role="status">
+                  <span class="sr-only">Loading</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
 

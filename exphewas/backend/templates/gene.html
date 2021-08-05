@@ -75,7 +75,11 @@
             <div>
               <p>Inflation factor <i>𝜆=<span id="lambdaQQ"></span></i></p>
             </div>
-            <svg id="geneQQ"></svg>
+            <div id="qqLoading"
+                 style="background: url({{ url_for('backend_blueprint.static', filename='qq_plot_loading.svg') }}) no-repeat; width: 80%; height: 80%; text-align: center; opacity: 0.5">
+              <div class="spinner-border" style="width: 3rem; height: 3rem; position: absolute; top: 40%" role="status"><span class="sr-only">Loading</span></div>
+            </div>
+            <svg id="geneQQ" style="display: none"></svg>
 
             <div>
               <h5>Browse associated phenotypes:</h5>
@@ -112,6 +116,15 @@
               <th class="dt-head-right">Q-Value</th>
             </tr>
           </thead>
+          <tbody>
+            <tr class="table-loading">
+              <td colspan="7">
+                <div class="spinner-border text-secondary" role="status">
+                  <span class="sr-only">Loading</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
 
@@ -137,6 +150,15 @@
               <th class="dt-head-right">Q-Value</th>
             </tr>
           </thead>
+          <tbody>
+            <tr class="table-loading">
+              <td colspan="7">
+                <div class="spinner-border text-secondary" role="status">
+                  <span class="sr-only">Loading</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
 
@@ -156,6 +178,15 @@
               <th class="dt-head-right">Q-Value</th>
             </tr>
           </thead>
+          <tbody>
+            <tr class="table-loading">
+              <td colspan="7">
+                <div class="spinner-border text-secondary" role="status">
+                  <span class="sr-only">Loading</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
 
@@ -175,6 +206,15 @@
               <th class="dt-head-right">Q-Value</th>
             </tr>
           </thead>
+          <tbody>
+            <tr class="table-loading">
+              <td colspan="7">
+                <div class="spinner-border text-secondary" role="status">
+                  <span class="sr-only">Loading</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
 

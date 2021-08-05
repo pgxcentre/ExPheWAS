@@ -77,6 +77,21 @@
   pointer-events: none;
 }
 
+#qqLoading {
+  width: 80%;
+  height: 80%;
+  text-align: center;
+  opacity: 0.5
+}
+
+#qqLoading .spinner-border {
+  width: 3rem;
+  height: 3rem;
+  position: absolute;
+  top: 40%
+}
+
+
 #atc-tree {
   width: 100%;
   min-width: 800px;
@@ -155,4 +170,10 @@
   padding: 7px 12px;
   border: 1px solid #aaaaaa;
   border-radius: 5px;
+}
+
+.table-loading > td {
+  width: 100%;
+  padding: 50px;
+  text-align: center;
 }
