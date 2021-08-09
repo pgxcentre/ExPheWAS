@@ -18,11 +18,9 @@ import scipy.stats
 import exphewas.db.tree as tree
 from exphewas.db.models import *
 from exphewas.db.engine import Session
-from exphewas.backend.r_bindings import R as R_
 
 
 Q_THRESHOLD = 0.05
-R = R_()
 
 
 def uniprot_list_to_ensembl(li, xrefs=None):
@@ -59,9 +57,8 @@ def get_results(outcome_id):
         .filter_by(id=outcome_id)\
         .one()
 
-    if outcome.analysis_type == "CONTINUOUS_VARIABLE":
+    if outcome.is_continuous():
         results_model = ContinuousVariableResult
-
     else:
         results_model = BinaryVariableResult
 
