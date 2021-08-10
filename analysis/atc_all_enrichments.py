@@ -6,7 +6,7 @@ Compute the enrichment of all ATC codes and all outcomes.
 
 import sys
 import csv
-import itertools
+from itertools import product
 import functools
 import collections
 import multiprocessing
@@ -15,9 +15,11 @@ import pandas as pd
 import numpy as np
 import scipy.stats
 
+from exphewas.utils import qvalue
 import exphewas.db.tree as tree
 from exphewas.db.models import *
 from exphewas.db.engine import Session
+from exphewas.db.utils import ANALYSIS_SUBSETS
 
 
 Q_THRESHOLD = 0.05
@@ -40,43 +42,40 @@ def uniprot_list_to_ensembl(li, xrefs=None):
 
 def get_uniprot_to_ensembl_xref():
     # -1 is the id for the Uniprot to Ensembl mapping
-    query = select([XRefs.external_id, XRefs.ensembl_id])\
-        .where(XRefs.external_db_id == -1)
+    xrefs = Session()\
+        .query(XRefs.external_id, XRefs.ensembl_id)\
+        .filter_by(external_db_id=-1)\
+        .all()
 
     uniprot_to_ensembl = collections.defaultdict(list)
-    for uniprot, ensg in Session().execute(query):
+    for uniprot, ensg in xrefs:
         uniprot_to_ensembl[uniprot].append(ensg)
 
     return uniprot_to_ensembl
 
 
-def get_results(outcome_id):
+def get_results(outcome_id, analysis_type, analysis_subset="BOTH"):
     # Check if binary or continuous.
     outcome = Session()\
         .query(Outcome)\
         .filter_by(id=outcome_id)\
+        .filter_by(analysis_type=analysis_type)\
         .one()
 
-    if outcome.is_continuous():
-        results_model = ContinuousVariableResult
-    else:
-        results_model = BinaryVariableResult
+    results = [
+        (r.gene, r.static_nlog10p) for r in
+        outcome.query_results(analysis_subset).all()
+    ]
 
-    df = pd.DataFrame(
-        Session()\
-        .query(
-            getattr(results_model, "gene"),
-            getattr(results_model, "p")
-        )\
-        .filter_by(outcome_id=outcome_id)\
-        .filter_by(variance_pct=95)\
-        .order_by(getattr(results_model, "p"))\
-        .all(),
-        columns=["gene", "p"]
-    )
+    if len(results) == 0:
+        print(f"No results for {outcome}")
+        return None
 
-    # Add Q value
-    df["q"] = R.qvalue(df["p"].values)
+    df = pd.DataFrame(results, columns=["gene", "nlog10p"])
+    df = df.sort_values("nlog10p", ascending=False)
+
+    df["p"] = 10 ** -df["nlog10p"]
+    df["q"] = qvalue(df["p"].values)
 
     df = df.set_index("gene", verify_integrity=True)
 
@@ -103,14 +102,14 @@ def create_atc_targets(chembl, atc_tree, uniprot_to_ensembl):
         for t in targets_uniprot:
             # ensg is a list of ensembl ids matching the uniprot accession.
             # or None
-            ensgs = uniprot_to_ensembl.get(t)
+            ensg = uniprot_to_ensembl.get(t)
 
             if ensg is None:
                 print(f"Could not find Ensembl ID for '{t}' (ignoring).")
                 continue
 
-            for ensg in ensg:
-                m.append((atc.code, ensg))
+            for id in ensg:
+                m.append((atc.code, id))
 
     # This is a relationship table (long format)
     df = pd.DataFrame(m, columns=["atc", "target"])
@@ -182,17 +181,23 @@ def main(n_cpus=None):
 
     atc_cols = atc_targets.columns
 
-    outcome_ids = [i for i, in Session().query(Outcome.id).distinct()]
+    outcomes = [(i.id, i.analysis_type) for i in Session().query(Outcome).all()]
 
     pool = multiprocessing.Pool(n_cpus)
 
     with open("atc_enrichment.csv", "wt") as f:
         out = csv.writer(f)
-        out.writerow(["outcome_id", "atc", "n00", "n01", "n10", "n11", "OR",
-                      "p"])
+        out.writerow(["outcome_id", "analysis_subset", "atc",
+                      "n00", "n01", "n10", "n11", "OR", "p"])
 
-        for outcome_id in outcome_ids:
-            results = get_results(outcome_id)
+        for subset, o in product(ANALYSIS_SUBSETS, outcomes):
+
+            outcome_id, analysis_type = o
+            results = get_results(outcome_id, analysis_type, subset)
+
+            if results is None:
+                # This is logged by the function.
+                continue
 
             if (results["q"] > Q_THRESHOLD).all():
                 # There are no associated genes with this outcome.
@@ -207,7 +212,7 @@ def main(n_cpus=None):
             )
 
             for res in cur:
-                out.writerow([outcome_id, *res])
+                out.writerow([outcome_id, subset, *res])
 
     pool.close()
 

@@ -60,6 +60,7 @@ class Enrichment(Base):
 
     outcome_id = Column(String, primary_key=True)
     analysis_type = Column(AnalysisEnum, primary_key=True)
+    analysis_subset = Column(SexSubsetEnum, primary_key=True)
 
     # This could be a code from Hierarchy (e.g. ATC codes).
     gene_set_id = Column(String, primary_key=True)
@@ -90,6 +91,7 @@ class EnrichmentContingency(Base):
 
     outcome_id = Column(String, primary_key=True)
     analysis_type = Column(AnalysisEnum, primary_key=True)
+    analysis_subset = Column(SexSubsetEnum, primary_key=True)
 
     # This could be a code from Hierarchy (e.g. ATC codes).
     gene_set_id = Column(String, primary_key=True)
