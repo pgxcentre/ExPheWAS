@@ -2,11 +2,12 @@
 Database models to store the results of ExPheWas analysis.
 """
 
+from collections import defaultdict
 from itertools import cycle, product
 
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.sql import literal, union
-from sqlalchemy.orm import relationship, deferred, foreign
+from sqlalchemy.orm import relationship, deferred, foreign, joinedload, undefer
 from sqlalchemy import (
     Column, Integer, String, ForeignKey, Enum, Float, Boolean,
     ForeignKeyConstraint, Date, JSON, and_
@@ -29,6 +30,11 @@ BiotypeEnum = Enum("lincRNA", "protein_coding", name="enum_biotype")
 
 
 Base = declarative_base()
+
+
+# These will be filled dynamically.
+RESULTS_CLASSES = []
+RESULTS_CLASS_MAP = defaultdict(dict)
 
 
 class Metadata(Base):
@@ -54,6 +60,7 @@ class Enrichment(Base):
 
     outcome_id = Column(String, primary_key=True)
     analysis_type = Column(AnalysisEnum, primary_key=True)
+    analysis_subset = Column(SexSubsetEnum, primary_key=True)
 
     # This could be a code from Hierarchy (e.g. ATC codes).
     gene_set_id = Column(String, primary_key=True)
@@ -84,6 +91,7 @@ class EnrichmentContingency(Base):
 
     outcome_id = Column(String, primary_key=True)
     analysis_type = Column(AnalysisEnum, primary_key=True)
+    analysis_subset = Column(SexSubsetEnum, primary_key=True)
 
     # This could be a code from Hierarchy (e.g. ATC codes).
     gene_set_id = Column(String, primary_key=True)
@@ -153,6 +161,37 @@ class Outcome(Base):
 
     def is_binary(self):
         return not self.is_continuous()
+
+    def query_results(self, *args, **kwargs):
+        return self.query_outcome_results(self, *args, **kwargs)
+
+    @staticmethod
+    def query_outcome_results(outcome, analysis_subset="BOTH",
+                              preload_model=False):
+        """Build a sqlalchemy query to get results for a given outcome."""
+        session = Session()
+
+        result_class_map = RESULTS_CLASS_MAP[analysis_subset]
+
+        Result = None
+        if outcome.is_binary():
+            Result = result_class_map[outcome.analysis_type]
+        elif outcome.is_continuous():
+            Result = result_class_map["CONTINUOUS_VARIABLE"]
+
+        query = session.query(Result)\
+            .filter_by(
+                outcome_id=outcome.id,
+                analysis_type=outcome.analysis_type,
+            )
+
+        if preload_model:
+            query.options(undefer("model_fit"))
+
+        query.options(joinedload(Result.outcome_obj))
+        query.options(joinedload(Result.gene_obj))
+
+        return query
 
 
 class ResultMixin(object):
@@ -231,9 +270,6 @@ class ContinuousResult(ResultMixin):
     n_params_base = Column(Integer)
     n_params_augmented = Column(Integer)
 
-    discriminator = Column("type", String(50))
-    __mapper_args__ = {"polymorphic_on": discriminator}
-
     def to_object(self):
         o = super().to_object()
         keys = ["n", "rss_base", "rss_augmented",
@@ -294,9 +330,6 @@ class BinaryResult(ResultMixin):
     deviance_base = Column(Float)
     deviance_augmented = Column(Float)
 
-    discriminator = Column("type", String(50))
-    __mapper_args__ = {"polymorphic_on": discriminator}
-
     def to_object(self):
         o = super().to_object()
         keys = ["n_cases", "n_controls", "n_excluded_from_controls",
@@ -323,57 +356,6 @@ class BinaryResult(ResultMixin):
             self.deviance_base, self.deviance_augmented,
             self.gene_obj.n_pcs
         )
-
-
-# Dynamically create results classes.
-RESULTS_CLASSES = []
-for analysis_type, analysis_subset in product(ANALYSIS_TYPES, ANALYSIS_SUBSETS):
-    class_name = _get_class_name(analysis_subset, analysis_type)
-    table_name = _get_table_name(analysis_subset, analysis_type)
-
-    if analysis_type == "CONTINUOUS_VARIABLE":
-        parent_class = ContinuousResult
-    else:
-        parent_class = BinaryResult
-
-    cls = type(
-        class_name,
-        (parent_class, Base),
-        {
-            "__tablename__": table_name,
-            "analysis_subset": analysis_subset,
-            "analysis_type": analysis_type
-        }
-    )
-
-    globals()[class_name] = cls
-    RESULTS_CLASSES.append(cls)
-
-
-def all_results_union(session, cols=None):
-    """Returns a sqlalchemy query unioning the binary and continuous results.
-
-    By default, this only uses outcome_id, analysis_type and analysis_subset.
-    Note that analysis subset always get added to the list of columns.
-
-    """
-    if cols is None:
-        cols = ["outcome_id", "analysis_type"]
-
-    # Making sure analysis_subset isn't in the list
-    cols = [col for col in cols if col != "analysis_subset"]
-
-    # The list of queries
-    queries = []
-
-    # The binary and continuous variables
-    for res_obj in RESULTS_CLASSES:
-        queries.append(session.query(
-            *[getattr(res_obj, col).label(col) for col in cols],
-            literal(res_obj.analysis_subset).label("analysis_subset"),
-        ))
-
-    return union(*queries)
 
 
 class Gene(Base):
@@ -491,3 +473,54 @@ class TargetToUniprot(Base):
         ),
         viewonly=True
     )
+
+
+# Dynamically create results classes.
+for analysis_type, analysis_subset in product(ANALYSIS_TYPES, ANALYSIS_SUBSETS):
+    class_name = _get_class_name(analysis_subset, analysis_type)
+    table_name = _get_table_name(analysis_subset, analysis_type)
+
+    if analysis_type == "CONTINUOUS_VARIABLE":
+        parent_class = ContinuousResult
+    else:
+        parent_class = BinaryResult
+
+    cls = type(
+        class_name,
+        (parent_class, Base),
+        {
+            "__tablename__": table_name,
+            "analysis_subset": analysis_subset,
+            "analysis_type": analysis_type
+        }
+    )
+
+    globals()[class_name] = cls
+    RESULTS_CLASSES.append(cls)
+    RESULTS_CLASS_MAP[analysis_subset][analysis_type] = cls
+
+
+def all_results_union(session, cols=None):
+    """Returns a sqlalchemy query unioning the binary and continuous results.
+
+    By default, this only uses outcome_id, analysis_type and analysis_subset.
+    Note that analysis subset always get added to the list of columns.
+
+    """
+    if cols is None:
+        cols = ["outcome_id", "analysis_type"]
+
+    # Making sure analysis_subset isn't in the list
+    cols = [col for col in cols if col != "analysis_subset"]
+
+    # The list of queries
+    queries = []
+
+    # The binary and continuous variables
+    for res_obj in RESULTS_CLASSES:
+        queries.append(session.query(
+            *[getattr(res_obj, col).label(col) for col in cols],
+            literal(res_obj.analysis_subset).label("analysis_subset"),
+        ))
+
+    return union(*queries)

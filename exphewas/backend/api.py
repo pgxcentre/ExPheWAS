@@ -16,11 +16,12 @@ from flask import Blueprint, jsonify, request
 
 from .cache import Cache
 from ..db import models
+from ..db.models import RESULTS_CLASS_MAP
 from ..db.tree import tree_from_hierarchy_id
 from ..db.engine import Session
-from ..db.utils import mod_to_dict
+from ..db.utils import mod_to_dict, ANALYSIS_TYPES
 from ..utils import (
-    load_gtex_median_tpm, load_gtex_statistics, qvalue, one_sample_ivw_mr
+    load_gtex_median_tpm, load_gtex_statistics, qvalue, one_sample_ivw_mr,
 )
 
 
@@ -30,28 +31,6 @@ api = Blueprint("api_blueprint", __name__)
 # Loading GTEx data
 GTEX_MEDIAN_TPM = load_gtex_median_tpm()
 GTEX_STATS = load_gtex_statistics()
-
-
-RESULT_CLASS_MAP = {
-    "BOTH": {
-        "CONTINUOUS": models.BothContinuousResult,
-        "PHECODES": models.BothPhecodesResult,
-        "SELF_REPORTED": models.BothSelfReportedResult,
-        "CV_ENDPOINTS": models.BothCVEndpointsResult,
-    },
-    "FEMALE_ONLY": {
-        "CONTINUOUS": models.FemaleContinuousResult,
-        "PHECODES": models.FemalePhecodesResult,
-        "SELF_REPORTED": models.FemaleSelfReportedResult,
-        "CV_ENDPOINTS": models.FemaleCVEndpointsResult,
-    },
-    "MALE_ONLY": {
-        "CONTINUOUS": models.MaleContinuousResult,
-        "PHECODES": models.MalePhecodesResult,
-        "SELF_REPORTED": models.MaleSelfReportedResult,
-        "CV_ENDPOINTS": models.MaleCVEndpointsResult,
-    },
-}
 
 
 class make_api(object):
@@ -169,14 +148,14 @@ def get_outcome(id):
         "type": "continuous_outcomes" if outcome.is_continuous() else "binary_outcomes"
     }
 
-    result_class_map = RESULT_CLASS_MAP[analysis_subset]
+    result_class_map = RESULTS_CLASS_MAP[analysis_subset]
 
     # Get appropriate result class.
     # We need to also look at analysis subset so that the reported ns are
     # correct.
-    if outcome.is_continuous():
-        result_obj = result_class_map["CONTINUOUS"]
+    result_obj = result_class_map[outcome.analysis_type]
 
+    if outcome.is_continuous():
         # Get mean n.
         ns = session.query(
             result_obj.n
@@ -185,11 +164,9 @@ def get_outcome(id):
             analysis_type=outcome.analysis_type,
         ).limit(100).all()
 
-        out["n_avg"] = np.mean(ns)
+        out["n_avg"] = int(round(np.mean(ns)))
 
     else:
-        result_obj = result_class_map[outcome.analysis_type]
-
         res = session.query(
             result_obj.n_cases,
             result_obj.n_controls,
@@ -211,33 +188,6 @@ def get_outcome(id):
     return out
 
 
-def _query_outcome_results(outcome, analysis_subset="BOTH",
-                           preload_model=False):
-    session = Session()
-
-    result_class_map = RESULT_CLASS_MAP[analysis_subset]
-
-    Result = None
-    if outcome.is_binary():
-        Result = result_class_map[outcome.analysis_type]
-    elif outcome.is_continuous():
-        Result = result_class_map["CONTINUOUS"]
-
-    query = session.query(Result)\
-        .filter_by(
-            outcome_id=outcome.id,
-            analysis_type=outcome.analysis_type,
-        )
-
-    if preload_model:
-        query.options(undefer("model_fit"))
-
-    query.options(joinedload(Result.outcome_obj))
-    query.options(joinedload(Result.gene_obj))
-
-    return query
-
-
 @make_api("/outcome/<id>/results")
 def get_outcome_results(id):
     session = Session()
@@ -247,8 +197,7 @@ def get_outcome_results(id):
     if analysis_subset not in models.ANALYSIS_SUBSETS:
         raise ValueError(f"{analysis_subset}: not a valid analysis subset")
 
-    results = _query_outcome_results(outcome, analysis_subset)\
-        .all()
+    results = outcome.query_results(analysis_subset).all()
 
     if len(results) == 0:
         raise NoResultFound(f"Could not find results for outcome '{id}'.")
@@ -341,17 +290,15 @@ def get_gene_results(ensg):
 
     analysis_type = request.args.get("analysis_type", None)
 
-    result_class_map = RESULT_CLASS_MAP[analysis_subset]
+    result_class_map = RESULTS_CLASS_MAP[analysis_subset]
 
     results = []
     nlog10ps = []
 
-    analysis_types = ["CONTINUOUS", "PHECODES", "SELF_REPORTED",
-                      "CV_ENDPOINTS"]
     if analysis_type is not None:
         analysis_types = [analysis_type]
 
-    for analysis_type in analysis_types:
+    for analysis_type in ANALYSIS_TYPES:
         result_class = result_class_map[analysis_type]
         for res in session.query(result_class).filter_by(gene=ensg).all():
             results.append(res.to_object())
@@ -474,8 +421,7 @@ def cis_mendelian_randomization():
 
     not_found = []
     try:
-        exposure_result = _query_outcome_results(
-            exposure,
+        exposure_result = exposure.query_results(
             analysis_subset,
             preload_model=True
         ).filter_by(gene=gene).one()
@@ -485,8 +431,7 @@ def cis_mendelian_randomization():
         )
 
     try:
-        outcome_result = _query_outcome_results(
-            outcome,
+        outcome_result = outcome.query_results(
             analysis_subset,
             preload_model=True
         ).filter_by(gene=gene).one()
