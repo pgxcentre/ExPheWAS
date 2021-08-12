@@ -1,7 +1,11 @@
 {% extends "base.html" %}
-{% block body %}
-    <div class="tooltip" id="tooltip-atc-tree"></div>
 
+{% block tooltips %}
+  <div class="tooltip" id="tooltip-enrichment"></div>
+  <div class="tooltip" id="tooltip-atc-tree"></div>
+{% endblock %}
+
+{% block body %}
     <div class="resultsHeader">
       <h3>Outcome '{{ label }}' ({{ id }}) </h3>
       {% for subset, label in [('BOTH', 'All'), ('MALE_ONLY', 'Male only'), ('FEMALE_ONLY', 'Female only')] %}
@@ -18,7 +22,7 @@
 
       <div class="container-fluid">
       <div class="row">
-        <div class="col-md-5">
+        <div class="col-md-6">
         <div class="card outcomeDescription">
           <div class="card-body">
             <dl class="row">
@@ -48,13 +52,22 @@
             </dl>
             <sup>*</sup> Estimated average across genes.
 
-            <div style="margin-top: 20px" id="phewas-plot"></div>
+            <div id="enrichment-box" style="display: none">
+              <div style="margin-top: 20px" id="enrichment-plot"></div>
+              <div style="margin-top: 20px">
+                <p><a href="https://biit.cs.ut.ee/gprofiler/gost">g:Profiler</a> is
+                used to automatically compute enrichment analyses when more
+                than 5 genes are significant with a Q-value under 0.05.</p>
+                <p>The above plot was created using this resource and with the
+                significant genes from the table below.</p>
+              </div>
+            </div>
 
           </div>
         </div>
         </div>
 
-        <div class="col-md-7">
+        <div class="col-md-6">
           {% if has_atc_enrichment -%}
           <div class="atc-enrichment" style="text-align: center;">
             <div class="atc-enrichment-header">

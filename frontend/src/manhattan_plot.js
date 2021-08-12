@@ -1,4 +1,6 @@
 import * as d3 from 'd3';
+import { Delaunay } from 'd3-delaunay';
+
 
 import { iteratorReduce } from './utils';
 
@@ -7,7 +9,8 @@ const test_data = {
   config: {
     width: 700,
     height: 200,
-    minimumY: 2
+    minimumY: 2,
+    addTooltip: true
   },
   // Ordered x-axis bands.
   bands: [
@@ -70,7 +73,7 @@ export default function manhattan_plot(parent, data) {
   parent.appendChild(svgElem);
 
   const margins = {
-    top: 0, right: 0, bottom: 0, left: 60
+    top: 10, right: 20, bottom: 0, left: 60
   };
   data.config.margins = margins;
 
@@ -78,9 +81,18 @@ export default function manhattan_plot(parent, data) {
     .attr('width', data.config.width)
     .attr('height', data.config.height);
 
+  if (data.config.addTooltip) {
+    svg
+      .on('mouseout', () => {
+        d3.select('#tooltip-enrichment')
+          .style('opacity', 0);
+        d3.select('.selected-pt').remove();
+      });
+  }
+
   const scatterG = svg
     .append('g')
-      .attr('transform', `translate(${margins.left}, 0)`);
+      .attr('transform', `translate(${margins.left}, ${margins.top})`);
 
   const bandsG = svg
     .append('g')
@@ -91,12 +103,19 @@ export default function manhattan_plot(parent, data) {
 
   let xScales = plotBands(data, bandsG);
 
-  let yScale = d3.scaleLinear()
-    .range([0, data.config.height - trackHeight(annotationDepth)])
-    .domain([
+  let yAxisDomain;
+  if (data.config.yAxisDomain) {
+    yAxisDomain = data.config.yAxisDomain;
+  } else {
+    yAxisDomain = [
       Math.max(...data.data.map(o => o.y)) + 1,
       0
-    ]);
+    ];
+  }
+
+  let yScale = d3.scaleLinear()
+    .range([0, data.config.height - trackHeight(annotationDepth) - margins.top - margins.bottom])
+    .domain(yAxisDomain);
 
   const yAxis = d3.axisLeft().scale(yScale);
 
@@ -118,16 +137,89 @@ export default function manhattan_plot(parent, data) {
     .attr('font-size', '14px')
     .text(data.config.yLabel || '-log(P)');
 
+  let plotData = data.data.filter(
+    d => data.config.minimumY !== undefined? (d.y >= data.config.minimumY): true
+  );
+
   scatterG
     .selectAll('.pt')
-    .data(data.data)
+    .data(plotData)
     .enter()
-    .filter(d => data.config.minimumY !== undefined? (d.y >= data.config.minimumY): true)
     .append('circle')
     .attr('cx', d => xScales[d.band](d.x))
     .attr('cy', d => yScale(d.y))
     .attr('r', 4)
     .attr('fill', d => colorMap[d.band]);
+
+  if (data.config.addTooltip) {
+    addTooltip(svgElem, plotData, scatterG, xScales, yScale);
+  }
+
+}
+
+
+function addTooltip(svg, data, scatterG, xScales, yScale) {
+  const delaunay = Delaunay.from(
+    data,
+    d => xScales[d.band](d.x),
+    d => yScale(d.y)
+  );
+
+  d3.select('#tooltip-enrichment')
+    .style('width', '400px')
+    .style('position', 'fixed')
+    .style('z-index', '20')
+    .style('opacity', 0);
+
+  let d3Svg = d3.select(svg);
+  d3Svg.on('mousemove', () => {
+    let pos = d3.clientPoint(scatterG.node(), d3.event);
+    let datum = data[delaunay.find(...pos)];
+
+    // Highlight circle
+    let hlCircle = scatterG.selectAll('.selected-pt')
+      .data([datum]);
+
+    hlCircle.exit().remove();
+
+    hlCircle
+      .enter()
+      .append('circle')
+      .attr('class', 'selected-pt')
+      .attr('pointer-events', 'none');
+
+    hlCircle
+      .attr('cx', d => xScales[d.band](d.x))
+      .attr('cy', d => yScale(d.y))
+      .attr('r', 6)
+      .attr('stroke', 'black')
+      .attr('fill', 'none');
+
+    // Tooltip
+    if (hlCircle.node()) {
+      const tooltip = d3.select('#tooltip-enrichment');
+      let content = "";
+      for (const [k, v] of Object.entries(datum.tooltip)) {
+        content += `<p><b>${k}</b>: ${v}</p>`
+      }
+      tooltip.html(content);
+
+      let ttRect = tooltip.node().getBoundingClientRect();
+      let circleNode = hlCircle.node();
+      let matrix = circleNode.getScreenCTM()
+        .translate(+circleNode.getAttribute("cx"),
+                   +circleNode.getAttribute("cy"));
+
+      let ttLeft = window.pageXOffset + matrix.e + 5;
+      let ttTop = window.pageYOffset + matrix.f - ttRect.height - 5;
+
+      tooltip
+        .style('left', `${ttLeft}px`)
+        .style('top', `${ttTop}px`)
+        .style('opacity', 1);
+    }
+
+  });
 
 }
 
@@ -182,7 +274,8 @@ function plotBands(data, g) {
       let curWidth;
       if (band.parent_name === undefined) {
         // First level. Total width is plot width.
-        parentWidth = data.config.margins.left + data.config.width;
+        parentWidth = data.config.width - data.config.margins.left - data.config.margins.right;
+        // parentWidth = data.config.margins.left + data.config.width;
         curWidth = (
           sizes[band.name].size / levelSizes[1].size *
           (parentWidth - levelMarginWidth)
