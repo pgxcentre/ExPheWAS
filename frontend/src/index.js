@@ -16,6 +16,7 @@ import qq from './qq_plot';
 import atcTree from './atc_tree';
 import documentation from './documentation';
 import cisMR from './cis_mr';
+import manhattan_plot from './manhattan_plot';
 
 
 // This is a shim for d3 events to work with webpack
@@ -84,8 +85,13 @@ async function mainOutcomeResults(id) {
     urlParam += `&analysis_type=${analysis_type}`;
 
   let data = api_call(`/outcome/${id}/results${urlParam}`);
+
   // Add the ATC tree
   atcTree(id);
+
+  // Add the manhattan.
+  manhattan_plot(document.getElementById('phewas-plot', null));
+
   data = await data;
 
   $('#app #outcomeResults')

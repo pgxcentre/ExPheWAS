@@ -93,3 +93,17 @@ export async function api_call(endpoint) {
 
   return results;
 }
+
+
+export function iteratorReduce(f, generator) {
+  let value;
+
+  for (const elem of generator) {
+    if (value === undefined)
+      value = elem;
+
+    value = f(value, elem);
+  }
+
+  return value;
+}
