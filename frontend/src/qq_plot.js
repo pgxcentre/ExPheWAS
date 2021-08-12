@@ -246,8 +246,6 @@ export default async function qq(data) {
     d => yScale(d.y)
   );
 
-  const voronoi = delaunay.voronoi([0, 0, width, height]);
-
   d3.select('#tooltipQQ')
     .style('position', 'fixed')
     .style('z-index', '20')
@@ -295,6 +293,7 @@ export default async function qq(data) {
       .enter()
       .append('circle')
       .attr('class', 'selected-pt')
+      .attr('class', 'pt')
       .attr('pointer-events', 'none');
 
     hlCircle

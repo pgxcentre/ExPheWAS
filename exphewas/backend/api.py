@@ -295,10 +295,13 @@ def get_gene_results(ensg):
     results = []
     nlog10ps = []
 
-    if analysis_type is not None:
+    if analysis_type is None:
+        analysis_types = ANALYSIS_TYPES
+
+    else:
         analysis_types = [analysis_type]
 
-    for analysis_type in ANALYSIS_TYPES:
+    for analysis_type in analysis_types:
         result_class = result_class_map[analysis_type]
         for res in session.query(result_class).filter_by(gene=ensg).all():
             results.append(res.to_object())

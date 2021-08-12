@@ -16,6 +16,7 @@ import qq from './qq_plot';
 import atcTree from './atc_tree';
 import documentation from './documentation';
 import cisMR from './cis_mr';
+import manhattan_plot from './manhattan_plot';
 
 
 // This is a shim for d3 events to work with webpack
@@ -75,6 +76,100 @@ function mainOutcomeList() {
 }
 
 
+async function createEnrichmentPlot(data) {
+
+  const ENRICHMENT_DESCRIPTIONS = {
+    'GO:MF': 'Gene Ontology - Molecular function'
+  }
+
+  const ENRICHMENT_COLORS = {
+    'GO:MF': '#012F61',
+    'GO:BP': '#024996',
+    'GO:CC': '#025AB8',
+    'HP': '#E03227',
+  }
+
+  // Keep genes with q <= 0.05.
+  data = data.filter(o => o.q <= 0.05);
+
+  if (data.length <= 5) {
+    // Not computing enrichment analysis when under 5 genes are significant at
+    // Q <= 0.05.
+    return;
+  }
+
+  let response = await fetch(
+    'https://biit.cs.ut.ee/gprofiler_beta/api/gost/profile/',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        organism: "hsapiens",
+        query: data.map(o => o.gene),
+        sources: ["GO:MF", "GO:BP", "GO:CC", "HP", "KEGG"]
+      })
+    }
+  );
+
+  let results = await response.json();
+
+  // Create bands from meta.
+  let plotData = results.result.map(o => { return {
+    band: o.source,
+    x: o.source_order,
+    y: -Math.log10(o.p_value),
+    tooltip: {
+      "Name": stringify(o.name),
+      "Source": stringify(o.source),
+      "ID": stringify(o.native),
+      "Enrichment <i>P</i>": formatP(o.p_value),
+      "Description": stringify(o.description),
+    }
+  }});
+
+  let yMin = plotData[0].y;
+  let yMax = plotData[0].y;
+  for (const o of plotData) {
+    if (o.y < yMin) yMin = o.y;
+    if (o.y > yMax) yMax = o.y;
+  }
+
+  let plotConfig = {
+    config: {
+      width: document.getElementById('enrichment-box').parentNode.offsetWidth - 50,
+      height: 200,
+      minimumY: 2,
+      yAxisDomain: [yMax + 0.5, yMin - 0.5],
+      addTooltip: true
+    },
+    bands: [],
+    data: plotData
+  };
+
+  for (const [name, meta] of Object.entries(results.meta.result_metadata)) {
+    plotConfig.bands.push({
+      name: name,
+      description: ENRICHMENT_DESCRIPTIONS[name],
+      color: ENRICHMENT_COLORS[name],
+      size: meta.number_of_terms
+    });
+  }
+
+  manhattan_plot(document.getElementById('enrichment-plot'), plotConfig);
+  document.getElementById("enrichment-box").style.display = 'block';
+
+}
+
+
+function stringify(s) {
+  s = s.replaceAll('"', '');
+  s = JSON.stringify(s);
+  return s.substring(1, s.length - 1);
+}
+
+
 async function mainOutcomeResults(id) {
   let analysis_subset = getUrlParam("analysis_subset", "BOTH");
   let analysis_type = getUrlParam("analysis_type", null);
@@ -84,9 +179,13 @@ async function mainOutcomeResults(id) {
     urlParam += `&analysis_type=${analysis_type}`;
 
   let data = api_call(`/outcome/${id}/results${urlParam}`);
+
   // Add the ATC tree
   atcTree(id);
+
+  // Add the manhattan.
   data = await data;
+  createEnrichmentPlot(data);
 
   $('#app #outcomeResults')
     .DataTable({
