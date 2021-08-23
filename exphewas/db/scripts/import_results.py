@@ -10,7 +10,7 @@ import numpy as np
 from ..engine import Session
 from ..models import (
     Gene,
-    ContinuousOutcome, BinaryOutcome,
+    Outcome,
     ContinuousResult, BinaryResult,
     BothContinuousResult, FemaleContinuousResult, MaleContinuousResult,
     BothPhecodesResult, FemalePhecodesResult, MalePhecodesResult,
@@ -197,12 +197,12 @@ def _process_continuous_result(row, gene, variable_type, args_sex_subset,
                                _min_n_cases, model_fit, labels, session):
     # Get or create outcome.
     try:
-        outcome = session.query(ContinuousOutcome)\
+        outcome = session.query(Outcome)\
             .filter_by(id=row.variable_id,
                        analysis_type=row.analysis_type).one()
 
     except sqlalchemy.orm.exc.NoResultFound:
-        outcome = ContinuousOutcome(
+        outcome = Outcome(
             id = row.variable_id,
             label = labels[(row.analysis_type, row.variable_id)],
             analysis_type = row.analysis_type,
@@ -232,12 +232,12 @@ def _process_binary_result(row, gene, variable_type, args_sex_subset,
 
     # Get or create outcome.
     try:
-        outcome = session.query(BinaryOutcome)\
+        outcome = session.query(Outcome)\
             .filter_by(id=row.variable_id,
                        analysis_type=row.analysis_type).one()
 
     except sqlalchemy.orm.exc.NoResultFound:
-        outcome = BinaryOutcome(
+        outcome = Outcome(
             id = row.variable_id,
             label = labels[(row.analysis_type, row.variable_id.lstrip("0"))],
             analysis_type = row.analysis_type,
