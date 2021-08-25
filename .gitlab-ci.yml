@@ -48,7 +48,7 @@ build:staging:frontend:ukbiobank:
 
 build:production:frontend:
   stage: build:frontend
-  image: node:latest
+  image: node:14
   tags:
     - deploy
   before_script:
