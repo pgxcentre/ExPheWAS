@@ -23,41 +23,8 @@ def create():
 def delete_results():
     session = Session()
 
-    session.query(models.BothContinuousVariableResult)\
-        .delete(synchronize_session=False)
-
-    session.query(models.FemaleContinuousVariableResult)\
-        .delete(synchronize_session=False)
-
-    session.query(models.MaleContinuousVariableResult)\
-        .delete(synchronize_session=False)
-
-    session.query(models.BothPhecodesResult)\
-        .delete(synchronize_session=False)
-
-    session.query(models.FemaePhecodesResult)\
-        .delete(synchronize_session=False)
-
-    session.query(models.MalePhecodesResult)\
-        .delete(synchronize_session=False)
-
-    session.query(models.BothSelfReportedResult)\
-        .delete(synchronize_session=False)
-
-    session.query(models.FemaleSelfReportedResult)\
-        .delete(synchronize_session=False)
-
-    session.query(models.MaleSelfReportedResult)\
-        .delete(synchronize_session=False)
-
-    session.query(models.BothCVEndpointsResult)\
-        .delete(synchronize_session=False)
-
-    session.query(models.FemaleCVEndpointsResult)\
-        .delete(synchronize_session=False)
-
-    session.query(models.MaleCVEndpointsResult)\
-        .delete(synchronize_session=False)
+    for cls in models.RESULTS_CLASSES:
+        session.query(cls).delete()
 
     session.commit()
 
@@ -217,6 +184,7 @@ def import_enrichment(args):
     for _, row in results.iterrows():
         d = {
             "outcome_id": row["outcome"],
+            "analysis_subset": row["analysis_subset"],
             "gene_set_id": row["pathway"],
             "hierarchy_id": "ATC",
             "set_size": row["size"],
@@ -237,13 +205,17 @@ def import_enrichment_contingency(args):
 
     results = pd.read_csv(args.filename)
 
-    expected_cols = {"outcome_id", "gene_set_id", "n00", "n01", "n10", "n11",
-                     "p"}
+    expected_cols = {"outcome_id", "analysis_subset", "gene_set_id",
+                     "n00", "n01", "n10", "n11", "p"}
 
     missing = expected_cols - set(results.columns)
     if missing:
         raise ValueError(f"Missing expected columns: {missing}")
 
+    # I forgot to save the analysis type so we need to find it back from the
+    # ID. There was one ambiguity (1100), but I removed it.
+    outcomes = session.query(models.Outcome).all()
+    outcome_id_to_type = {o.id: o.analysis_type for o in outcomes}
 
     # If there is a hierarchy_id, test that it exists.
     if args.hierarchy_id:
@@ -264,6 +236,8 @@ def import_enrichment_contingency(args):
     for _, row in results.iterrows():
         d = {
             "outcome_id": row.outcome_id,
+            "analysis_type": outcome_id_to_type[row.outcome_id],
+            "analysis_subset": row.analysis_subset,
             "gene_set_id": row.gene_set_id,
             "n00": row.n00,
             "n01": row.n01,

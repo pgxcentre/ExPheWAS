@@ -10,7 +10,7 @@ from sqlalchemy.sql import literal, union
 from sqlalchemy.orm import relationship, deferred, foreign, joinedload, undefer
 from sqlalchemy import (
     Column, Integer, String, ForeignKey, Enum, Float, Boolean,
-    ForeignKeyConstraint, Date, JSON, and_
+    ForeignKeyConstraint, Date, JSON, and_, cast
 )
 
 import scipy.stats
@@ -508,19 +508,23 @@ def all_results_union(session, cols=None):
 
     """
     if cols is None:
-        cols = ["outcome_id", "analysis_type"]
+        cols = ["outcome_id"]
 
     # Making sure analysis_subset isn't in the list
-    cols = [col for col in cols if col != "analysis_subset"]
+    cols = [
+        col for col in cols if col not in {"analysis_subset", "analysis_type"}
+    ]
 
     # The list of queries
     queries = []
 
     # The binary and continuous variables
-    for res_obj in RESULTS_CLASSES:
-        queries.append(session.query(
-            *[getattr(res_obj, col).label(col) for col in cols],
-            literal(res_obj.analysis_subset).label("analysis_subset"),
-        ))
+    for analysis_subset, d in RESULTS_CLASS_MAP.items():
+        for analysis_type, cls in d.items():
+            queries.append(session.query(
+                *[getattr(cls, col).label(col) for col in cols],
+                cast(literal(analysis_type).label("analysis_type"), AnalysisEnum),
+                cast(literal(analysis_subset).label("analysis_subset"), SexSubsetEnum),
+            ).distinct())
 
     return union(*queries)

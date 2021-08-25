@@ -187,7 +187,7 @@ def main(n_cpus=None):
 
     with open("atc_enrichment.csv", "wt") as f:
         out = csv.writer(f)
-        out.writerow(["outcome_id", "analysis_subset", "atc",
+        out.writerow(["outcome_id", "analysis_type", "analysis_subset", "atc",
                       "n00", "n01", "n10", "n11", "OR", "p"])
 
         for subset, o in product(ANALYSIS_SUBSETS, outcomes):
@@ -212,7 +212,7 @@ def main(n_cpus=None):
             )
 
             for res in cur:
-                out.writerow([outcome_id, subset, *res])
+                out.writerow([outcome_id, analysis_type, subset, *res])
 
     pool.close()
 

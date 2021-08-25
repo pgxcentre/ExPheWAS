@@ -13,22 +13,6 @@ from ..db import models
 from ..db.engine import Session
 
 
-RESULT_CLASSES = [
-    models.BothContinuousResult,
-    models.FemaleContinuousResult,
-    models.MaleContinuousResult,
-    models.BothPhecodesResult,
-    models.FemalePhecodesResult,
-    models.MalePhecodesResult,
-    models.BothSelfReportedResult,
-    models.FemaleSelfReportedResult,
-    models.MaleSelfReportedResult,
-    models.BothCVEndpointsResult,
-    models.FemaleCVEndpointsResult,
-    models.MaleCVEndpointsResult,
-]
-
-
 def path_to(name):
     return os.path.join(CACHE_DIR, name)
 
@@ -73,27 +57,26 @@ def create_or_load_startup_caches():
 
 
 def cache_outcomes(cache, session):
-    u = models.all_results_union(session).subquery()
+    q = models.all_results_union(session).subquery()
 
-    subq = session.query(
-        u.c.outcome_id,
-        u.c.analysis_type,
-        func.array_agg(u.c.analysis_subset).label("available_subsets")
-    ).group_by(
-        u.c.outcome_id,
-        u.c.analysis_type
-    ).subquery()
-
-    results = session.query(models.Outcome, subq.c.available_subsets)\
-        .join(subq, and_(
-            models.Outcome.id==subq.c.outcome_id,
-            models.Outcome.analysis_type==subq.c.analysis_type
-        ))
+    results = session.query(
+        models.Outcome,
+        func.array_agg(
+            q.c.analysis_subset
+        ).label("available_subsets"))\
+        .filter(
+            models.Outcome.id==q.c.outcome_id,
+            models.Outcome.analysis_type==q.c.analysis_type
+        )\
+        .group_by(
+            models.Outcome.id,
+            models.Outcome.analysis_type
+        )
 
     results = [
         {
             "id": o.id,
-            "type": o.type,
+            "type": "binary_outcomes" if o.is_binary() else "continuous_outcomes",
             "analysis_type": o.analysis_type,
             "label": o.label,
             "available_subsets": availables,
@@ -104,7 +87,7 @@ def cache_outcomes(cache, session):
 
 
 def cache_gene_with_results(cache, session):
-    all_genes = session.query(RESULT_CLASSES[0].gene)
-    for result_obj in RESULT_CLASSES[1:]:
+    all_genes = session.query(models.RESULTS_CLASSES[0].gene)
+    for result_obj in models.RESULTS_CLASSES[1:]:
         all_genes = all_genes.union(session.query(result_obj.gene))
     cache.put("genes_with_results", [tu[0] for tu in all_genes.all()])

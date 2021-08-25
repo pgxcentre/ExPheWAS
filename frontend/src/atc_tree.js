@@ -55,7 +55,7 @@ function addColorScale(svg, scale, legendText) {
 
 export default async function atcTree(id) {
   // The default enrichment algorithm
-  let defaultAlgo = 'fgsea';
+  let defaultAlgo = 'fisher';
 
   // The legend text
   let legendText = {
