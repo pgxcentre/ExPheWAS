@@ -174,11 +174,11 @@ async function mainOutcomeResults(id) {
   let analysis_subset = getUrlParam("analysis_subset", "BOTH");
   let analysis_type = getUrlParam("analysis_type", null);
 
-  let urlParam = `?analysis_subset=${analysis_subset}`;
+  let urlParam = `analysis_subset=${analysis_subset}`;
   if (analysis_type !== null)
     urlParam += `&analysis_type=${analysis_type}`;
 
-  let data = api_call(`/outcome/${id}/results${urlParam}`);
+  let data = api_call(`/outcome/${id}/results?${urlParam}`);
 
   // Add the ATC tree
   atcTree(id);
@@ -204,7 +204,7 @@ async function mainOutcomeResults(id) {
         {
           targets: 0,
           render: function(ensg, type, row, meta) {
-            return `<a href="${URL_PREFIX}/gene/${ensg}${urlParam}">${ensg}</a>`;
+            return `<a href="${URL_PREFIX}/gene/${ensg}?${urlParam}">${ensg}</a>`;
           }
         },
         {
@@ -249,10 +249,8 @@ function geneResultBinaryOutcomeTable(o) {
         {
           targets: 0,
           render: function(outcome, type, row, meta) {
-            let urlParam = `?analysis_subset=${o.analysis_subset}`
-            urlParam += `&analysis_type=${o.analysis_type}`;
-
-            return `<a href="${URL_PREFIX}/outcome/${outcome}${urlParam}">${outcome}</a>`;
+            let urlParam = `analysis_subset=${o.analysis_subset}&analysis_type=${o.analysis_type}`;
+            return `<a href="${URL_PREFIX}/outcome/${outcome}?${urlParam}">${outcome}</a>`;
           }
         },
         {
@@ -315,16 +313,9 @@ async function mainGeneResults(id) {
   });
 
   let analysis_subset = getUrlParam("analysis_subset", "BOTH");
-  let urlParam = `?analysis_subset=${analysis_subset}`;
+  let urlParam = `analysis_subset=${analysis_subset}`;
 
-  let data = await api_call(`/gene/${id}/results${urlParam}`);
-//  let data = await Promise.all([
-//    api_call(`/gene/${id}/results${urlParam}&analysis_type=CONTINUOUS`),
-//    api_call(`/gene/${id}/results${urlParam}&analysis_type=PHECODES`),
-//    api_call(`/gene/${id}/results${urlParam}&analysis_type=SELF_REPORTED`),
-//    api_call(`/gene/${id}/results${urlParam}&analysis_type=CV_ENDPOINTS`)
-//  ]);
-//  data = [].concat.apply([], data);
+  let data = await api_call(`/gene/${id}/results?${urlParam}`);
 
   // Add the gene QQ plot as a measure of pleiotropy.
   qq(data);
@@ -349,8 +340,8 @@ async function mainGeneResults(id) {
         {
           targets: 0,
           render: function(outcome, type, row, meta) {
-            urlParam = urlParam + `&analysis_type=CONTINUOUS_VARIABLE`;
-            return `<a href="${URL_PREFIX}/outcome/${outcome}${urlParam}">${outcome}</a>`;
+            let curUrlParam = urlParam + `&analysis_type=CONTINUOUS_VARIABLE`;
+            return `<a href="${URL_PREFIX}/outcome/${outcome}?${curUrlParam}">${outcome}</a>`;
           }
         },
         {
