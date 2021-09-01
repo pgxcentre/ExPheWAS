@@ -3,7 +3,7 @@ Database models to store the results of ExPheWas analysis.
 """
 
 from collections import defaultdict
-from itertools import cycle, product
+from itertools import product
 
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.sql import literal, union
@@ -475,11 +475,23 @@ class TargetToUniprot(Base):
     )
 
 
-# Dynamically create results classes.
-for analysis_type, analysis_subset in product(ANALYSIS_TYPES, ANALYSIS_SUBSETS):
-    class_name = _get_class_name(analysis_subset, analysis_type)
-    table_name = _get_table_name(analysis_subset, analysis_type)
+def dynamically_create_results_classes():
+    """Dynamically create results classes."""
+    for analysis_type, analysis_subset in product(ANALYSIS_TYPES,
+                                                  ANALYSIS_SUBSETS):
+        class_name=_get_class_name(analysis_subset, analysis_type)
+        table_name=_get_table_name(analysis_subset, analysis_type)
 
+        _add_class(
+            analysis_type=analysis_type,
+            analysis_subset=analysis_subset,
+            class_name=class_name,
+            table_name=table_name,
+        )
+
+
+def _add_class(analysis_type, analysis_subset, class_name, table_name):
+    """Add the class to the different objects."""
     if analysis_type == "CONTINUOUS_VARIABLE":
         parent_class = ContinuousResult
     else:
@@ -498,6 +510,14 @@ for analysis_type, analysis_subset in product(ANALYSIS_TYPES, ANALYSIS_SUBSETS):
     globals()[class_name] = cls
     RESULTS_CLASSES.append(cls)
     RESULTS_CLASS_MAP[analysis_subset][analysis_type] = cls
+
+
+dynamically_create_results_classes()
+
+
+def get_results_class(analysis_type, analysis_subset="BOTH", outcome_id=None):
+    """Returns the result class."""
+    return RESULTS_CLASS_MAP[analysis_subset][analysis_type]
 
 
 def all_results_union(session, cols=None):
