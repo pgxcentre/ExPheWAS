@@ -479,43 +479,33 @@ def dynamically_create_results_classes():
     """Dynamically create results classes."""
     for analysis_type, analysis_subset in product(ANALYSIS_TYPES,
                                                   ANALYSIS_SUBSETS):
-        class_name=_get_class_name(analysis_subset, analysis_type)
-        table_name=_get_table_name(analysis_subset, analysis_type)
+        class_name = _get_class_name(analysis_subset, analysis_type)
+        table_name = _get_table_name(analysis_subset, analysis_type)
 
-        _add_class(
-            analysis_type=analysis_type,
-            analysis_subset=analysis_subset,
-            class_name=class_name,
-            table_name=table_name,
+        if analysis_type == "CONTINUOUS_VARIABLE":
+            parent_class = ContinuousResult
+        else:
+            parent_class = BinaryResult
+
+        cls = type(
+            class_name,
+            (parent_class, Base),
+            {
+                "__tablename__": table_name,
+                "analysis_subset": analysis_subset,
+                "analysis_type": analysis_type
+            }
         )
 
-
-def _add_class(analysis_type, analysis_subset, class_name, table_name):
-    """Add the class to the different objects."""
-    if analysis_type == "CONTINUOUS_VARIABLE":
-        parent_class = ContinuousResult
-    else:
-        parent_class = BinaryResult
-
-    cls = type(
-        class_name,
-        (parent_class, Base),
-        {
-            "__tablename__": table_name,
-            "analysis_subset": analysis_subset,
-            "analysis_type": analysis_type
-        }
-    )
-
-    globals()[class_name] = cls
-    RESULTS_CLASSES.append(cls)
-    RESULTS_CLASS_MAP[analysis_subset][analysis_type] = cls
+        globals()[class_name] = cls
+        RESULTS_CLASSES.append(cls)
+        RESULTS_CLASS_MAP[analysis_subset][analysis_type] = cls
 
 
 dynamically_create_results_classes()
 
 
-def get_results_class(analysis_type, analysis_subset="BOTH", outcome_id=None):
+def get_results_class(analysis_type, analysis_subset="BOTH"):
     """Returns the result class."""
     return RESULTS_CLASS_MAP[analysis_subset][analysis_type]
 
