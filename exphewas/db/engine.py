@@ -2,7 +2,7 @@ import sys
 import os
 
 from sqlalchemy.orm import sessionmaker, scoped_session
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 
 
 # Set the DEBUG variable.
@@ -32,6 +32,20 @@ if DEBUG:
           file=sys.stderr)
 
 ENGINE = create_engine(EXPHEWAS_DATABASE_URL, echo=DEBUG, pool_pre_ping=True)
+
+
+@event.listens_for(ENGINE, "connect", insert=True)
+def set_search_path(dbapi_connection, connection_record):
+    if EXPHEWAS_DATABASE_URL.startswith("postgresql"):
+        # Getting the schema (if any)
+        schema_name = os.environ.get("EXPHEWAS_SCHEMA_NAME", "public")
+
+        existing_autocommit = dbapi_connection.autocommit
+        dbapi_connection.autocommit = True
+        cursor = dbapi_connection.cursor()
+        cursor.execute("SET SESSION search_path='%s'" % schema_name)
+        cursor.close()
+        dbapi_connection.autocommit = existing_autocommit
 
 
 Session = scoped_session(sessionmaker(bind=ENGINE))
