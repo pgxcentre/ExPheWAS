@@ -194,6 +194,15 @@ class Outcome(Base):
         return query
 
 
+class ModelFitMixin(object):
+    def model_fit_df(self):
+        return pd.DataFrame(self.model_fit)
+
+    @declared_attr
+    def model_fit(cls):
+        return deferred(Column(JSON))
+
+
 class ResultMixin(object):
     static_nlog10p = Column(Float)
 
@@ -204,13 +213,6 @@ class ResultMixin(object):
     # There is no formal relationship between subclasses of ResultMixin and
     # Outcome, but we do provide utilities to join with outcomes.
     outcome_id = Column(String, primary_key=True)
-
-    def model_fit_df(self):
-        return pd.DataFrame(self.model_fit)
-
-    @declared_attr
-    def model_fit(cls):
-        return deferred(Column(JSON))
 
     @declared_attr
     def gene(cls):
