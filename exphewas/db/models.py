@@ -195,12 +195,18 @@ class Outcome(Base):
 
 
 class ModelFitMixin(object):
+    outcome_id = Column(String, primary_key=True)
+
+    @declared_attr
+    def gene(cls):
+        return Column(String, ForeignKey("genes.ensembl_id"), primary_key=True)
+
     def model_fit_df(self):
         return pd.DataFrame(self.model_fit)
 
     @declared_attr
     def model_fit(cls):
-        return deferred(Column(JSON))
+        return Column(JSON)
 
 
 class ResultMixin(object):
@@ -234,6 +240,17 @@ class ResultMixin(object):
             )
         )
 
+    @declared_attr
+    def model_fit(cls):
+        return relationship(
+            cls.model_fit_cls,
+            primaryjoin=lambda: and_(
+                foreign(cls.outcome_id) == cls.model_fit_cls.outcome_id,
+                foreign(cls.gene) == cls.model_fit_cls.gene
+            ),
+            viewonly=True
+        )
+        
     def p(self):
         return None
 
@@ -484,18 +501,33 @@ def dynamically_create_results_classes():
         class_name = _get_class_name(analysis_subset, analysis_type)
         table_name = _get_table_name(analysis_subset, analysis_type)
 
+        model_fit_class_name = f"{class_name}ModelFit"
+        model_fit_table_name = f"{table_name}_model_fit"
+
         if analysis_type == "CONTINUOUS_VARIABLE":
             parent_class = ContinuousResult
         else:
             parent_class = BinaryResult
 
+        # Create model fit class.
+        fit_cls = type(
+            model_fit_class_name,
+            (ModelFitMixin, Base),
+            {
+                "__tablename__": model_fit_table_name
+            }
+        )
+        globals()[class_name] = fit_cls
+
+        # Create results class.
         cls = type(
             class_name,
             (parent_class, Base),
             {
                 "__tablename__": table_name,
                 "analysis_subset": analysis_subset,
-                "analysis_type": analysis_type
+                "analysis_type": analysis_type,
+                "model_fit_cls": fit_cls
             }
         )
 
