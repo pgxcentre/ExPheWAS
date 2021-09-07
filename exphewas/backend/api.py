@@ -16,7 +16,7 @@ from flask import Blueprint, jsonify, request
 
 from .cache import Cache
 from ..db import models
-from ..db.models import RESULTS_CLASS_MAP
+from ..db.models import get_results_class
 from ..db.tree import tree_from_hierarchy_id
 from ..db.engine import Session
 from ..db.utils import mod_to_dict, ANALYSIS_TYPES
@@ -148,12 +148,10 @@ def get_outcome(id):
         "type": "continuous_outcomes" if outcome.is_continuous() else "binary_outcomes"
     }
 
-    result_class_map = RESULTS_CLASS_MAP[analysis_subset]
-
     # Get appropriate result class.
     # We need to also look at analysis subset so that the reported ns are
     # correct.
-    result_obj = result_class_map[outcome.analysis_type]
+    result_obj = get_results_class(outcome.analysis_type, analysis_subset)
 
     if outcome.is_continuous():
         # Get mean n.
@@ -290,8 +288,6 @@ def get_gene_results(ensg):
 
     analysis_type = request.args.get("analysis_type", None)
 
-    result_class_map = RESULTS_CLASS_MAP[analysis_subset]
-
     results = []
     nlog10ps = []
 
@@ -302,7 +298,7 @@ def get_gene_results(ensg):
         analysis_types = [analysis_type]
 
     for analysis_type in analysis_types:
-        result_class = result_class_map[analysis_type]
+        result_class = get_results_class(analysis_type, analysis_subset)
         for res in session.query(result_class).filter_by(gene=ensg).all():
             results.append(res.to_object())
             nlog10ps.append(res.static_nlog10p)
@@ -449,8 +445,8 @@ def cis_mendelian_randomization():
         )
 
     mr_results = one_sample_ivw_mr(
-        exposure_result.model_fit_df(),
-        outcome_result.model_fit_df(),
+        exposure_result.model_fit.model_fit_df(),
+        outcome_result.model_fit.model_fit_df(),
         alpha=0.05,
         instrument_prune=not disable_pruning
     )

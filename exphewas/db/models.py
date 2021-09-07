@@ -3,7 +3,7 @@ Database models to store the results of ExPheWas analysis.
 """
 
 from collections import defaultdict
-from itertools import cycle, product
+from itertools import product
 
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.sql import literal, union
@@ -194,6 +194,21 @@ class Outcome(Base):
         return query
 
 
+class ModelFitMixin(object):
+    outcome_id = Column(String, primary_key=True)
+
+    @declared_attr
+    def gene(cls):
+        return Column(String, ForeignKey("genes.ensembl_id"), primary_key=True)
+
+    def model_fit_df(self):
+        return pd.DataFrame(self.model_fit)
+
+    @declared_attr
+    def model_fit(cls):
+        return Column(JSON)
+
+
 class ResultMixin(object):
     static_nlog10p = Column(Float)
 
@@ -204,13 +219,6 @@ class ResultMixin(object):
     # There is no formal relationship between subclasses of ResultMixin and
     # Outcome, but we do provide utilities to join with outcomes.
     outcome_id = Column(String, primary_key=True)
-
-    def model_fit_df(self):
-        return pd.DataFrame(self.model_fit)
-
-    @declared_attr
-    def model_fit(cls):
-        return deferred(Column(JSON))
 
     @declared_attr
     def gene(cls):
@@ -232,6 +240,17 @@ class ResultMixin(object):
             )
         )
 
+    @declared_attr
+    def model_fit(cls):
+        return relationship(
+            cls.model_fit_cls,
+            primaryjoin=lambda: and_(
+                foreign(cls.outcome_id) == cls.model_fit_cls.outcome_id,
+                foreign(cls.gene) == cls.model_fit_cls.gene
+            ),
+            viewonly=True
+        )
+        
     def p(self):
         return None
 
@@ -475,29 +494,54 @@ class TargetToUniprot(Base):
     )
 
 
-# Dynamically create results classes.
-for analysis_type, analysis_subset in product(ANALYSIS_TYPES, ANALYSIS_SUBSETS):
-    class_name = _get_class_name(analysis_subset, analysis_type)
-    table_name = _get_table_name(analysis_subset, analysis_type)
+def dynamically_create_results_classes():
+    """Dynamically create results classes."""
+    for analysis_type, analysis_subset in product(ANALYSIS_TYPES,
+                                                  ANALYSIS_SUBSETS):
+        class_name = _get_class_name(analysis_subset, analysis_type)
+        table_name = _get_table_name(analysis_subset, analysis_type)
 
-    if analysis_type == "CONTINUOUS_VARIABLE":
-        parent_class = ContinuousResult
-    else:
-        parent_class = BinaryResult
+        model_fit_class_name = f"{class_name}ModelFit"
+        model_fit_table_name = f"{table_name}_model_fit"
 
-    cls = type(
-        class_name,
-        (parent_class, Base),
-        {
-            "__tablename__": table_name,
-            "analysis_subset": analysis_subset,
-            "analysis_type": analysis_type
-        }
-    )
+        if analysis_type == "CONTINUOUS_VARIABLE":
+            parent_class = ContinuousResult
+        else:
+            parent_class = BinaryResult
 
-    globals()[class_name] = cls
-    RESULTS_CLASSES.append(cls)
-    RESULTS_CLASS_MAP[analysis_subset][analysis_type] = cls
+        # Create model fit class.
+        fit_cls = type(
+            model_fit_class_name,
+            (ModelFitMixin, Base),
+            {
+                "__tablename__": model_fit_table_name
+            }
+        )
+        globals()[class_name] = fit_cls
+
+        # Create results class.
+        cls = type(
+            class_name,
+            (parent_class, Base),
+            {
+                "__tablename__": table_name,
+                "analysis_subset": analysis_subset,
+                "analysis_type": analysis_type,
+                "model_fit_cls": fit_cls
+            }
+        )
+
+        globals()[class_name] = cls
+        RESULTS_CLASSES.append(cls)
+        RESULTS_CLASS_MAP[analysis_subset][analysis_type] = cls
+
+
+dynamically_create_results_classes()
+
+
+def get_results_class(analysis_type, analysis_subset="BOTH"):
+    """Returns the result class."""
+    return RESULTS_CLASS_MAP[analysis_subset][analysis_type]
 
 
 def all_results_union(session, cols=None):
