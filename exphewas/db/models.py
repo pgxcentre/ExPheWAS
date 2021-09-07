@@ -222,7 +222,8 @@ class ResultMixin(object):
 
     @declared_attr
     def gene(cls):
-        return Column(String, ForeignKey("genes.ensembl_id"), primary_key=True)
+        return Column(String, ForeignKey("genes.ensembl_id"),
+                      primary_key=True, index=True)
 
     @declared_attr
     def gene_obj(cls):

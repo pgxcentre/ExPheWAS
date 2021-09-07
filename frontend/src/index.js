@@ -115,6 +115,12 @@ async function createEnrichmentPlot(data) {
 
   let results = await response.json();
 
+  if (results.result.length === 0) {
+    // No enrichment results.
+    console.log('No significant enrichment in g:Profiler.');
+    return;
+  }
+
   // Create bands from meta.
   let plotData = results.result.map(o => { return {
     band: o.source,
