@@ -7,7 +7,7 @@ from itertools import product
 
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.sql import literal, union
-from sqlalchemy.orm import relationship, deferred, foreign, joinedload, undefer
+from sqlalchemy.orm import relationship, foreign, joinedload, undefer
 from sqlalchemy import (
     Column, Integer, String, ForeignKey, Enum, Float, Boolean,
     ForeignKeyConstraint, Date, JSON, and_, cast
@@ -250,7 +250,7 @@ class ResultMixin(object):
             ),
             viewonly=True
         )
-        
+
     def p(self):
         return None
 
