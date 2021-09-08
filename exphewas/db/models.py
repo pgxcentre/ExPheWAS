@@ -35,6 +35,8 @@ Base = declarative_base()
 # These will be filled dynamically.
 RESULTS_CLASSES = []
 RESULTS_CLASS_MAP = defaultdict(dict)
+MODEL_FIT_CLASSES = []
+MODEL_FIT_CLASS_MAP = defaultdict(dict)
 
 
 class Metadata(Base):
@@ -531,9 +533,15 @@ def dynamically_create_results_classes():
             }
         )
 
+        # The result classes
         globals()[class_name] = cls
         RESULTS_CLASSES.append(cls)
         RESULTS_CLASS_MAP[analysis_subset][analysis_type] = cls
+
+        # The model fit classes
+        globals()[model_fit_class_name] = fit_cls
+        MODEL_FIT_CLASSES.append(fit_cls)
+        MODEL_FIT_CLASS_MAP[analysis_subset][analysis_type] = fit_cls
 
 
 dynamically_create_results_classes()
@@ -542,6 +550,11 @@ dynamically_create_results_classes()
 def get_results_class(analysis_type, analysis_subset="BOTH"):
     """Returns the result class."""
     return RESULTS_CLASS_MAP[analysis_subset][analysis_type]
+
+
+def get_model_fit_class(analysis_type, analysis_subset="BOTH"):
+    """Returns the model fit class."""
+    return MODEL_FIT_CLASS_MAP[analysis_subset][analysis_type]
 
 
 def all_results_union(session, cols=None):
