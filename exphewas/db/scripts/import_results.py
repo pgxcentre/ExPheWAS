@@ -10,6 +10,7 @@ import numpy as np
 from ..engine import Session
 from ..models import (
     Gene, Outcome, ContinuousResult, BinaryResult, get_results_class,
+    get_model_fit_class,
 )
 from ...utils import load_ukbphewas_model, load_variable_labels
 from ..utils import ANALYSIS_TYPES, ANALYSIS_SUBSETS
@@ -62,26 +63,13 @@ def main(args):
     # 1. Get or create Outcome.
     # 2. Create Result.
     objects = {
-        "CONTINUOUS_VARIABLE": {
-            "BOTH": [],
-            "FEMALE_ONLY": [],
-            "MALE_ONLY": [],
-        },
-        "PHECODES": {
-            "BOTH": [],
-            "FEMALE_ONLY": [],
-            "MALE_ONLY": [],
-        },
-        "SELF_REPORTED": {
-            "BOTH": [],
-            "FEMALE_ONLY": [],
-            "MALE_ONLY": [],
-        },
-        "CV_ENDPOINTS": {
-            "BOTH": [],
-            "FEMALE_ONLY": [],
-            "MALE_ONLY": [],
-        },
+        a_type: {a_subset: [] for a_subset in ANALYSIS_SUBSETS}
+        for a_type in ANALYSIS_TYPES
+    }
+
+    model_fit_objects = {
+        a_type: {a_subset: [] for a_subset in ANALYSIS_SUBSETS}
+        for a_type in ANALYSIS_TYPES
     }
 
     for _, row in df.iterrows():
@@ -89,9 +77,8 @@ def main(args):
             continue
 
         # Get the model object.
-        model_fit = models[(row["analysis_type"], row["variable_id"])]
         o = create_object(row, gene, variable_type, args.sex_subset,
-                          args.min_n_cases, model_fit, labels, session)
+                          args.min_n_cases, labels, session)
 
         if o is not None:
             # Pre-compute the p-value
@@ -103,15 +90,29 @@ def main(args):
             )
             objects[row.analysis_type][o["analysis_subset"]].append(o)
 
+            # Adding the model fit
+            model_fit_objects[row.analysis_type][o["analysis_subset"]].append(
+                dict(
+                    outcome_id=o["outcome_id"],
+                    gene=gene,
+                    model_fit=models[(row["analysis_type"], row["variable_id"])],
+                )
+            )
+
     session.commit()
 
     # Bulk insert.
     for analysis_type in ANALYSIS_TYPES:
         for sex_subset in ANALYSIS_SUBSETS:
+            # The results
             to_insert = objects[analysis_type][sex_subset]
             result_class = get_results_class(analysis_type, sex_subset)
-
             session.bulk_insert_mappings(result_class, to_insert)
+
+            # The model fits
+            to_insert = model_fit_objects[analysis_type][sex_subset]
+            model_fit_class = get_model_fit_class(analysis_type, sex_subset)
+            session.bulk_insert_mappings(model_fit_class, to_insert)
 
     session.commit()
 
@@ -164,7 +165,7 @@ class SkipRow(Exception):
 
 
 def _process_continuous_result(row, gene, variable_type, args_sex_subset,
-                               _min_n_cases, model_fit, labels, session):
+                               _min_n_cases, labels, session):
     # Get or create outcome.
     try:
         outcome = session.query(Outcome)\
@@ -185,7 +186,6 @@ def _process_continuous_result(row, gene, variable_type, args_sex_subset,
         outcome_id=outcome.id,
         analysis_type=row.analysis_type,
         analysis_subset=args_sex_subset,
-        model_fit=model_fit,
 
         n=row.n_samples,
         rss_base=row.rss_base,
@@ -196,7 +196,7 @@ def _process_continuous_result(row, gene, variable_type, args_sex_subset,
 
 
 def _process_binary_result(row, gene, variable_type, args_sex_subset,
-                           min_n_cases, model_fit, labels, session):
+                           min_n_cases, labels, session):
     if row.n_cases < min_n_cases:
         return None
 
@@ -225,7 +225,6 @@ def _process_binary_result(row, gene, variable_type, args_sex_subset,
         outcome_id=outcome.id,
         analysis_type=row.analysis_type,
         analysis_subset=sex_subset,
-        model_fit=model_fit,
 
         n_cases=row.n_cases,
         n_controls=row.n_controls,
