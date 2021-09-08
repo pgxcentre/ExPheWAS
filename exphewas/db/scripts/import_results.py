@@ -9,44 +9,15 @@ import numpy as np
 
 from ..engine import Session
 from ..models import (
-    Gene,
-    Outcome,
-    ContinuousResult, BinaryResult,
-    BothContinuousResult, FemaleContinuousResult, MaleContinuousResult,
-    BothPhecodesResult, FemalePhecodesResult, MalePhecodesResult,
-    BothSelfReportedResult, FemaleSelfReportedResult, MaleSelfReportedResult,
-    BothCVEndpointsResult, FemaleCVEndpointsResult, MaleCVEndpointsResult,
+    Gene, Outcome, ContinuousResult, BinaryResult, get_results_class,
 )
 from ...utils import load_ukbphewas_model, load_variable_labels
+from ..utils import ANALYSIS_TYPES, ANALYSIS_SUBSETS
 
 
 PREFIX_PAT = re.compile(
     r"results_(?P<ensg>ENSG[0-9]+)_(?P<type>binary|continuous)"
 )
-
-
-RESULT_CLASS_MAP = {
-    "CONTINUOUS_VARIABLE": {
-        "BOTH": BothContinuousResult,
-        "FEMALE_ONLY": FemaleContinuousResult,
-        "MALE_ONLY": MaleContinuousResult,
-    },
-    "PHECODES": {
-        "BOTH": BothPhecodesResult,
-        "FEMALE_ONLY": FemalePhecodesResult,
-        "MALE_ONLY": MalePhecodesResult,
-    },
-    "SELF_REPORTED": {
-        "BOTH": BothSelfReportedResult,
-        "FEMALE_ONLY": FemaleSelfReportedResult,
-        "MALE_ONLY": MaleSelfReportedResult,
-    },
-    "CV_ENDPOINTS": {
-        "BOTH": BothCVEndpointsResult,
-        "FEMALE_ONLY": FemaleCVEndpointsResult,
-        "MALE_ONLY": MaleCVEndpointsResult,
-    },
-}
 
 
 # import-results prefix --sex-subset
@@ -58,7 +29,7 @@ def main(args):
     if match is None:
         raise ValueError(
             f"Unrecognized prefix: '{basename}'. The expected "
-             "pattern is 'results_ENSG_binary' (or continuous)."
+            f"pattern is 'results_ENSG_binary' (or continuous)."
         )
 
     match = match.groupdict()
@@ -69,6 +40,9 @@ def main(args):
     # Get n_pcs
     session = Session()
     n_pcs = session.query(Gene).filter_by(ensembl_id=gene).one().n_pcs
+
+    # By default, analysis kept only 40 PCs
+    n_pcs = min(n_pcs, args.max_n_pcs)
 
     # Check that we can find the model and summary files.
     model = f"{args.prefix}_model.json.gz"
@@ -110,7 +84,7 @@ def main(args):
         },
     }
 
-    for i, row in df.iterrows():
+    for _, row in df.iterrows():
         if np.isnan(row["p"]):
             continue
 
@@ -121,7 +95,9 @@ def main(args):
 
         if o is not None:
             # Pre-compute the p-value
-            result_class = RESULT_CLASS_MAP[row.analysis_type][o["analysis_subset"]]
+            result_class = get_results_class(
+                row.analysis_type, o["analysis_subset"]
+            )
             o["static_nlog10p"] = _compute_nlog10p(
                 result_class, o, n_pcs,
             )
@@ -130,18 +106,12 @@ def main(args):
     session.commit()
 
     # Bulk insert.
-    n = len(objects)
-    chunk_size = 10000
-    for analysis_type in RESULT_CLASS_MAP.keys():
-        for sex_subset in ("BOTH", "FEMALE_ONLY", "MALE_ONLY"):
+    for analysis_type in ANALYSIS_TYPES:
+        for sex_subset in ANALYSIS_SUBSETS:
             to_insert = objects[analysis_type][sex_subset]
-            result_class = RESULT_CLASS_MAP[analysis_type][sex_subset]
+            result_class = get_results_class(analysis_type, sex_subset)
 
-            for chunk in range(0, n, chunk_size):
-                session.bulk_insert_mappings(
-                    result_class,
-                    to_insert[chunk:chunk+chunk_size]
-                )
+            session.bulk_insert_mappings(result_class, to_insert)
 
     session.commit()
 
@@ -203,25 +173,25 @@ def _process_continuous_result(row, gene, variable_type, args_sex_subset,
 
     except sqlalchemy.orm.exc.NoResultFound:
         outcome = Outcome(
-            id = row.variable_id,
-            label = labels[(row.analysis_type, row.variable_id)],
-            analysis_type = row.analysis_type,
+            id=row.variable_id,
+            label=labels[(row.analysis_type, row.variable_id)],
+            analysis_type=row.analysis_type,
         )
 
         session.add(outcome)
 
     return dict(
-        gene = gene,
-        outcome_id = outcome.id,
-        analysis_type = row.analysis_type,
-        analysis_subset = args_sex_subset,
-        model_fit = model_fit,
+        gene=gene,
+        outcome_id=outcome.id,
+        analysis_type=row.analysis_type,
+        analysis_subset=args_sex_subset,
+        model_fit=model_fit,
 
-        n = row.n_samples,
-        rss_base = row.rss_base,
-        rss_augmented = row.rss_augmented,
-        n_params_base = row.n_params_base,
-        n_params_augmented = row.n_params_aug,
+        n=row.n_samples,
+        rss_base=row.rss_base,
+        rss_augmented=row.rss_augmented,
+        n_params_base=row.n_params_base,
+        n_params_augmented=row.n_params_aug,
     )
 
 
@@ -238,9 +208,9 @@ def _process_binary_result(row, gene, variable_type, args_sex_subset,
 
     except sqlalchemy.orm.exc.NoResultFound:
         outcome = Outcome(
-            id = row.variable_id,
-            label = labels[(row.analysis_type, row.variable_id.lstrip("0"))],
-            analysis_type = row.analysis_type,
+            id=row.variable_id,
+            label=labels[(row.analysis_type, row.variable_id.lstrip("0"))],
+            analysis_type=row.analysis_type,
         )
 
         session.add(outcome)
@@ -251,16 +221,16 @@ def _process_binary_result(row, gene, variable_type, args_sex_subset,
         return None
 
     return dict(
-        gene = gene,
-        outcome_id = outcome.id,
-        analysis_type = row.analysis_type,
-        analysis_subset = sex_subset,
-        model_fit = model_fit,
+        gene=gene,
+        outcome_id=outcome.id,
+        analysis_type=row.analysis_type,
+        analysis_subset=sex_subset,
+        model_fit=model_fit,
 
-        n_cases = row.n_cases,
-        n_controls = row.n_controls,
-        n_excluded_from_controls = row.n_excluded_from_controls,
+        n_cases=row.n_cases,
+        n_controls=row.n_controls,
+        n_excluded_from_controls=row.n_excluded_from_controls,
 
-        deviance_base = row.deviance_base,
-        deviance_augmented = row.deviance_augmented,
+        deviance_base=row.deviance_base,
+        deviance_augmented=row.deviance_augmented,
     )
