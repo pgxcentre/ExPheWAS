@@ -7,7 +7,7 @@ from itertools import product
 
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.sql import literal, union
-from sqlalchemy.orm import relationship, deferred, foreign, joinedload, undefer
+from sqlalchemy.orm import relationship, foreign, joinedload, undefer
 from sqlalchemy import (
     Column, Integer, String, ForeignKey, Enum, Float, Boolean,
     ForeignKeyConstraint, Date, JSON, and_, cast
@@ -35,6 +35,8 @@ Base = declarative_base()
 # These will be filled dynamically.
 RESULTS_CLASSES = []
 RESULTS_CLASS_MAP = defaultdict(dict)
+MODEL_FIT_CLASSES = []
+MODEL_FIT_CLASS_MAP = defaultdict(dict)
 
 
 class Metadata(Base):
@@ -53,37 +55,6 @@ class Metadata(Base):
 
     def __repr__(self):
         return f"<Metadata v{self.version} - {self.date} // {self.comments}>"
-
-
-class Enrichment(Base):
-    __tablename__ = "enrichment"
-
-    outcome_id = Column(String, primary_key=True)
-    analysis_type = Column(AnalysisEnum, primary_key=True)
-    analysis_subset = Column(SexSubsetEnum, primary_key=True)
-
-    # This could be a code from Hierarchy (e.g. ATC codes).
-    gene_set_id = Column(String, primary_key=True)
-    hierarchy_id = Column(String, nullable=True)
-
-    set_size = Column(Integer, nullable=True)
-    enrichment_score = Column(Float, nullable=True)
-
-    p = Column(Float, nullable=False)
-
-    __table_args__ = (
-        ForeignKeyConstraint(
-            [outcome_id, analysis_type],
-            ["outcomes.id", "outcomes.analysis_type"]
-        ),
-    )
-
-    def get_data_dict(self):
-        return {
-            "p": self.p,
-            "set_size": self.set_size,
-            "enrichment_score": self.enrichment_score,
-        }
 
 
 class EnrichmentContingency(Base):
@@ -250,7 +221,7 @@ class ResultMixin(object):
             ),
             viewonly=True
         )
-        
+
     def p(self):
         return None
 
@@ -389,6 +360,7 @@ class Gene(Base):
     positive_strand = Column(Boolean)
     description = Column(String)
     biotype = Column(BiotypeEnum)
+    has_results = Column(Boolean)
 
     n_pcs_obj = relationship(
         "GeneNPcs", uselist=False, back_populates="gene",
@@ -531,9 +503,15 @@ def dynamically_create_results_classes():
             }
         )
 
+        # The result classes
         globals()[class_name] = cls
         RESULTS_CLASSES.append(cls)
         RESULTS_CLASS_MAP[analysis_subset][analysis_type] = cls
+
+        # The model fit classes
+        globals()[model_fit_class_name] = fit_cls
+        MODEL_FIT_CLASSES.append(fit_cls)
+        MODEL_FIT_CLASS_MAP[analysis_subset][analysis_type] = fit_cls
 
 
 dynamically_create_results_classes()
@@ -542,6 +520,11 @@ dynamically_create_results_classes()
 def get_results_class(analysis_type, analysis_subset="BOTH"):
     """Returns the result class."""
     return RESULTS_CLASS_MAP[analysis_subset][analysis_type]
+
+
+def get_model_fit_class(analysis_type, analysis_subset="BOTH"):
+    """Returns the model fit class."""
+    return MODEL_FIT_CLASS_MAP[analysis_subset][analysis_type]
 
 
 def all_results_union(session, cols=None):

@@ -15,7 +15,7 @@ function createGeneTable() {
     .DataTable({
       processing: true,
       serverSide: true,
-      ajax: `${DT_API_URL}/gene`,
+      ajax: `${DT_API_URL}/gene?only_with_results=1`,
       columns: [
         {data: "ensembl_id"},             // 0
         {data: "name"},                   // 1
@@ -27,7 +27,7 @@ function createGeneTable() {
       ],
       columnDefs: [
         { targets: 0, className: 'ensembl-id' },
-        { 
+        {
           targets: 1,
           width: '12%',
           className: 'symbol'
@@ -182,8 +182,8 @@ function displayMRResults(results, geneSymbol) {
   let content = (
     `<h2>cis-MR Results</h2>
      <p>
-      MR estimate of the effect of '${results.exposure_label}' on 
-      '${results.outcome_label}' based on genetic variants close to the gene 
+      MR estimate of the effect of '${results.exposure_label}' on
+      '${results.outcome_label}' based on genetic variants close to the gene
       <i>${geneSymbol}</i>.
      </p>
      <p>Inverse variance weighted (IVW) effect and 95% confidence interval:</p>

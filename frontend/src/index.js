@@ -408,10 +408,19 @@ function mainGeneList() {
         {data: "end"},                    // 7
         {data: "positive_strand"}         // 8
       ],
+      createdRow: function(row, data, dataIndex) {
+        if (!data.has_results) {
+          $(row).addClass('dataTables-no-results');
+        }
+      },
       columnDefs: [
         {
           targets: 0,
           render: (ensembl_id, type, row, meta) => {
+            // Skipping if no results in DB
+            if (!row.has_results)
+              return ensembl_id
+
             let a = `<a href="${URL_PREFIX}/gene/${ensembl_id}?analysis_subset=BOTH">`;
             a += ensembl_id + "</a>";
             return a;
@@ -422,6 +431,10 @@ function mainGeneList() {
           orderable: false,
           searchable: false,
           render: (a, type, row, meta) => {
+            // Skipping if no results in DB
+            if (!row.has_results)
+              return null;
+
             let ensembl_id = row.ensembl_id;
             let baseUrl = `${URL_PREFIX}/gene/${ensembl_id}`;
             let subsets = ["BOTH", "FEMALE_ONLY", "MALE_ONLY"];

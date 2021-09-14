@@ -404,9 +404,17 @@ def main():
     parser_import_results.add_argument(
         "--min-n-cases",
         help="Minimum number of cases for inclusion in the db for binary "
-             "variables.",
+             "variables [%(default)s].",
         default=0,
         type=int
+    )
+
+    parser_import_results.add_argument(
+        "--max-n-pcs",
+        help="Maximum number of PCs which were used for the analysis "
+             "[%(default)s].",
+        default=40,
+        type=int,
     )
 
     parser_import_external = subparsers.add_parser("import-external")

@@ -4,9 +4,9 @@ Disk-based caching for ExPheWas.
 
 import os
 import json
+import sys
 
 from sqlalchemy.sql.expression import func
-from sqlalchemy import and_
 
 from .config import CACHE_DIR
 from ..db import models
@@ -47,10 +47,6 @@ def create_or_load_startup_caches():
     cache = Cache()
     session = Session()
 
-    if not cache.has("genes_with_results"):
-        print("Creating cache for genes")
-        cache_gene_with_results(cache, session)
-
     if not cache.has("outcomes"):
         print("Creating cache for outcomes")
         cache_outcomes(cache, session)
@@ -65,8 +61,8 @@ def cache_outcomes(cache, session):
             q.c.analysis_subset
         ).label("available_subsets"))\
         .filter(
-            models.Outcome.id==q.c.outcome_id,
-            models.Outcome.analysis_type==q.c.analysis_type
+            models.Outcome.id == q.c.outcome_id,
+            models.Outcome.analysis_type == q.c.analysis_type
         )\
         .group_by(
             models.Outcome.id,
@@ -86,8 +82,33 @@ def cache_outcomes(cache, session):
     cache.put("outcomes", results)
 
 
-def cache_gene_with_results(cache, session):
+def cache_gene_with_results():
+    """Cache genes with results (setting `has_results` to True)."""
+    print("Finding genes with results", file=sys.stderr)
+    session = Session()
+
+    # Retrieving all the genes with results
     all_genes = session.query(models.RESULTS_CLASSES[0].gene)
     for result_obj in models.RESULTS_CLASSES[1:]:
         all_genes = all_genes.union(session.query(result_obj.gene))
-    cache.put("genes_with_results", [tu[0] for tu in all_genes.all()])
+
+    # Setting has_results to true for these genes
+    for gene in all_genes.all():
+        gene_obj = session.query(models.Gene)\
+            .filter(models.Gene.ensembl_id == gene[0])\
+            .one()
+        gene_obj.has_results = True
+
+    session.commit()
+
+
+def clear_cache_gene_with_results():
+    """Clear cache genes with results (setting `has_results` to False)."""
+    print("Clearing genes with results", file=sys.stderr)
+    session = Session()
+
+    # Resetting the cache
+    genes = session.query(models.Gene)
+    for gene in genes.all():
+        gene.has_results = False
+    session.commit()
