@@ -80,7 +80,7 @@ def get_outcome(id):
         abort(404)
 
     # Checks if there are enrichment results for this outcome
-    enrichment_result = Session.query(models.Enrichment)\
+    enrichment_result = Session.query(models.EnrichmentContingency)\
         .filter_by(hierarchy_id="ATC", outcome_id=id)
 
     if "analysis_type" in request.args:

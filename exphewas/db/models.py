@@ -57,37 +57,6 @@ class Metadata(Base):
         return f"<Metadata v{self.version} - {self.date} // {self.comments}>"
 
 
-class Enrichment(Base):
-    __tablename__ = "enrichment"
-
-    outcome_id = Column(String, primary_key=True)
-    analysis_type = Column(AnalysisEnum, primary_key=True)
-    analysis_subset = Column(SexSubsetEnum, primary_key=True)
-
-    # This could be a code from Hierarchy (e.g. ATC codes).
-    gene_set_id = Column(String, primary_key=True)
-    hierarchy_id = Column(String, nullable=True)
-
-    set_size = Column(Integer, nullable=True)
-    enrichment_score = Column(Float, nullable=True)
-
-    p = Column(Float, nullable=False)
-
-    __table_args__ = (
-        ForeignKeyConstraint(
-            [outcome_id, analysis_type],
-            ["outcomes.id", "outcomes.analysis_type"]
-        ),
-    )
-
-    def get_data_dict(self):
-        return {
-            "p": self.p,
-            "set_size": self.set_size,
-            "enrichment_score": self.enrichment_score,
-        }
-
-
 class EnrichmentContingency(Base):
     __tablename__ = "enrichment_contingency"
 

@@ -465,11 +465,6 @@ def cis_mendelian_randomization():
     return mr_results
 
 
-@make_api("/enrichment/atc/fgsea/<outcome_id>")
-def get_enrichment_atc_fgsea_for_outcome(outcome_id):
-    return get_enrichment_for_outcome(outcome_id, models.Enrichment)
-
-
 @make_api("/enrichment/atc/contingency/<outcome_id>")
 def get_enrichment_atc_contingency_for_outcome(outcome_id):
     return get_enrichment_for_outcome(outcome_id, models.EnrichmentContingency)
