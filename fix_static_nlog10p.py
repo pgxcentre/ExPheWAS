@@ -33,7 +33,6 @@ def main() -> None:  # pylint: disable=missing-docstring
         assert gene.n_pcs > 40
         fix_gene(gene, session)
         session.commit()
-        break
 
 
 def fix_gene(gene, session):
