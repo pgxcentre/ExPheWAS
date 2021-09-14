@@ -360,6 +360,7 @@ class Gene(Base):
     positive_strand = Column(Boolean)
     description = Column(String)
     biotype = Column(BiotypeEnum)
+    has_results = Column(Boolean)
 
     n_pcs_obj = relationship(
         "GeneNPcs", uselist=False, back_populates="gene",
