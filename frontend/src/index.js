@@ -284,7 +284,7 @@ function geneResultBinaryOutcomeTable(o) {
   });
 }
 
-async function mainGeneResults(id) {
+async function mainGeneResults(id, has_results = true) {
   // Add the GTEx radial plot.
   radialGTEX(id);
 
@@ -314,6 +314,9 @@ async function mainGeneResults(id) {
 
   let analysis_subset = getUrlParam("analysis_subset", "BOTH");
   let urlParam = `analysis_subset=${analysis_subset}`;
+
+  if (!has_results)
+    return;
 
   let data = await api_call(`/gene/${id}/results?${urlParam}`);
 
