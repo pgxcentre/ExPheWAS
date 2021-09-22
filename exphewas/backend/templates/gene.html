@@ -41,7 +41,7 @@
               </dd>
 
               <dt class="col-md-4">Nb components:</dt>
-              <dd class="col-md-8">{{ n_pcs }}{% if n_pcs > max_n_pcs %} (40 used <span class="tooltip-help" title="Only 40 principal components were used to speed up the analysis">?</span>){% endif %}</dd>
+              <dd class="col-md-8">{{ n_pcs }}{% if n_pcs > max_n_pcs %} (40 used <span class="tooltip-help" title="Only 40 principal components were used to avoid exceeding memory limitations">?</span>){% endif %}</dd>
 
               <dt class="col-md-4">Ensembl:</dt>
               <dd class="col-md-8"><a target="_blank" href="http://grch37.ensembl.org/Homo_sapiens/Gene/Summary?g={{ ensembl_id }}">{{ ensembl_id }}</a></dd>
