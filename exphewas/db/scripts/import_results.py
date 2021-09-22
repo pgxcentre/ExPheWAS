@@ -9,44 +9,16 @@ import numpy as np
 
 from ..engine import Session
 from ..models import (
-    Gene,
-    Outcome,
-    ContinuousResult, BinaryResult,
-    BothContinuousResult, FemaleContinuousResult, MaleContinuousResult,
-    BothPhecodesResult, FemalePhecodesResult, MalePhecodesResult,
-    BothSelfReportedResult, FemaleSelfReportedResult, MaleSelfReportedResult,
-    BothCVEndpointsResult, FemaleCVEndpointsResult, MaleCVEndpointsResult,
+    Gene, Outcome, ContinuousResult, BinaryResult, get_results_class,
+    get_model_fit_class,
 )
 from ...utils import load_ukbphewas_model, load_variable_labels
+from ..utils import ANALYSIS_TYPES, ANALYSIS_SUBSETS
 
 
 PREFIX_PAT = re.compile(
     r"results_(?P<ensg>ENSG[0-9]+)_(?P<type>binary|continuous)"
 )
-
-
-RESULT_CLASS_MAP = {
-    "CONTINUOUS_VARIABLE": {
-        "BOTH": BothContinuousResult,
-        "FEMALE_ONLY": FemaleContinuousResult,
-        "MALE_ONLY": MaleContinuousResult,
-    },
-    "PHECODES": {
-        "BOTH": BothPhecodesResult,
-        "FEMALE_ONLY": FemalePhecodesResult,
-        "MALE_ONLY": MalePhecodesResult,
-    },
-    "SELF_REPORTED": {
-        "BOTH": BothSelfReportedResult,
-        "FEMALE_ONLY": FemaleSelfReportedResult,
-        "MALE_ONLY": MaleSelfReportedResult,
-    },
-    "CV_ENDPOINTS": {
-        "BOTH": BothCVEndpointsResult,
-        "FEMALE_ONLY": FemaleCVEndpointsResult,
-        "MALE_ONLY": MaleCVEndpointsResult,
-    },
-}
 
 
 # import-results prefix --sex-subset
@@ -58,7 +30,7 @@ def main(args):
     if match is None:
         raise ValueError(
             f"Unrecognized prefix: '{basename}'. The expected "
-             "pattern is 'results_ENSG_binary' (or continuous)."
+            f"pattern is 'results_ENSG_binary' (or continuous)."
         )
 
     match = match.groupdict()
@@ -69,6 +41,9 @@ def main(args):
     # Get n_pcs
     session = Session()
     n_pcs = session.query(Gene).filter_by(ensembl_id=gene).one().n_pcs
+
+    # By default, analysis kept only 40 PCs
+    n_pcs = min(n_pcs, args.max_n_pcs)
 
     # Check that we can find the model and summary files.
     model = f"{args.prefix}_model.json.gz"
@@ -88,60 +63,56 @@ def main(args):
     # 1. Get or create Outcome.
     # 2. Create Result.
     objects = {
-        "CONTINUOUS_VARIABLE": {
-            "BOTH": [],
-            "FEMALE_ONLY": [],
-            "MALE_ONLY": [],
-        },
-        "PHECODES": {
-            "BOTH": [],
-            "FEMALE_ONLY": [],
-            "MALE_ONLY": [],
-        },
-        "SELF_REPORTED": {
-            "BOTH": [],
-            "FEMALE_ONLY": [],
-            "MALE_ONLY": [],
-        },
-        "CV_ENDPOINTS": {
-            "BOTH": [],
-            "FEMALE_ONLY": [],
-            "MALE_ONLY": [],
-        },
+        a_type: {a_subset: [] for a_subset in ANALYSIS_SUBSETS}
+        for a_type in ANALYSIS_TYPES
     }
 
-    for i, row in df.iterrows():
+    model_fit_objects = {
+        a_type: {a_subset: [] for a_subset in ANALYSIS_SUBSETS}
+        for a_type in ANALYSIS_TYPES
+    }
+
+    for _, row in df.iterrows():
         if np.isnan(row["p"]):
             continue
 
         # Get the model object.
-        model_fit = models[(row["analysis_type"], row["variable_id"])]
         o = create_object(row, gene, variable_type, args.sex_subset,
-                          args.min_n_cases, model_fit, labels, session)
+                          args.min_n_cases, labels, session)
 
         if o is not None:
             # Pre-compute the p-value
-            result_class = RESULT_CLASS_MAP[row.analysis_type][o["analysis_subset"]]
+            result_class = get_results_class(
+                row.analysis_type, o["analysis_subset"]
+            )
             o["static_nlog10p"] = _compute_nlog10p(
                 result_class, o, n_pcs,
             )
             objects[row.analysis_type][o["analysis_subset"]].append(o)
 
+            # Adding the model fit
+            model_fit_objects[row.analysis_type][o["analysis_subset"]].append(
+                dict(
+                    outcome_id=o["outcome_id"],
+                    gene=gene,
+                    model_fit=models[(row["analysis_type"], row["variable_id"])],
+                )
+            )
+
     session.commit()
 
     # Bulk insert.
-    n = len(objects)
-    chunk_size = 10000
-    for analysis_type in RESULT_CLASS_MAP.keys():
-        for sex_subset in ("BOTH", "FEMALE_ONLY", "MALE_ONLY"):
+    for analysis_type in ANALYSIS_TYPES:
+        for sex_subset in ANALYSIS_SUBSETS:
+            # The results
             to_insert = objects[analysis_type][sex_subset]
-            result_class = RESULT_CLASS_MAP[analysis_type][sex_subset]
+            result_class = get_results_class(analysis_type, sex_subset)
+            session.bulk_insert_mappings(result_class, to_insert)
 
-            for chunk in range(0, n, chunk_size):
-                session.bulk_insert_mappings(
-                    result_class,
-                    to_insert[chunk:chunk+chunk_size]
-                )
+            # The model fits
+            to_insert = model_fit_objects[analysis_type][sex_subset]
+            model_fit_class = get_model_fit_class(analysis_type, sex_subset)
+            session.bulk_insert_mappings(model_fit_class, to_insert)
 
     session.commit()
 
@@ -194,7 +165,7 @@ class SkipRow(Exception):
 
 
 def _process_continuous_result(row, gene, variable_type, args_sex_subset,
-                               _min_n_cases, model_fit, labels, session):
+                               _min_n_cases, labels, session):
     # Get or create outcome.
     try:
         outcome = session.query(Outcome)\
@@ -203,30 +174,29 @@ def _process_continuous_result(row, gene, variable_type, args_sex_subset,
 
     except sqlalchemy.orm.exc.NoResultFound:
         outcome = Outcome(
-            id = row.variable_id,
-            label = labels[(row.analysis_type, row.variable_id)],
-            analysis_type = row.analysis_type,
+            id=row.variable_id,
+            label=labels[(row.analysis_type, row.variable_id)],
+            analysis_type=row.analysis_type,
         )
 
         session.add(outcome)
 
     return dict(
-        gene = gene,
-        outcome_id = outcome.id,
-        analysis_type = row.analysis_type,
-        analysis_subset = args_sex_subset,
-        model_fit = model_fit,
+        gene=gene,
+        outcome_id=outcome.id,
+        analysis_type=row.analysis_type,
+        analysis_subset=args_sex_subset,
 
-        n = row.n_samples,
-        rss_base = row.rss_base,
-        rss_augmented = row.rss_augmented,
-        n_params_base = row.n_params_base,
-        n_params_augmented = row.n_params_aug,
+        n=row.n_samples,
+        rss_base=row.rss_base,
+        rss_augmented=row.rss_augmented,
+        n_params_base=row.n_params_base,
+        n_params_augmented=row.n_params_aug,
     )
 
 
 def _process_binary_result(row, gene, variable_type, args_sex_subset,
-                           min_n_cases, model_fit, labels, session):
+                           min_n_cases, labels, session):
     if row.n_cases < min_n_cases:
         return None
 
@@ -238,9 +208,9 @@ def _process_binary_result(row, gene, variable_type, args_sex_subset,
 
     except sqlalchemy.orm.exc.NoResultFound:
         outcome = Outcome(
-            id = row.variable_id,
-            label = labels[(row.analysis_type, row.variable_id.lstrip("0"))],
-            analysis_type = row.analysis_type,
+            id=row.variable_id,
+            label=labels[(row.analysis_type, row.variable_id.lstrip("0"))],
+            analysis_type=row.analysis_type,
         )
 
         session.add(outcome)
@@ -251,16 +221,15 @@ def _process_binary_result(row, gene, variable_type, args_sex_subset,
         return None
 
     return dict(
-        gene = gene,
-        outcome_id = outcome.id,
-        analysis_type = row.analysis_type,
-        analysis_subset = sex_subset,
-        model_fit = model_fit,
+        gene=gene,
+        outcome_id=outcome.id,
+        analysis_type=row.analysis_type,
+        analysis_subset=sex_subset,
 
-        n_cases = row.n_cases,
-        n_controls = row.n_controls,
-        n_excluded_from_controls = row.n_excluded_from_controls,
+        n_cases=row.n_cases,
+        n_controls=row.n_controls,
+        n_excluded_from_controls=row.n_excluded_from_controls,
 
-        deviance_base = row.deviance_base,
-        deviance_augmented = row.deviance_augmented,
+        deviance_base=row.deviance_base,
+        deviance_augmented=row.deviance_augmented,
     )

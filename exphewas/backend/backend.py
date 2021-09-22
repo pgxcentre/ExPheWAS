@@ -80,7 +80,7 @@ def get_outcome(id):
         abort(404)
 
     # Checks if there are enrichment results for this outcome
-    enrichment_result = Session.query(models.Enrichment)\
+    enrichment_result = Session.query(models.EnrichmentContingency)\
         .filter_by(hierarchy_id="ATC", outcome_id=id)
 
     if "analysis_type" in request.args:
@@ -149,7 +149,6 @@ def get_gene(ensg):
     elif analysis_subset == "MALE_ONLY":
         title += " (Male only)"
 
-
     return render_template(
         "gene.html",
         page_title=title,
@@ -160,4 +159,5 @@ def get_gene(ensg):
         db_full_names=db_names,
         db_urls=EXTERNAL_DB_URL,
         external_dbs=EXTERNAL_DB_TO_SHOW,
+        max_n_pcs=os.environ.get("EXPHEWAS_MAX_N_PCS", 40),
     )

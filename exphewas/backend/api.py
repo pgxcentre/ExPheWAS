@@ -2,15 +2,11 @@
 Flask-based REST API for the results of the ExPheWAS analysis.
 """
 
-import json
 import functools
-from os import path
 
 import numpy as np
 
 from sqlalchemy.exc import NoResultFound, MultipleResultsFound
-from sqlalchemy.orm import joinedload, subqueryload, undefer
-from sqlalchemy.sql.expression import func, null
 
 from flask import Blueprint, jsonify, request
 
@@ -231,16 +227,8 @@ def get_outcome_results(id):
 
 @make_api("/gene")
 def get_genes():
-    from_db = request.args.get("from_db", False)
-
-    if not from_db:
-        json_fn = path.join(path.dirname(__file__), "static", "genes.json")
-        with open(json_fn) as genes:
-            return json.loads(genes.read())
-
-    else:
-        genes = Session.query(models.Gene).all()
-        return [mod_to_dict(gene) for gene in genes]
+    genes = Session.query(models.Gene).all()
+    return [mod_to_dict(gene) for gene in genes]
 
 
 @make_api("/gene/name/<name>")
@@ -463,11 +451,6 @@ def cis_mendelian_randomization():
     mr_results["outcome_label"] = outcome.label
 
     return mr_results
-
-
-@make_api("/enrichment/atc/fgsea/<outcome_id>")
-def get_enrichment_atc_fgsea_for_outcome(outcome_id):
-    return get_enrichment_for_outcome(outcome_id, models.Enrichment)
 
 
 @make_api("/enrichment/atc/contingency/<outcome_id>")

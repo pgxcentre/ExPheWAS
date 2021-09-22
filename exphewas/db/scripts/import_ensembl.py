@@ -18,6 +18,7 @@ def parse_line(line):
     if len(chrom) > 2:
         raise ValueError("Contig unsupported.")
 
+    # By default, genes have no results
     return Gene(
         ensembl_id=ensembl_id,
         name=meta.get("gene_name"),
@@ -25,7 +26,8 @@ def parse_line(line):
         start=int(start),
         end=int(end),
         positive_strand=(strand == "+"),
-        biotype=meta.get("gene_biotype")
+        biotype=meta.get("gene_biotype"),
+        has_results=False,
     )
 
 

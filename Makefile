@@ -60,7 +60,9 @@ serve:
 .PHONY: clear_cache
 clear_cache:
 	python -c 'import exphewas.backend.cache; exphewas.backend.cache.Cache().clear()'
+	python -c 'from exphewas.backend.cache import clear_cache_gene_with_results; clear_cache_gene_with_results()'
 
 .PHONY: cache
 cache:
 	python -c 'import exphewas.backend.cache; exphewas.backend.cache.create_or_load_startup_caches()'
+	python -c 'from exphewas.backend.cache import cache_gene_with_results; cache_gene_with_results()'
