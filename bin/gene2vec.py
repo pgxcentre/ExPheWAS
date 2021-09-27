@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-import os
+import sys
 import pickle
 import gzip
 import argparse
@@ -33,8 +33,16 @@ def main():
         with open(args.keep, "rt") as f:
             keep_samples = set(f.read().splitlines())
 
+    # Splitting the region
     chrom, _pos = args.region.split(":")
     start, end = [int(i) for i in _pos.split("-")]
+
+    if args.only_write_genotypes:
+        write_genotypes_in_region(reader, chrom, start, end,
+                                  maf_threshold=args.maf,
+                                  extract_ids=extract_ids, output=args.output)
+        sys.exit(0)
+
     genotypes = extract_genotypes_in_region(reader, chrom, start, end,
                                             maf_threshold=args.maf,
                                             extract_ids=extract_ids)
@@ -82,6 +90,7 @@ def main():
 def _get_maf(g):
     return g.genotypes, g.maf()
 
+
 def extract_genotypes_in_region(reader, chrom, start, end, maf_threshold,
                                 extract_ids):
     """Returns a m x n matrix of standardized genotypes.
@@ -109,7 +118,34 @@ def extract_genotypes_in_region(reader, chrom, start, end, maf_threshold,
 
         genotypes.append(g)
 
+    if len(genotypes) == 0:
+        print("No variant left in the region 'chr{}:{}-{}'"
+              "".format(chrom, start, end))
+        sys.exit(0)
+
     return np.vstack(genotypes).T
+
+
+def write_genotypes_in_region(reader, chrom, start, end, maf_threshold,
+                              extract_ids, output):
+    """Writes the genotypes to a file."""
+    samples = reader.get_samples()
+
+    with open(output + "_genotypes.csv", "w") as f:
+        # The header
+        print("variant", *samples, sep=",", file=f)
+
+        for g in reader.get_variants_in_region(chrom, start, end):
+            maf = g.maf()
+
+            if (extract_ids is not None) and (g.variant.name not in extract_ids):
+                continue
+
+            if np.isnan(maf) or maf < maf_threshold:
+                continue
+
+            print(g.variant.name, *g.genotypes, sep=",", file=f)
+
 
 
 def parse_args():
@@ -139,7 +175,6 @@ def parse_args():
         default="gene2vec"
     )
 
-
     parser.add_argument(
         "--maf",
         help="Maf threshold for inclusion (MAF < threshold will be excluded). "
@@ -161,6 +196,11 @@ def parse_args():
         help="Specify a list of SAMPLES to keep for the PCA.",
         default=None,
         type=str
+    )
+
+    parser.add_argument(
+        "--only-write-genotypes", action="store_true",
+        help="Write the genotypes to file, and exits.",
     )
 
     return parser.parse_args()

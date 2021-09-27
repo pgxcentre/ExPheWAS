@@ -41,7 +41,7 @@
               </dd>
 
               <dt class="col-md-4">Nb components:</dt>
-              <dd class="col-md-8">{{ n_pcs }}</dd>
+              <dd class="col-md-8">{{ n_pcs }}{% if n_pcs > max_n_pcs %} (40 used <span class="tooltip-help" title="Only 40 principal components were used to avoid exceeding memory limitations">?</span>){% endif %}</dd>
 
               <dt class="col-md-4">Ensembl:</dt>
               <dd class="col-md-8"><a target="_blank" href="http://grch37.ensembl.org/Homo_sapiens/Gene/Summary?g={{ ensembl_id }}">{{ ensembl_id }}</a></dd>
@@ -68,7 +68,7 @@
         </div>
         </div>
 
-        <!-- GTEx expression median to know where the gene is expressed. -->
+        {% if has_results %}
         <div class="col-md-6">
             <!-- QQ plot as a measure of pleiotropy -->
             <h5>Genetic associations QQ-plot</h5>
@@ -100,9 +100,11 @@
 
             </div>
         </div>
+        {% endif %}
 
       </div>
 
+      {% if has_results %}
       <div class="geneResults continuousVariable">
         <h4 id="continuous-results-section">Continuous variables</h4>
         <table id="geneResultsContinuous" class="display" style="width:100%">
@@ -218,12 +220,15 @@
           </tbody>
         </table>
       </div>
+      {% else %}
+        <h4>There are no results for this gene</h4>
+      {% endif %}
 
     </div>
 {% endblock %}
 
 {% block other_script %}
     <script>
-      window.pages.mainGeneResults("{{ ensembl_id }}");
+      window.pages.mainGeneResults("{{ ensembl_id }}", {{ "true" if has_results else "false" }});
     </script>
 {% endblock %}

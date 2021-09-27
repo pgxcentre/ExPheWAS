@@ -3,15 +3,11 @@ Flask-based API specific for datatables.
 """
 
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, request
 
-from sqlalchemy.sql.expression import func
-from sqlalchemy.dialects.postgresql import array
 from sqlalchemy import or_
 
 from datatables import DataTable
-
-from .cache import Cache
 
 from ..db import models
 from ..db.engine import Session
@@ -23,12 +19,14 @@ dt_api = Blueprint("dt_api_blueprint", __name__)
 # Datatables serverprocessing endpoints.
 @dt_api.route("/gene")
 def dt_gene():
+    with_results_only = request.args.get("only_with_results", False)
+
     session = Session()
 
-    # genes_with_results = Cache().get("genes_with_results")
-    # q = session.query(models.Gene)\
-    #     .filter(models.Gene.ensembl_id.in_(genes_with_results))
     q = session.query(models.Gene)
+
+    if with_results_only:
+        q = q.filter(models.Gene.has_results.is_(True))
 
     table = DataTable(
         request.args,
@@ -42,7 +40,8 @@ def dt_gene():
             "chrom",
             "start",
             "end",
-            "positive_strand"
+            "positive_strand",
+            "has_results",
         ]
     )
 
