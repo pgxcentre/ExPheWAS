@@ -136,19 +136,28 @@ class Outcome(Base):
     def query_results(self, *args, **kwargs):
         return self.query_outcome_results(self, *args, **kwargs)
 
+    def get_results_class(self, analysis_subset):
+        result_class_map = RESULTS_CLASS_MAP[analysis_subset]
+
+        Result = None
+        if self.is_binary():
+            Result = result_class_map[self.analysis_type]
+
+        elif self.is_continuous():
+            Result = result_class_map["CONTINUOUS_VARIABLE"]
+
+        else:
+            raise ValueError()
+
+        return Result
+
     @staticmethod
     def query_outcome_results(outcome, analysis_subset="BOTH",
                               preload_model=False):
         """Build a sqlalchemy query to get results for a given outcome."""
         session = Session()
 
-        result_class_map = RESULTS_CLASS_MAP[analysis_subset]
-
-        Result = None
-        if outcome.is_binary():
-            Result = result_class_map[outcome.analysis_type]
-        elif outcome.is_continuous():
-            Result = result_class_map["CONTINUOUS_VARIABLE"]
+        Result = outcome.get_results_class(analysis_subset)
 
         query = session.query(Result)\
             .filter_by(
@@ -193,7 +202,8 @@ class ResultMixin(object):
 
     @declared_attr
     def gene(cls):
-        return Column(String, ForeignKey("genes.ensembl_id"), primary_key=True)
+        return Column(String, ForeignKey("genes.ensembl_id"),
+                      primary_key=True, index=True)
 
     @declared_attr
     def gene_obj(cls):

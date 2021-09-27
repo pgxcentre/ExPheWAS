@@ -191,14 +191,24 @@ def get_outcome_results(id):
     if analysis_subset not in models.ANALYSIS_SUBSETS:
         raise ValueError(f"{analysis_subset}: not a valid analysis subset")
 
-    results = outcome.query_results(analysis_subset).all()
+    Result = outcome.get_results_class(analysis_subset)
+    query = Session().query(
+        Result.static_nlog10p,
+        Result.gene,
+        models.Gene.name,
+        models.GeneNPcs.n_pcs_95,
+    ).filter_by(outcome_id=id)\
+    .join(models.Gene, models.Gene.ensembl_id == Result.gene)\
+    .join(models.GeneNPcs, models.GeneNPcs.ensembl_id == models.Gene.ensembl_id)
+
+    results = query.all()
 
     if len(results) == 0:
         raise NoResultFound(f"Could not find results for outcome '{id}'.")
 
     # Get the corresponding Q-values.
     nlog10ps = np.fromiter(
-        (r.static_nlog10p for r in results),
+        (r[0] for r in results),
         dtype=np.float, count=len(results)
     )
 
@@ -210,16 +220,16 @@ def get_outcome_results(id):
 
     return [
         {
-            "gene": r.gene,
-            "analysis_type": r.analysis_type,
-            "outcome_id": r.outcome_id,
-            "outcome_label": r.outcome_obj.label,
+            "gene": r[1],
+            "analysis_type": outcome.analysis_type,
+            "outcome_id": outcome.id,
+            "outcome_label": outcome.label,
             "nlog10p": nlog10p,
             "p": p,
             "bonf": p * len(results),
             "q": q,
-            "gene_name": r.gene_obj.name,
-            "n_components": r.gene_obj.n_pcs
+            "gene_name": r[2],
+            "n_components": [3]
         }
         for nlog10p, q, p, r in zip(nlog10ps, qs, ps, results)
     ]
