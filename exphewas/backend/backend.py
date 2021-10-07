@@ -74,22 +74,19 @@ def get_outcomes():
 
 @backend.route("/outcome/<id>")
 def get_outcome(id):
+    analysis_type = request.args.get("analysis_type")
     try:
-        outcome_obj = api.get_outcome(id)
+        outcome_dict = api.get_outcome(id)
     except api.RessourceNotFoundError as exception:
         abort(404)
 
     # Checks if there are enrichment results for this outcome
     enrichment_result = Session.query(models.EnrichmentContingency)\
-        .filter_by(hierarchy_id="ATC", outcome_id=id)
-
-    if "analysis_type" in request.args:
-        enrichment_result = enrichment_result\
-            .filter_by(analysis_type=request.args["analysis_type"])
+        .filter_by(hierarchy_id="ATC", outcome_iid=outcome_dict["iid"])
 
     has_atc = enrichment_result is not None
 
-    title = "Outcome '{}' - {}".format(id, outcome_obj["label"])
+    title = "Outcome '{}' - {}".format(id, outcome_dict["label"])
     analysis_subset = request.args.get("analysis_subset", "BOTH")
     if analysis_subset == "FEMALE_ONLY":
         title += " (Female only)"
@@ -99,7 +96,7 @@ def get_outcome(id):
     available_subsets = list(filter(
         lambda o: (
             o["id"] == id and
-            o["analysis_type"] == outcome_obj["analysis_type"]
+            o["analysis_type"] == outcome_dict["analysis_type"]
         ),
         Cache().get("outcomes")
     ))
@@ -111,7 +108,8 @@ def get_outcome(id):
         page_title=title,
         has_atc_enrichment=has_atc,
         available_subsets=list(available_subsets),
-        **outcome_obj,
+        analysis_subset=analysis_subset,
+        **outcome_dict,
     )
 
 

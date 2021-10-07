@@ -60,8 +60,7 @@ class Metadata(Base):
 class EnrichmentContingency(Base):
     __tablename__ = "enrichment_contingency"
 
-    outcome_id = Column(String, primary_key=True)
-    analysis_type = Column(AnalysisEnum, primary_key=True)
+    outcome_iid = Column(Integer, ForeignKey("outcomes.iid"), primary_key=True)
     analysis_subset = Column(SexSubsetEnum, primary_key=True)
 
     # This could be a code from Hierarchy (e.g. ATC codes).
@@ -75,13 +74,6 @@ class EnrichmentContingency(Base):
     n11 = Column(Integer, nullable=False)
 
     p = Column(Float, nullable=False)
-
-    __table_args__ = (
-        ForeignKeyConstraint(
-            [outcome_id, analysis_type],
-            ["outcomes.id", "outcomes.analysis_type"]
-        ),
-    )
 
     def get_data_dict(self):
         return {
@@ -115,8 +107,10 @@ class Hierarchy(Base):
 class Outcome(Base):
     __tablename__ = "outcomes"
 
-    id = Column(String, primary_key=True)
-    analysis_type = Column(AnalysisEnum, primary_key=True)
+    iid = Column(Integer, primary_key=True)
+
+    id = Column(String, index=True)
+    analysis_type = Column(AnalysisEnum, index=True)
     label = Column(String, nullable=False)
 
     def __repr__(self):
@@ -126,6 +120,16 @@ class Outcome(Base):
             self.analysis_type,
             self.label
         )
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "iid": self.iid,
+            "analysis_type": self.analysis_type,
+            "label": self.label,
+            "type": "continuous_outcomes" if self.is_continuous()
+                    else "binary_outcomes"
+        }
 
     def is_continuous(self):
         return self.analysis_type == "CONTINUOUS_VARIABLE"
@@ -160,10 +164,7 @@ class Outcome(Base):
         Result = outcome.get_results_class(analysis_subset)
 
         query = session.query(Result)\
-            .filter_by(
-                outcome_id=outcome.id,
-                analysis_type=outcome.analysis_type,
-            )
+            .filter_by(outcome_iid=outcome.iid)
 
         if preload_model:
             query.options(undefer("model_fit"))
@@ -175,11 +176,13 @@ class Outcome(Base):
 
 
 class ModelFitMixin(object):
-    outcome_id = Column(String, primary_key=True)
+    @declared_attr
+    def outcome_iid(cls):
+        return Column(Integer, ForeignKey("outcomes.iid"), primary_key=True)
 
     @declared_attr
-    def gene(cls):
-        return Column(String, ForeignKey("genes.ensembl_id"), primary_key=True)
+    def gene_iid(cls):
+        return Column(Integer, ForeignKey("genes.iid"), primary_key=True)
 
     def model_fit_df(self):
         return pd.DataFrame(self.model_fit)
@@ -198,12 +201,13 @@ class ResultMixin(object):
     # Also note that analysis_type is defined by subclasses.
     # There is no formal relationship between subclasses of ResultMixin and
     # Outcome, but we do provide utilities to join with outcomes.
-    outcome_id = Column(String, primary_key=True)
+    @declared_attr
+    def outcome_iid(cls):
+        return Column(Integer, ForeignKey("outcomes.iid"), primary_key=True)
 
     @declared_attr
-    def gene(cls):
-        return Column(String, ForeignKey("genes.ensembl_id"),
-                      primary_key=True, index=True)
+    def gene_iid(cls):
+        return Column(Integer, ForeignKey("genes.iid"), primary_key=True)
 
     @declared_attr
     def gene_obj(cls):
@@ -212,22 +216,15 @@ class ResultMixin(object):
 
     @declared_attr
     def outcome_obj(cls):
-        return relationship(
-            "Outcome",
-            lazy="joined",
-            primaryjoin=lambda: and_(
-                foreign(cls.outcome_id) == Outcome.id,
-                cls.analysis_type == Outcome.analysis_type
-            )
-        )
+        return relationship("Outcome", lazy="joined")
 
     @declared_attr
     def model_fit(cls):
         return relationship(
             cls.model_fit_cls,
             primaryjoin=lambda: and_(
-                foreign(cls.outcome_id) == cls.model_fit_cls.outcome_id,
-                foreign(cls.gene) == cls.model_fit_cls.gene
+                foreign(cls.outcome_iid) == cls.model_fit_cls.outcome_iid,
+                foreign(cls.gene_iid) == cls.model_fit_cls.gene_iid
             ),
             viewonly=True
         )
@@ -245,17 +242,17 @@ class ResultMixin(object):
         return "<{} - {}:{} / {}; p={}>".format(
             self.__class__.__name__,
             self.analysis_type,
-            self.outcome_id,
-            self.gene,
+            self.outcome_obj.id,
+            self.gene_obj.ensembl_id,
             p
         )
 
     def to_object(self):
         """Serialize using only primitive types (e.g. to json dump)."""
         return {
-            "gene": self.gene,
+            "gene": self.gene_obj.ensembl_id,
             "nlog10p": self.static_nlog10p,
-            "outcome_id": self.outcome_id,
+            "outcome_id": self.outcome_obj.id,
             "outcome_label": self.outcome_obj.label,
             "analysis_type": self.analysis_type,
             "analysis_subset": self.analysis_subset,
@@ -361,7 +358,9 @@ class BinaryResult(ResultMixin):
 class Gene(Base):
     __tablename__ = "genes"
 
-    ensembl_id = Column(String, primary_key=True)
+    iid = Column(Integer, primary_key=True)
+
+    ensembl_id = Column(String, unique=True, index=True)
     name = Column(String)
 
     chrom = Column(String(2))
@@ -392,8 +391,7 @@ class Gene(Base):
 class GeneNPcs(Base):
     __tablename__ = "gene_n_pcs"
 
-    ensembl_id = Column(String, ForeignKey("genes.ensembl_id"),
-                        primary_key=True)
+    gene_iid = Column(Integer, ForeignKey("genes.iid"), primary_key=True)
     n_pcs_95 = Column(Integer, primary_key=True)
     n_variants = Column(Integer)
     pct_explained = Column(Float)
@@ -412,8 +410,7 @@ class ExternalDB(Base):
 class XRefs(Base):
     __tablename__ = "xrefs"
 
-    ensembl_id = Column(String, ForeignKey("genes.ensembl_id"),
-                        primary_key=True)
+    gene_iid = Column(Integer, ForeignKey("genes.iid"), primary_key=True)
     external_db_id = Column(Integer, ForeignKey("external_db.id"),
                             primary_key=True)
     external_id = Column(String, nullable=False, primary_key=True)
@@ -443,7 +440,7 @@ class ChEMBLDrug(Base):
             "ChEMBLDrug.atc5 == TargetToUniprot.target_atc5"
         ),
         secondaryjoin=(
-            "XRefs.ensembl_id == Gene.ensembl_id"
+            "XRefs.gene_iid == Gene.iid"
         ),
         viewonly=True
     )
@@ -470,7 +467,7 @@ class TargetToUniprot(Base):
             "XRefs.external_id == TargetToUniprot.uniprot)"
         ),
         secondaryjoin=(
-            "XRefs.ensembl_id == Gene.ensembl_id"
+            "XRefs.gene_iid == Gene.iid"
         ),
         viewonly=True
     )
