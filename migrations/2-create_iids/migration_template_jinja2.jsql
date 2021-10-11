@@ -1,0 +1,180 @@
+-- Changes in *outcomes*
+-- Change the primary key to the new serial id.
+begin;
+alter table outcomes drop constraint outcomes_pkey cascade;
+alter table outcomes add column iid serial primary key;
+
+-- Still enforce the uniqueness and index for id, analysis_type.
+create unique index outcomes_id_type_idx on outcomes (id, analysis_type);
+
+-- Restore relationships with new field.
+-- enrichment
+create table enrichment_new as
+select
+    o.iid as outcome_iid,
+    e.gene_set_id,
+    e.hierarchy_id,
+    e.set_size,
+    e.enrichment_score,
+    e.p float8,
+    e.analysis_subset
+from
+    enrichment e
+    inner join outcomes o
+        on e.outcome_id = o.id and e.analysis_type = o.analysis_type;
+
+drop table enrichment;
+alter table enrichment_new rename to enrichment;
+
+alter table enrichment add primary key
+    (outcome_iid, analysis_subset, gene_set_id);
+
+alter table enrichment add constraint enrichment_outcome_id_fkey
+    foreign key (outcome_iid) references outcomes(iid);
+
+-- enrichment_contingency
+create table enrichment_contingency_new as
+select
+    o.iid as outcome_iid,
+    e.gene_set_id,
+    e.hierarchy_id,
+    e.n00,
+    e.n01,
+    e.n10,
+    e.n11,
+    e.p,
+    e.analysis_subset
+from
+    enrichment_contingency e
+    inner join outcomes o
+        on e.outcome_id = o.id and e.analysis_type = o.analysis_type;
+
+drop table enrichment_contingency;
+alter table enrichment_contingency_new rename to enrichment_contingency;
+
+alter table enrichment_contingency
+    add primary key (outcome_iid, analysis_subset, gene_set_id);
+
+alter table enrichment_contingency
+    add constraint enrichment_contingency_outcome_iid_fkey
+    foreign key (outcome_iid) references outcomes(iid);
+commit;
+
+-- Changes in *genes*
+-- Change the primary key to the new serial id.
+begin;
+alter table genes drop constraint genes_pkey cascade;
+alter table genes add column iid serial primary key;
+
+-- Still enforce the uniqueness and index for ensembl id.
+create unique index genes_id_idx on genes (ensembl_id);
+
+-- Restore relationships with new field.
+-- xrefs
+create table xrefs_new as
+select
+    g.iid as gene_iid,
+    xrefs.external_db_id,
+    xrefs.external_id
+from
+    xrefs inner join genes g on xrefs.ensembl_id = g.ensembl_id;
+
+drop table xrefs;
+alter table xrefs_new rename to xrefs;
+
+alter table xrefs add primary key (gene_iid, external_db_id, external_id);
+
+alter table xrefs add constraint xrefs_gene_iid_fkey
+    foreign key (gene_iid) references genes(iid);
+
+alter table xrefs add constraint xrefs_external_db_id_fkey
+    foreign key (external_db_id) references external_db(id);
+
+-- gene_n_pcs
+create table gene_n_pcs_new as
+select
+    g.iid as gene_iid,
+    pc.n_pcs_95,
+    pc.n_variants,
+    pc.pct_explained
+from
+    gene_n_pcs pc
+    inner join genes g on pc.ensembl_id = g.ensembl_id;
+
+drop table gene_n_pcs;
+alter table gene_n_pcs_new rename to gene_n_pcs;
+
+alter table gene_n_pcs add primary key (gene_iid, n_pcs_95);
+alter table gene_n_pcs add constraint gene_n_pcs_gene_iid_fkey
+    foreign key (gene_iid) references genes(iid);
+commit;
+
+-- *All results tables and model fits*
+{%- for result_table, analysis_type in result_tables %}
+-- results ({{ result_table }})
+begin;
+create table {{ result_table }}_new as
+select
+    o.iid as outcome_iid,
+    g.iid as gene_iid,
+    r.*
+from
+    {{ result_table }} r
+    inner join
+    genes g on r.gene = g.ensembl_id
+    inner join
+    (select * from outcomes where analysis_type = '{{ analysis_type }}') o
+        on r.outcome_id = o.id;
+
+drop table {{ result_table }};
+alter table {{ result_table }}_new rename to {{ result_table }};
+
+alter table {{ result_table }} drop column gene;
+alter table {{ result_table }} drop column outcome_id;
+
+alter table {{ result_table }} add primary key (outcome_iid, gene_iid);
+
+alter table {{ result_table }}
+    add constraint {{ result_table }}_gene_fkey
+    foreign key (gene_iid) references genes(iid);
+
+alter table {{ result_table }}
+    add constraint {{ result_table }}_outcome_fkey
+    foreign key (outcome_iid) references outcomes(iid);
+commit;
+
+-- model fit ({{ result_table }})
+begin;
+create table {{ result_table }}_model_fit_new as
+select
+    o.iid as outcome_iid,
+    g.iid as gene_iid,
+    r.*
+from
+    {{ result_table }}_model_fit r
+    inner join
+    genes g on r.gene = g.ensembl_id
+    inner join
+    (select * from outcomes where analysis_type = '{{ analysis_type }}') o
+        on r.outcome_id = o.id;
+
+drop table {{ result_table }}_model_fit;
+alter table {{ result_table }}_model_fit_new
+    rename to {{ result_table }}_model_fit;
+alter table {{ result_table }}_model_fit drop column outcome_id;
+alter table {{ result_table }}_model_fit drop column gene;
+
+alter table {{ result_table }}_model_fit
+    add primary key (outcome_iid, gene_iid);
+
+alter table {{ result_table }}_model_fit
+    add constraint {{ result_table }}_model_fit_gene_fkey
+    foreign key (gene_iid) references genes(iid);
+
+alter table {{ result_table }}_model_fit
+    add constraint {{ result_table }}_model_fit_outcome_fkey
+    foreign key (outcome_iid) references outcomes(iid);
+
+commit;
+
+{% endfor %}
