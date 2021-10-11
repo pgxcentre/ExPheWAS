@@ -1,0 +1,46 @@
+begin;
+
+-- Create the master table for {{ table }}
+alter table {{ table }} rename to {{ table }}_old;
+
+create table {{ table }}
+    (like {{ table }}_old including constraints)
+    partition by range (outcome_iid);
+
+-- Partitions based on quartiles for {{ table }}
+{%- for i, l, r in bounds %}
+
+-- Q{{ i }}
+drop table if exists {{ table }}_q{{ i }};
+create table {{ table }}_q{{ i }}
+    as (
+        select * from {{ table }}_old
+        {%- if l == "MINVALUE" %}
+        where outcome_iid < {{ r }}
+        {%- elif r == "MAXVALUE" %}
+        where {{ l }} <= outcome_iid
+        {%- else %}
+        where {{ l }} <= outcome_iid and outcome_iid < {{ r }}
+        {%- endif %}
+    );
+
+alter table {{ table }}_q{{ i }}
+    add primary key (outcome_iid, gene_iid);
+
+alter table {{ table }}_q{{ i }}
+    add constraint {{ table }}_q{{ i }}_gene_fkey
+    foreign key (gene_iid) references genes(iid);
+
+alter table {{ table }}_q{{ i }}
+    add constraint {{ table }}_q{{ i }}_outcome_fkey
+    foreign key (outcome_iid) references outcomes(iid);
+
+create index {{ table }}_q{{ i }}_gene_idx on {{ table }}_q{{ i }} (gene_iid);
+
+alter table {{ table }}
+    attach partition {{ table }}_q{{ i }} for values from ({{ l }}) to ({{ r }});
+{%- endfor %}
+
+drop table {{ table }}_old;
+
+end;
