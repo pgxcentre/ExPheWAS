@@ -179,7 +179,7 @@ def get_outcome_results(id):
     if analysis_subset not in models.ANALYSIS_SUBSETS:
         raise ValueError(f"{analysis_subset}: not a valid analysis subset")
 
-    results = outcome.query_results().all()
+    results = outcome.query_results(analysis_subset).all()
 
     if len(results) == 0:
         raise NoResultFound(f"Could not find results for outcome '{id}'.")
