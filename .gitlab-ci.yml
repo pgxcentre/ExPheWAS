@@ -120,11 +120,11 @@ deploy:production:
     - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
     - chmod 600 ~/.ssh/known_hosts
   script:
-    - rsync -av deploy.sh dist/exphewas-*.tar.gz frontend/frontend_dist.tar.gz exphewas@exphewas.statgen.org:auto_deploy
-    - ssh exphewas@exphewas.statgen.org "auto_deploy/deploy.sh auto_deploy/exphewas-*.tar.gz auto_deploy/frontend_dist.tar.gz /var/www/exphewas /opt/exphewas-pyvenv"
-    - ssh exphewas@exphewas.statgen.org "sudo /usr/bin/systemctl restart httpd.service"
-    - ssh exphewas@exphewas.statgen.org "sudo /usr/bin/systemctl status httpd.service"
-    - ssh exphewas@exphewas.statgen.org "rm -f auto_deploy/*"
+    - rsync -av deploy.sh dist/exphewas-*.tar.gz frontend/frontend_dist.tar.gz exphewas@exphewas.ca:auto_deploy
+    - ssh exphewas@exphewas.ca "auto_deploy/deploy.sh auto_deploy/exphewas-*.tar.gz auto_deploy/frontend_dist.tar.gz /var/www/exphewas /opt/exphewas-pyvenv"
+    - ssh exphewas@exphewas.ca "sudo /usr/bin/systemctl restart httpd.service"
+    - ssh exphewas@exphewas.ca "sudo /usr/bin/systemctl status httpd.service"
+    - ssh exphewas@exphewas.ca "rm -f auto_deploy/*"
   dependencies:
     - build:backend
     - build:production:frontend
@@ -133,6 +133,6 @@ deploy:production:
     - build:production:frontend
   environment:
     name: production_ukbiobank
-    url: https://exphewas.statgen.org/
+    url: https://exphewas.ca/
   only:
     - deploy
