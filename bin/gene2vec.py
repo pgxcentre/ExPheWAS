@@ -147,7 +147,6 @@ def write_genotypes_in_region(reader, chrom, start, end, maf_threshold,
             print(g.variant.name, *g.genotypes, sep=",", file=f)
 
 
-
 def parse_args():
     parser = argparse.ArgumentParser()
 
