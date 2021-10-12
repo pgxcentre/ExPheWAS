@@ -5,8 +5,7 @@
     <h3>Data release information</h3>
 
     <div>
-      <p>The current data release is v{{ meta.db.version }}</p>
-      <p>Generated on {{ meta.db.date }}</p>
+      <p>The current data release is <span class="badge bg-success text-light">v{{ meta.db.version }}</span> generated on {{ meta.db.date }}</p>
       <p>{{ meta.db.comments|safe }}</p>
     </div>
 

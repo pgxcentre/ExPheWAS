@@ -12,7 +12,7 @@ import os
 from setuptools import setup, find_packages
 
 
-MAJOR = 1
+MAJOR = 2
 MINOR = 0
 MICRO = 0
 VERSION = "{0}.{1}.{2}".format(MAJOR, MINOR, MICRO)
