@@ -3,6 +3,7 @@ Flask-based application for ExPheWAS.
 """
 
 import os
+import random
 from collections import defaultdict
 
 from sqlalchemy.orm.exc import NoResultFound
@@ -13,6 +14,7 @@ from .cache import Cache
 from ..version import exphewas_version
 from ..db import models
 from ..db.engine import Session
+from ..db.utils import ANALYSIS_SUBSETS
 
 
 backend = Blueprint(
@@ -72,6 +74,31 @@ def get_outcomes():
     return render_template("outcome_list.html", page_title="Phenotypes")
 
 
+@backend.route("/outcome/random")
+def get_random_outcome():
+    outcomes = Session().query(models.Outcome).all()
+    outcome = random.choice(outcomes)
+
+    args = request.args.to_dict()
+
+    # Pick an analysis subset with data.
+    subsets = ANALYSIS_SUBSETS.copy()
+    random.shuffle(subsets)
+    for subset in subsets:
+        # Check if current subset has data.
+        Result = models.RESULTS_CLASS_MAP[subset][outcome.analysis_type]
+        res = Session.query(Result).filter_by(outcome_iid=outcome.iid).first()
+        if res is None:
+            continue
+
+        args["analysis_type"] = outcome.analysis_type
+        args["analysis_subset"] = subset
+
+        request.args = args
+
+        return get_outcome(outcome.id)
+
+
 @backend.route("/outcome/<id>")
 def get_outcome(id):
     analysis_type = request.args.get("analysis_type")
@@ -82,7 +109,8 @@ def get_outcome(id):
 
     # Checks if there are enrichment results for this outcome
     enrichment_result = Session.query(models.EnrichmentContingency)\
-        .filter_by(hierarchy_id="ATC", outcome_iid=outcome_dict["iid"])
+        .filter_by(hierarchy_id="ATC", outcome_iid=outcome_dict["iid"])\
+        .first()
 
     has_atc = enrichment_result is not None
 
@@ -121,6 +149,18 @@ def get_genes():
 @backend.route("/cisMR")
 def cis_mr():
     return render_template("cis_mr.html", page_title="cisMR")
+
+
+@backend.route("/gene/random")
+def get_random_gene():
+    ensgs = Session().query(models.Gene.ensembl_id).all()
+    ensg = random.choice(ensgs)[0]
+
+    args = request.args.to_dict()
+    args["analysis_subset"] = random.choice(ANALYSIS_SUBSETS)
+    request.args = args
+
+    return get_gene(ensg)
 
 
 @backend.route("/gene/<ensg>")

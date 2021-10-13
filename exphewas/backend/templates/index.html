@@ -2,30 +2,59 @@
 {% block body %}
 
 <div class="container">
-    <p>See the preprint for a thorough discussion or to cite this resource:</p>
-
-    <div class="citation">
-      <p><b><i>ExPheWas</i>: a browser for gene-based pheWAS associations.</b><br /> Legault, M.-A., Lemieux Perreault, L.-P., & Dubé, M.-P. (2021). medRxiv. <a href="https://doi.org/10.1101/2021.03.17.21253824">https://doi.org/10.1101/2021.03.17.21253824</a></p>
-    </div>
-
     <h3>Overview</h3>
 
-    <p>The ExPheWas browser showcases the results of a phenome-wide association study (PheWAS) using an approach that models the joint effect of variants at protein coding genes. In the original release, we tested the association between 19,114 genes on human autosomes and 1,210 phenotypes available from the UK Biobank.</p>
+    <p>The ExPheWas browser showcases the results of a phenome-wide association study (PheWAS) using an approach that models the joint effect of variants at protein coding genes. In the current data release, we tested the association between 26,616 protein coding or lincRNA genes and 1,746 phenotypes available in the UK Biobank.</p>
 
-    <p>Briefly, we used a principal component analysis of common variant genotypes (PCA) to reduce the effective number of variables needed to represent the genotypes. Association testing is then done by assessing the improvement in goodness of fit from including the gene based principal components to a regression model. The experimental setup is described in more details in the figure below:</p>
+    <p>Briefly, we used a principal component analysis (PCA) of common variant genotypes to reduce the effective number of variables needed to capture statistical variance in the genotypes. Association testing is then done by assessing the improvement in goodness of fit from including the gene based principal components to a regression model. The experimental setup is described in more details in the figure below:</p>
 
-    <p style="text-align: center;"><img style="max-width: 100%; height: auto" src="{{ url_for('backend_blueprint.static', filename='analysis_summary.png') }}" /></p>
+    <p style="text-align: center;"><img style="max-width: 100%; height: auto" src="{{ url_for('backend_blueprint.static', filename='v1_analysis_summary_web.svg') }}" /></p>
 
-    <p>PheWAS results can then be browsed <a href="{{ url_for("backend_blueprint.get_genes") }}">by gene</a> or <a href="{{ url_for("backend_blueprint.get_outcomes") }}">by phenotype</a>. The pages are mostly self-explanatory, but key features are illustrated below:</p>
+    <p>PheWAS results can then be browsed <a href="{{ url_for("backend_blueprint.get_genes") }}">by gene</a> or <a href="{{ url_for("backend_blueprint.get_outcomes") }}">by phenotype</a>.</p>
 
     <div class="row" style="margin-bottom: 30px;">
-      <a id="home-phen-page-link" href="{{ url_for('backend_blueprint.get_outcomes') }}">
-        <img src="{{ url_for('backend_blueprint.static', filename='browser_figure_phenotype.svg') }}" />
-      </a>
-      <a id="home-gene-page-link" href="{{ url_for('backend_blueprint.get_genes') }}">
-        <img src="{{ url_for('backend_blueprint.static', filename='browser_figure_gene.svg') }}" />
-      </a>
+      <div class="col-sm-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Phenotype page</h5>
+            <p class="card-text">See all genes associated with a given phenotype.</p>
+            <a href="{{ url_for('backend_blueprint.get_outcomes') }}" class="btn btn-primary">List of phenotypes</a><br/>
+            <a href="{{ url_for('backend_blueprint.get_random_outcome') }}" class="card-link">(or random example)</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">Gene page</h5>
+            <p class="card-text">See all phenotypes associated with a given gene.</p>
+            <a href="{{ url_for('backend_blueprint.get_genes') }}" class="btn btn-primary">List of genes</a><br />
+            <a href="{{ url_for('backend_blueprint.get_random_gene') }}" class="card-link">(or random example)</a>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title"><i>cis</i>-Mendelian randomization</h5>
+            <p class="card-text">Estimate the causal (under the instrumental variable assumptions) effect of an exposure on an outcome based only on a single gene.</p>
+            <a href="{{ url_for('backend_blueprint.cis_mr') }}" class="btn btn-primary">cis-MR</a>
+          </div>
+        </div>
+      </div>
     </div>
+
+    <h3>Citation</h3>
+    <p>If you use ExPheWas in your research, please consider citing:</p>
+    <div class="citation">
+      <p><b><i>ExPheWas</i>: a browser for gene-based pheWAS associations.</b><br /> Legault, M.-A., Lemieux Perreault, L.-P., & Dubé, M.-P. (2021). <br />Preprint on <i>medRxiv</i>. <a href="https://doi.org/10.1101/2021.03.17.21253824">https://doi.org/10.1101/2021.03.17.21253824</a></p>
+    </div>
+
+    <h3>Data release information</h3>
+    <p>We use distinct version numbers for the data release and the browser. This enables us to improve on the browser while unambiguously referring to the underlying data. You may refer to the data release version when reporting ExPheWas results and we are commited to maintaining stable access to previous data releases. There are currently two data releases (<a href="https://exphewas.ca/v0">v0</a> and <a href="https://exphewas.ca/v1">v1</a>).</p>
+
+    <p>This browser uses data release <span class="badge bg-success text-light">v{{ meta.db.version }}</span> ({{ meta.db.date }})</p>
+    <p>{{ meta.db.comments|safe }}</p>
 
     <h3>Support</h3>
 

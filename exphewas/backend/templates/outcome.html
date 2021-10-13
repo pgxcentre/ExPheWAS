@@ -57,7 +57,7 @@
               <div style="margin-top: 20px">
                 <p><a href="https://biit.cs.ut.ee/gprofiler/gost">g:Profiler</a> is
                 used to automatically compute enrichment analyses when more
-                than 5 genes are significant with a Q-value under 0.05.</p>
+                than 5 genes are significant with a <i>Q</i> &lt; 0.05.</p>
                 <p>The above plot was created using this resource and with the
                 significant genes from the table below.</p>
               </div>
@@ -75,6 +75,7 @@
             </div>
             <svg id="atc-tree"></svg>
           </div>
+          <div>The above tree shows drug classes based on Anatomical Therapeutic Chemical (ATC) Classification codes. The color of the nodes indicates an enrichment of genes associated with the current phenotype (at <i>Q</i> &lt; 0.05) with drugs of the corresponding ATC class.</div>
           {%- endif %}
         </div>
       </div>
