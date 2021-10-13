@@ -2,12 +2,6 @@
 {% block body %}
 
   <div class="container">  <!-- Documentation is narrower because it's more text-heavy. -->
-    <h3>Data release information</h3>
-
-    <div>
-      <p>The current data release is <span class="badge bg-success text-light">v{{ meta.db.version }}</span> generated on {{ meta.db.date }}</p>
-      <p>{{ meta.db.comments|safe }}</p>
-    </div>
 
     <h3>API Documentation</h3>
 
@@ -51,7 +45,7 @@
           </tr>
           <tr>
             <td class="dt-left">GET /outcome/venn</td>
-            <td class="dt-left">Get number of shared associated genes for an arbitrary number of outcomes.</td>
+            <td class="dt-left">Get number of shared associated genes between two outcomes.</td>
             <td>
               <ul class="list-group list-group-flush">
                 <li class="list-group-item"><span class="badge badge-pill badge-dark">outcomes</span> List of outcomes delimited by ';'</li>
