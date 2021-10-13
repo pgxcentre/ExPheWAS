@@ -8,7 +8,7 @@
 
     <p>Briefly, we used a principal component analysis (PCA) of common variant genotypes to reduce the effective number of variables needed to capture statistical variance in the genotypes. Association testing is then done by assessing the improvement in goodness of fit from including the gene based principal components to a regression model. The experimental setup is described in more details in the figure below:</p>
 
-    <p style="text-align: center;"><img style="max-width: 100%; height: auto" src="{{ url_for('backend_blueprint.static', filename='v1_analysis_summary_web.svg') }}" /></p>
+    <p style="text-align: center;"><img style="max-width: 100%; height: auto" src="{{ url_for('backend_blueprint.static', filename='v1_analysis_summary_web.png') }}" /></p>
 
     <p>PheWAS results can then be browsed <a href="{{ url_for("backend_blueprint.get_genes") }}">by gene</a> or <a href="{{ url_for("backend_blueprint.get_outcomes") }}">by phenotype</a>.</p>
 
