@@ -7,7 +7,7 @@ import random
 from collections import defaultdict
 
 from sqlalchemy.orm.exc import NoResultFound
-from flask import Blueprint, render_template, abort, url_for, request
+from flask import Blueprint, render_template, abort, url_for, request, redirect
 
 from . import api
 from .cache import Cache
@@ -79,8 +79,6 @@ def get_random_outcome():
     outcomes = Session().query(models.Outcome).all()
     outcome = random.choice(outcomes)
 
-    args = request.args.to_dict()
-
     # Pick an analysis subset with data.
     subsets = ANALYSIS_SUBSETS.copy()
     random.shuffle(subsets)
@@ -91,12 +89,12 @@ def get_random_outcome():
         if res is None:
             continue
 
-        args["analysis_type"] = outcome.analysis_type
-        args["analysis_subset"] = subset
-
-        request.args = args
-
-        return get_outcome(outcome.id)
+        return redirect(url_for(
+            "backend_blueprint.get_outcome",
+            id=outcome.id,
+            analysis_subset=subset,
+            analysis_type=outcome.analysis_type
+        ))
 
 
 @backend.route("/outcome/<id>")
@@ -156,11 +154,13 @@ def get_random_gene():
     ensgs = Session().query(models.Gene.ensembl_id).all()
     ensg = random.choice(ensgs)[0]
 
-    args = request.args.to_dict()
-    args["analysis_subset"] = random.choice(ANALYSIS_SUBSETS)
-    request.args = args
-
-    return get_gene(ensg)
+    subset = random.choice(ANALYSIS_SUBSETS)
+    print("-> ", subset)
+    return redirect(url_for(
+        "backend_blueprint.get_gene",
+        ensg=ensg,
+        analysis_subset=subset
+    ))
 
 
 @backend.route("/gene/<ensg>")
@@ -182,6 +182,7 @@ def get_gene(ensg):
 
     title = "Gene '{}' - {}".format(gene_info["ensembl_id"], gene_info["name"])
     analysis_subset = request.args.get("analysis_subset", "BOTH")
+    print("-> ", analysis_subset)
     if analysis_subset == "FEMALE_ONLY":
         title += " (Female only)"
     elif analysis_subset == "MALE_ONLY":
