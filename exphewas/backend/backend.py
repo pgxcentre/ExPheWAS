@@ -155,7 +155,6 @@ def get_random_gene():
     ensg = random.choice(ensgs)[0]
 
     subset = random.choice(ANALYSIS_SUBSETS)
-    print("-> ", subset)
     return redirect(url_for(
         "backend_blueprint.get_gene",
         ensg=ensg,
@@ -182,7 +181,6 @@ def get_gene(ensg):
 
     title = "Gene '{}' - {}".format(gene_info["ensembl_id"], gene_info["name"])
     analysis_subset = request.args.get("analysis_subset", "BOTH")
-    print("-> ", analysis_subset)
     if analysis_subset == "FEMALE_ONLY":
         title += " (Female only)"
     elif analysis_subset == "MALE_ONLY":
