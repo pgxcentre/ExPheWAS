@@ -136,13 +136,7 @@ def get_outcome(id):
     if analysis_subset not in models.ANALYSIS_SUBSETS:
         raise ValueError(f"{analysis_subset}: not a valid analysis subset")
 
-    out = {
-        "id": outcome.id,
-        "analysis_type": outcome.analysis_type,
-        "analysis_subset": analysis_subset,
-        "label": outcome.label,
-        "type": "continuous_outcomes" if outcome.is_continuous() else "binary_outcomes"
-    }
+    out = outcome.to_dict()
 
     # Get appropriate result class.
     # We need to also look at analysis subset so that the reported ns are
@@ -153,10 +147,7 @@ def get_outcome(id):
         # Get mean n.
         ns = session.query(
             result_obj.n
-        ).filter_by(
-            outcome_id=outcome.id,
-            analysis_type=outcome.analysis_type,
-        ).limit(100).all()
+        ).filter_by(outcome_iid=outcome.iid,).limit(100).all()
 
         out["n_avg"] = int(round(np.mean(ns)))
 
@@ -165,10 +156,7 @@ def get_outcome(id):
             result_obj.n_cases,
             result_obj.n_controls,
             result_obj.n_excluded_from_controls
-        ).filter_by(
-            outcome_id=outcome.id,
-            analysis_type=outcome.analysis_type,
-        ).limit(100).all()
+        ).filter_by(outcome_iid=outcome.iid).limit(100).all()
 
         res = np.array(res)
         avgs = [int(round(i)) for i in np.mean(res, axis=0)]
@@ -191,24 +179,14 @@ def get_outcome_results(id):
     if analysis_subset not in models.ANALYSIS_SUBSETS:
         raise ValueError(f"{analysis_subset}: not a valid analysis subset")
 
-    Result = outcome.get_results_class(analysis_subset)
-    query = Session().query(
-        Result.static_nlog10p,
-        Result.gene,
-        models.Gene.name,
-        models.GeneNPcs.n_pcs_95,
-    ).filter_by(outcome_id=id)\
-    .join(models.Gene, models.Gene.ensembl_id == Result.gene)\
-    .join(models.GeneNPcs, models.GeneNPcs.ensembl_id == models.Gene.ensembl_id)
-
-    results = query.all()
+    results = outcome.query_results(analysis_subset).all()
 
     if len(results) == 0:
         raise NoResultFound(f"Could not find results for outcome '{id}'.")
 
     # Get the corresponding Q-values.
     nlog10ps = np.fromiter(
-        (r[0] for r in results),
+        (r.static_nlog10p for r in results),
         dtype=np.float, count=len(results)
     )
 
@@ -220,7 +198,7 @@ def get_outcome_results(id):
 
     return [
         {
-            "gene": r[1],
+            "gene": o.gene_obj.ensembl_id,
             "analysis_type": outcome.analysis_type,
             "outcome_id": outcome.id,
             "outcome_label": outcome.label,
@@ -228,10 +206,10 @@ def get_outcome_results(id):
             "p": p,
             "bonf": p * len(results),
             "q": q,
-            "gene_name": r[2],
-            "n_components": [3]
+            "gene_name": o.gene_obj.name,
+            "n_components": o.gene_obj.n_pcs
         }
-        for nlog10p, q, p, r in zip(nlog10ps, qs, ps, results)
+        for nlog10p, q, p, o in zip(nlog10ps, qs, ps, results)
     ]
 
 
@@ -273,7 +251,7 @@ def get_gene_by_ensembl_id(ensg):
 def get_gene_results(ensg):
     session = Session()
     try:
-        session.query(models.Gene).filter_by(ensembl_id=ensg).one()
+        gene = session.query(models.Gene).filter_by(ensembl_id=ensg).one()
     except NoResultFound:
         raise RessourceNotFoundError(
             f"Could not find gene (by Ensembl ID) '{ensg}'."
@@ -297,7 +275,8 @@ def get_gene_results(ensg):
 
     for analysis_type in analysis_types:
         result_class = get_results_class(analysis_type, analysis_subset)
-        for res in session.query(result_class).filter_by(gene=ensg).all():
+        q = session.query(result_class).filter_by(gene_iid=gene.iid)
+        for res in q:
             results.append(res.to_object())
             nlog10ps.append(res.static_nlog10p)
 
@@ -325,19 +304,20 @@ def get_gene_results(ensg):
 
 @make_api("/gene/<ensg>/xrefs")
 def get_gene_xrefs(ensg):
-    results = Session.query(models.XRefs, models.ExternalDB)\
+    results = Session.query(models.Gene, models.XRefs, models.ExternalDB)\
         .filter(models.XRefs.external_db_id == models.ExternalDB.id)\
+        .filter(models.XRefs.gene_iid == models.Gene.iid)\
         .filter_by(ensembl_id=ensg)\
         .all()
 
     return [
         {
-            "gene": xref.ensembl_id,
+            "gene": gene.ensembl_id,
             "db_id": external_db.db_name,
             "db_description": external_db.db_display_name,
             "external_id": xref.external_id,
         }
-        for xref, external_db in results
+        for gene, xref, external_db in results
     ]
 
 
@@ -414,6 +394,8 @@ def cis_mendelian_randomization():
     exposure = _get_outcome(session, exposure_id, exposure_type)
     outcome = _get_outcome(session, outcome_id, outcome_type)
 
+    gene = session.query(models.Gene).filter_by(ensembl_id=gene).one()
+
     disable_pruning = request.args.get("disable_pruning") == "true"
 
     not_found = []
@@ -421,7 +403,7 @@ def cis_mendelian_randomization():
         exposure_result = exposure.query_results(
             analysis_subset,
             preload_model=True
-        ).filter_by(gene=gene).one()
+        ).filter_by(gene_iid=gene.iid).one()
     except NoResultFound:
         not_found.append(
             f"'{exposure_type} - {exposure.label} ({exposure_id})'"
@@ -431,7 +413,7 @@ def cis_mendelian_randomization():
         outcome_result = outcome.query_results(
             analysis_subset,
             preload_model=True
-        ).filter_by(gene=gene).one()
+        ).filter_by(gene_iid=gene.iid).one()
     except NoResultFound:
         not_found.append(f"'{outcome_type} - {outcome.label} ({outcome_id})'")
 
@@ -465,10 +447,13 @@ def cis_mendelian_randomization():
 
 @make_api("/enrichment/atc/contingency/<outcome_id>")
 def get_enrichment_atc_contingency_for_outcome(outcome_id):
-    return get_enrichment_for_outcome(outcome_id, models.EnrichmentContingency)
+    outcome = _get_outcome(Session(), outcome_id,
+                           request.args.get("analysis_type"))
+    return get_enrichment_for_outcome(outcome.iid,
+                                      models.EnrichmentContingency)
 
 
-def get_enrichment_for_outcome(outcome_id, enr_model):
+def get_enrichment_for_outcome(outcome_iid, enr_model):
     atc_tree = tree_from_hierarchy_id("ATC")
 
     # We will make a dict representation of the ATC tree to update the data
@@ -477,7 +462,7 @@ def get_enrichment_for_outcome(outcome_id, enr_model):
 
     results = Session.query(enr_model)\
         .filter_by(hierarchy_id="ATC")\
-        .filter_by(outcome_id=outcome_id)\
+        .filter_by(outcome_iid=outcome_iid)\
         .all()
 
     for enrichment_result in results:

@@ -8,7 +8,7 @@
     </script>
     <script type="text/javascript" src="{{ url_for('static', filename='main.js') }}?{{ config.EXPHEWAS_VERSION }}"></script>
 
-    <title>ExPheWAS Browser{{ " | " + page_title if page_title is not none }}</title>
+    <title>ExPheWas Browser{{ " | " + page_title if page_title is not none }}</title>
 
     <link rel="shortcut icon" href="{{ url_for('backend_blueprint.static', filename='favicon.ico') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('backend_blueprint.static', filename='favicon-16x16.png') }}">
@@ -21,7 +21,7 @@
 
     <div>
       <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <span class="navbar-brand"><img src="{{ url_for('backend_blueprint.static', filename='exphewas_logo.svg') }}" height="30px" /></span>
+        <span class="navbar-brand"><a href="{{ url_for("backend_blueprint.get_index") }}"><img src="{{ url_for('backend_blueprint.static', filename='exphewas_logo.svg') }}" height="30px" /></a></span>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
