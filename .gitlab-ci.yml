@@ -75,11 +75,11 @@ build:production:frontend:
 
 deploy:staging:ukbiobank:
   stage: deploy
-  image: centos:latest
+  image: fedora:latest
   tags:
     - deploy
   before_script:
-    - yum install -y which openssh-clients
+    - yum install -y openssh-clients
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
@@ -108,11 +108,11 @@ deploy:staging:ukbiobank:
 
 deploy:production:
   stage: deploy
-  image: centos:latest
+  image: fedora:latest
   tags:
     - deploy
   before_script:
-    - yum install -y which openssh-clients rsync
+    - yum install -y openssh-clients rsync
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh

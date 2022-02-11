@@ -542,7 +542,7 @@ def all_results_union(session, cols=None):
 
     """
     if cols is None:
-        cols = ["outcome_id"]
+        cols = ["outcome_iid"]
 
     # Making sure analysis_subset isn't in the list
     cols = [
