@@ -1,4 +1,9 @@
 {% extends "base.html" %}
+
+{% block tooltips %}
+  <div class="tooltip" id="tooltip-atc-tree"></div>
+{% endblock %}
+
 {% block body %}
 
   <div class="container">  <!-- Documentation is narrower because it's more text-heavy. -->
@@ -7,5 +12,40 @@
 
     <p>Write description here.</p>
 
+    <h4>Enrichment analysis</h4>
 
+    <p>
+      The figure below shows the results from the drug target enrichment
+      analysis using Fisher's exact test on <i>essential hypertension</i>
+      (outcome <a href="{{ url_for('backend_blueprint.get_outcome', id='401.1') }}">401.1</a>).
+      The color of each node indicates the enrichment of genes with the
+      phenotype with drugs of the corresponding ATC class or subclass. The color
+      of the border represents the lowest p-value in the branch.
+    </p>
+
+    <p>
+      For example, ATC class C (<i>cardiovascular system</i>) shows no
+      significant gene enrichment (p-value of 0.612), but the red border shows
+      that at least one of its sub-classes has a significant p-values. Expanding
+      the nodes shows enrichments for ATC codes C02 (<i>antihypertensives</i>)
+      and C07 (<i>beta blocking agents</i>) with p-values of 0.008 and 0.015,
+      respectively. Again, the red border for ATC class C01 (<i>cardiac
+      therapy</i>) shows that at least one of its subclasses is significant.
+      Going down the C01 branch reveals that ATC C01DA (<i>organic nitrates</i>)
+      is significantly enriched with a p-value of 0.002.
+    </p>
+
+    <div class="atc-enrichment" style="text-align: center;">
+      <div class="atc-enrichment-header">
+        <h5>Enrichment Analysis for Essential hypertension (<a href="{{ url_for('backend_blueprint.get_outcome', id='401.1') }}">401.1</a>)</h5>
+      </div>
+      <svg id="atc-tree-401-1" class="atc-tree-cls"></svg>
+    </div>
+
+{% endblock %}
+
+{% block other_script %}
+    <script>
+      window.pages.atcTree('401.1', 'atc-tree-401-1');
+    </script>
 {% endblock %}
