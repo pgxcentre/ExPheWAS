@@ -40,8 +40,14 @@
             <li class="nav-item genes">
               <a class="nav-link{% if request.url_rule.endpoint == 'backend_blueprint.cis_mr' %} active{% endif %}" href="{{ url_for("backend_blueprint.cis_mr") }}">cis-MR</a>
             </li>
-            <li class="nav-item docs">
-              <a class="nav-link{% if request.url_rule.endpoint == 'backend_blueprint.get_docs' %} active{% endif %}" href="{{ url_for("backend_blueprint.get_docs") }}">Documentation</a>
+            <li class="nav-item dropdown{% if request.url_rule.endpoint in ['backend_blueprint.get_api_docs', 'backend_blueprint.get_browser_docs'] %} active{% endif %}">
+              <a class="nav-link dropdown-toggle" href="#" id="docsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Documentation
+              </a>
+              <div class="dropdown-menu" aria-labelledby="docsDropdown">
+                <a class="dropdown-item{% if request.url_rule.endpoint == 'backend_blueprint.get_browser_docs' %} active{% endif %}" href="{{ url_for("backend_blueprint.get_browser_docs") }}">Browser documentation</a>
+                <a class="dropdown-item{% if request.url_rule.endpoint == 'backend_blueprint.get_api_docs' %} active{% endif %}" href="{{ url_for("backend_blueprint.get_api_docs") }}">API Documentation</a>
+              </div>
             </li>
           </ul>
           <div class="dropdown-divider"></div>
