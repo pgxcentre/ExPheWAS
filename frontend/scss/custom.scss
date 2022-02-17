@@ -96,21 +96,21 @@
   display: flex;
 }
 
-#atc-tree {
+.atc-tree-cls {
   width: 100%;
   min-width: 800px;
 }
 
 // Colorbar text
-#atc-tree g.node:first-of-type {
+.atc-tree-cls g.node:first-of-type {
   pointer-events: none;
 }
 
-#atc-tree text {
+.atc-tree-cls text {
   pointer-events: none;
 }
 
-#atc-tree .leaf {
+.atc-tree-cls .leaf {
   cursor: default;
 }
 

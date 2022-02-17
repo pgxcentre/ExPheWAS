@@ -14,10 +14,13 @@ from ..db.engine import Session
 
 
 def path_to(name):
+    """Return the path to a given cache file."""
     return os.path.join(CACHE_DIR, name)
 
 
 class Cache(object):
+    """Cache object."""
+    # pylint: disable=missing-function-docstring
     def __init__(self):
         print(f"Using '{CACHE_DIR}' as data cache.")
 
@@ -44,6 +47,7 @@ class Cache(object):
 
 # Create the data caches.
 def create_or_load_startup_caches():
+    """Create or load the startup cache (outcome)."""
     cache = Cache()
     session = Session()
 
@@ -53,6 +57,7 @@ def create_or_load_startup_caches():
 
 
 def cache_outcomes(cache, session):
+    """Cache outcomes with results."""
     q = models.all_results_union(session).subquery()
 
     results = session.query(
@@ -61,11 +66,11 @@ def cache_outcomes(cache, session):
             q.c.analysis_subset
         ).label("available_subsets"))\
         .filter(
-            models.Outcome.id == q.c.outcome_id,
+            models.Outcome.iid == q.c.outcome_iid,
             models.Outcome.analysis_type == q.c.analysis_type
         )\
         .group_by(
-            models.Outcome.id,
+            models.Outcome.iid,
             models.Outcome.analysis_type
         )
 
@@ -88,14 +93,14 @@ def cache_gene_with_results():
     session = Session()
 
     # Retrieving all the genes with results
-    all_genes = session.query(models.RESULTS_CLASSES[0].gene)
+    all_genes = session.query(models.RESULTS_CLASSES[0].gene_iid)
     for result_obj in models.RESULTS_CLASSES[1:]:
-        all_genes = all_genes.union(session.query(result_obj.gene))
+        all_genes = all_genes.union(session.query(result_obj.gene_iid))
 
     # Setting has_results to true for these genes
     for gene in all_genes.all():
         gene_obj = session.query(models.Gene)\
-            .filter(models.Gene.ensembl_id == gene[0])\
+            .filter(models.Gene.iid == gene[0])\
             .one()
         gene_obj.has_results = True
 

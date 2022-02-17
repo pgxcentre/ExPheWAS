@@ -490,5 +490,6 @@ window.pages = {
   mainGeneResults,
   mainGeneList,
   documentation,
-  cisMR
+  cisMR,
+  atcTree
 }
