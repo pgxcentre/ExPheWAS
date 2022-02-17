@@ -35,11 +35,15 @@
       is significantly enriched with a p-value of 0.002.
     </p>
 
-    <div class="atc-enrichment" style="text-align: center;">
-      <div class="atc-enrichment-header">
-        <h5>Enrichment Analysis for Essential hypertension (<a href="{{ url_for('backend_blueprint.get_outcome', id='401.1') }}">401.1</a>)</h5>
+    <div class="card atcDocs">
+      <div class="card-body">
+        <div class="atc-enrichment" style="text-align: center;">
+          <div class="atc-enrichment-header">
+            <h5>Enrichment Analysis for Essential hypertension (<a href="{{ url_for('backend_blueprint.get_outcome', id='401.1') }}">401.1</a>)</h5>
+          </div>
+          <svg id="atc-tree-401-1" class="atc-tree-cls"></svg>
+        </div>
       </div>
-      <svg id="atc-tree-401-1" class="atc-tree-cls"></svg>
     </div>
 
 {% endblock %}
