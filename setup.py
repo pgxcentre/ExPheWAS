@@ -52,7 +52,7 @@ def setup_package():
                           "pandas >= 0.25.3"],
         packages=find_packages(),
         package_data={
-            "exphewas.backend": ["templates/*", "static/*", "static/data*",
+            "exphewas.backend": ["templates/*", "static/*", "static/docs*",
                                  "data/*"],
             "exphewas.db.scripts": ["data/*"],
         },
