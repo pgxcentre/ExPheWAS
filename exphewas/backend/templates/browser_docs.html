@@ -20,18 +20,20 @@
       (outcome <a href="{{ url_for('backend_blueprint.get_outcome', id='401.1') }}">401.1</a>).
       The color of each node indicates the enrichment of genes with the
       phenotype with drugs of the corresponding ATC class or subclass. The color
-      of the border represents the lowest p-value in the branch.
+      of the border represents the lowest p-value in the branch. The tree is
+      interactive, and each node can be expanded to show its children by
+      clicking on it.
     </p>
 
     <p>
       For example, ATC class C (<i>cardiovascular system</i>) shows no
       significant gene enrichment (p-value of 0.612), but the red border shows
       that at least one of its sub-classes has a significant p-values. Expanding
-      the nodes shows enrichments for ATC codes C02 (<i>antihypertensives</i>)
+      the C node shows enrichments for ATC codes C02 (<i>antihypertensives</i>)
       and C07 (<i>beta blocking agents</i>) with p-values of 0.008 and 0.015,
       respectively. Again, the red border for ATC class C01 (<i>cardiac
       therapy</i>) shows that at least one of its subclasses is significant.
-      Going down the C01 branch reveals that ATC C01DA (<i>organic nitrates</i>)
+      Expanding the C01 branch reveals that ATC C01DA (<i>organic nitrates</i>)
       is significantly enriched with a p-value of 0.002.
     </p>
 
