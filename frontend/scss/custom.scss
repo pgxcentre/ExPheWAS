@@ -39,6 +39,19 @@
   margin: 20px 0;
 }
 
+.card.docs {
+  margin: auto;
+  width: 90%;
+}
+
+.card img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 100%;
+  width: inherit !important;
+}
+
 .dropdown.analyisType {
   margin: 10px 0px 20px 0px;
 }
@@ -183,4 +196,16 @@
 .tooltip-help {
   border-bottom: 1px dotted black;
   font-size: 10pt;
+}
+
+@media all and (min-width: 992px) {
+	.navbar .nav-item .dropdown-menu {
+    display: none;
+  }
+	.navbar .nav-item:hover .dropdown-menu {
+    display: block;
+  }
+	.navbar .nav-item .dropdown-menu {
+    margin-top: 0;
+  }
 }

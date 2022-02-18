@@ -20,27 +20,78 @@
       (outcome <a href="{{ url_for('backend_blueprint.get_outcome', id='401.1') }}">401.1</a>).
       The color of each node indicates the enrichment of genes with the
       phenotype with drugs of the corresponding ATC class or subclass. The color
-      of the border represents the lowest p-value in the branch.
+      of the border represents the lowest p-value in the branch. The tree is
+      interactive, and each node can be expanded to show its children by
+      clicking on it.
     </p>
 
     <p>
       For example, ATC class C (<i>cardiovascular system</i>) shows no
       significant gene enrichment (p-value of 0.612), but the red border shows
       that at least one of its sub-classes has a significant p-values. Expanding
-      the nodes shows enrichments for ATC codes C02 (<i>antihypertensives</i>)
+      the C node shows enrichments for ATC codes C02 (<i>antihypertensives</i>)
       and C07 (<i>beta blocking agents</i>) with p-values of 0.008 and 0.015,
       respectively. Again, the red border for ATC class C01 (<i>cardiac
       therapy</i>) shows that at least one of its subclasses is significant.
-      Going down the C01 branch reveals that ATC C01DA (<i>organic nitrates</i>)
+      Expanding the C01 branch reveals that ATC C01DA (<i>organic nitrates</i>)
       is significantly enriched with a p-value of 0.002.
     </p>
 
-    <div class="atc-enrichment" style="text-align: center;">
-      <div class="atc-enrichment-header">
-        <h5>Enrichment Analysis for Essential hypertension (<a href="{{ url_for('backend_blueprint.get_outcome', id='401.1') }}">401.1</a>)</h5>
+    <p>
+      <div class="card docs">
+        <div class="card-body">
+          <div class="atc-enrichment" style="text-align: center;">
+            <div class="atc-enrichment-header">
+              <h5>Enrichment Analysis for Essential hypertension (<a href="{{ url_for('backend_blueprint.get_outcome', id='401.1') }}">401.1</a>)</h5>
+            </div>
+            <svg id="atc-tree-401-1" class="atc-tree-cls"></svg>
+          </div>
+        </div>
       </div>
-      <svg id="atc-tree-401-1" class="atc-tree-cls"></svg>
-    </div>
+    </p>
+
+    <h4>How to save image</h4>
+
+    <p>
+      Figures in the browser are all SVG images. A quick way to save a figure to
+      disk is using an extension (either
+      <a href="https://chrome.google.com/webstore/detail/svg-export/naeaaedieihlkmdajjefioajbbdbdjgp">SVG Export</a>
+      or <a href="https://chrome.google.com/webstore/detail/svg-grabber-get-all-the-s/ndakggdliegnegeclmfgodmgemdokdmg">svg-grabber</a>
+      on Google Chrome, or <a href="https://addons.mozilla.org/en-CA/firefox/addon/svg-export/">SVG Export</a>
+      for Firefox). SVG Export will be documented here, since it's available for
+      both Google Chrome and Firefox.
+    </p>
+
+    <p>
+      Let's say we want to save the g:Profiler figure for Essential hypertension
+      (<a href="{{ url_for('backend_blueprint.get_outcome', id='401.1') }}">401.1</a>).
+      First, navigate to the URL, and wait that all the figures are generated.
+      Then launch the SVG Export plugin by clicking on it.
+    </p>
+
+    <p>
+      <div class="card docs">
+        <div class="card-body">
+          <a href="{{ url_for('backend_blueprint.static', filename='docs/select_svg_export.png') }}"><img src="{{ url_for('backend_blueprint.static', filename='docs/select_svg_export.png') }}"></a>
+        </div>
+      </div>
+    </p>
+
+    <p>
+      A new tab will automatically open. 1) Select the g:Profiler plot and 2)
+      the required format (PNG in this example). Finally, 3) click the "Download
+      Selected" button at the bottom to download the selected images in PNG
+      format.
+    </p>
+
+    <p>
+      <div class="card docs">
+        <div class="card-body">
+          <a href="{{ url_for('backend_blueprint.static', filename='docs/svg_export.png') }}"><img src="{{ url_for('backend_blueprint.static', filename='docs/svg_export.png') }}"></a>
+        </div>
+      </div>
+    </p>
+
 
 {% endblock %}
 
