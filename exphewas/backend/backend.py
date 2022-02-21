@@ -58,7 +58,7 @@ def get_index():
     return render_template("index.html", page_title="Home")
 
 
-@backend.route("/api_docs")
+@backend.route("/docs/api")
 def get_api_docs():
     """API documentation."""
     # Infer api root
@@ -72,7 +72,7 @@ def get_api_docs():
     )
 
 
-@backend.route("/browser_docs")
+@backend.route("/docs/browser")
 def get_browser_docs():
     """Browser documentation"""
     return render_template(

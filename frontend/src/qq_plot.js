@@ -275,8 +275,8 @@ export default async function qq(data) {
       .translate(+curCircle.getAttribute("cx"),
                  +curCircle.getAttribute("cy"));
 
-    let ttLeft = window.pageXOffset + matrix.e - ttRect.width - 5;
-    let ttTop = window.pageYOffset + matrix.f - ttRect.height - 5;
+    let ttLeft = matrix.e - ttRect.width - 5;
+    let ttTop = matrix.f - ttRect.height - 5;
 
     tooltip
       .style('left', `${ttLeft}px`)

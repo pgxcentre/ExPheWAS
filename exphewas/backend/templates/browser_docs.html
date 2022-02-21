@@ -2,6 +2,8 @@
 
 {% block tooltips %}
   <div class="tooltip" id="tooltip-atc-tree"></div>
+  <div class="tooltip" id="tooltipQQ"></div>
+  <div class="tooltip" id="tooltip-enrichment"></div>
 {% endblock %}
 
 {% block body %}
@@ -12,7 +14,7 @@
 
     <p>Write description here.</p>
 
-    <h4>Enrichment analysis</h4>
+    <h4>Enrichment analysis (ATC)</h4>
 
     <p>
       The figure below shows the results from the drug target enrichment
@@ -72,7 +74,7 @@
     <p>
       <div class="card docs">
         <div class="card-body">
-          <a href="{{ url_for('backend_blueprint.static', filename='docs/select_svg_export.png') }}"><img src="{{ url_for('backend_blueprint.static', filename='docs/select_svg_export.png') }}"></a>
+          <a href="{{ url_for('backend_blueprint.static', filename='docs/select_svg_export.png') }}"><img src="{{ url_for('backend_blueprint.static', filename='docs/select_svg_export.png') }}" alt="Launch extension"></a>
         </div>
       </div>
     </p>
@@ -87,16 +89,90 @@
     <p>
       <div class="card docs">
         <div class="card-body">
-          <a href="{{ url_for('backend_blueprint.static', filename='docs/svg_export.png') }}"><img src="{{ url_for('backend_blueprint.static', filename='docs/svg_export.png') }}"></a>
+          <a href="{{ url_for('backend_blueprint.static', filename='docs/svg_export.png') }}"><img src="{{ url_for('backend_blueprint.static', filename='docs/svg_export.png') }}" alt="Export image"></a>
         </div>
       </div>
     </p>
 
+    <h4>cis-MR analysis</h4>
+
+    <p>
+      Below is an example of cis-MR analys of the effect of
+      <a href="{{ url_for('backend_blueprint.get_outcome', id='cont_v72') }}">LDL direct</a>
+      exposure on the <a href="{{ url_for('backend_blueprint.get_outcome', id='411.4') }}">Coronary astherosclerosis</a>
+      outcome based on genetic variants close to the
+      <a href="{{ url_for('backend_blueprint.get_gene', ensg='ENSG00000169174') }}">PCSK9</a> gene.
+    </p>
+
+    <p>
+      <div class="card docs">
+        <div class="card-body">
+          <a href="{{ url_for('backend_blueprint.static', filename='docs/cisMR_example.svg') }}"><img src="{{ url_for('backend_blueprint.static', filename='docs/cisMR_example.svg') }}" alt="cis-MR analysis"></a>
+        </div>
+      </div>
+    </p>
+
+    <h4>QQ plot interpretation</h4>
+
+    <p>
+      Below is a QQ plot generated for the <a href="{{ url_for('backend_blueprint.get_gene', ensg='ENSG00000162104') }}">ADCY9</a> gene.
+    </p>
+
+    <p>
+      <div class="card docs">
+        <div class="card-body">
+          <div class="qqplot-docs">
+            <h5>Genetic associations QQ-plot for <a href="{{ url_for('backend_blueprint.get_gene', ensg='ENSG00000162104') }}">ADCY9</a></h5>
+            <div>
+              <p>Inflation factor <i>𝜆=<span id="lambdaQQ"></span></i></p>
+            </div>
+            <div id="qqLoading" style="background: url({{ url_for('backend_blueprint.static', filename='qq_plot_loading.svg') }}) no-repeat;">
+              <div style="margin-top: 63%"></div>
+              <div class="spinner-border" role="status"><span class="sr-only">Loading</span></div>
+            </div>
+            <svg id="geneQQ" style="display: none"></svg>
+          </div>
+        </div>
+      </div>
+    </p>
+
+    <h4>Enrichment analysis (g:Profiler)</h4>
+
+    <p>
+
+      Below is the g:Profiler results for Essential hypertension
+      (<a href="{{ url_for('backend_blueprint.get_outcome', id='401.1') }}">401.1</a>).
+      The plot are created using g:Profiler and with the significant genes for
+      the given outcome.
+    </p>
+
+    <p>
+      <div class="card docs">
+        <div class="card-body">
+          <div class="g-profiler-docs">
+            <div id="enrichmentPlotLoading" style="background: url({{ url_for('backend_blueprint.static', filename='gProfiler_loading.svg') }}) no-repeat;">
+              <div style="height: 210px"></div>
+              <div class="spinner-border" role="status"><span class="sr-only">Loading</span></div>
+            </div>
+            <div id="enrichment-box" style="display: none">
+              <div style="margin-top: 20px" id="enrichment-plot"></div>
+              <div style="margin-top: 20px">
+                <p><a href="https://biit.cs.ut.ee/gprofiler/gost">g:Profiler</a> is
+                used to automatically compute enrichment analyses when more
+                than 5 genes are significant with a <i>Q</i> &lt; 0.05.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </p>
 
 {% endblock %}
 
 {% block other_script %}
     <script>
       window.pages.atcTree('401.1', 'atc-tree-401-1');
+      window.pages.simpleQQPlotFromURL('/gene/ENSG00000162104/results?analysis_subset=BOTH');
+      window.pages.simpleManhattanFromURL('/outcome/401.1/results?analysis_subset=BOTH');
     </script>
 {% endblock %}
