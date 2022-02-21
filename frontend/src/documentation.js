@@ -52,10 +52,10 @@ async function modalCallback(event) {
     // Populate the modal example.
     let commandText;
     if (method == 'GET') {
-      commandText = `curl --silent 'https://${window.location.host}${reqURL}'`;
+      commandText = `curl --silent '${window.location.origin}${reqURL}'`;
     } else {
       // TODO
-      commandText = `curl --silent -X ${method} 'https://${window.location.host}${reqURL}'`;
+      commandText = `curl --silent -X ${method} '${window.location.origin}${reqURL}'`;
     }
     modal.find('.example-command').text(commandText);
 
