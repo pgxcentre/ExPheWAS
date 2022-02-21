@@ -484,6 +484,13 @@ function mainGeneList() {
 }
 
 
+async function simpleQQPlotFromURL(url) {
+  // We should have a valid URL to generate the QQ plot
+  let data = await api_call(url);
+  qq(data);
+}
+
+
 window.pages = {
   mainOutcomeList,
   mainOutcomeResults,
@@ -491,5 +498,6 @@ window.pages = {
   mainGeneList,
   documentation,
   cisMR,
-  atcTree
+  atcTree,
+  simpleQQPlotFromURL
 }
