@@ -100,12 +100,10 @@ class AmbiguousIdentifierError(Exception):
         self.message = message
 
 
-@api.errorhandler(404)
 def resource_not_found(e):
     return jsonify(error=str(e)), 404
 
 
-@api.errorhandler(400)
 def bad_request(e):
     return jsonify(error=str(e)), 400
 
