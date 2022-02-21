@@ -190,9 +190,9 @@ function displayMRResults(results, geneSymbol) {
        <p><span id="ivw-effect">${effect}</span></p>
      <p>MR P-value : <span id="ivw-p">${formatP(results.wald_p)}</span></p>
      <p>
-       The association P-value for the exposure is
+       The association P-value between the selected gene and exposurem, in ExPheWas, is 
        <b>${formatP(Math.pow(10, -results.exposure_nlog10p))}</b>. The strength of this
-       association is one of the MR assumptions. In general, <u>values above
+       association is one of the MR assumptions (<em>relevance</em>). In general, <u>values above
        ${formatP(0.05 / 2000)} should be met with skepticism </u>unless supported by prior data.
        This suggested threshold accounts for 2,000 association tests which is
        approximately the number of phenotypes included in ExPheWas.
