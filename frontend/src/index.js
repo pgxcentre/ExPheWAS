@@ -490,6 +490,12 @@ async function simpleQQPlotFromURL(url) {
   qq(data);
 }
 
+async function simpleManhattanFromURL(url) {
+  // We should have a valid URL to generate the manhattan plot
+  let data = await api_call(url);
+  createEnrichmentPlot(data);
+}
+
 
 window.pages = {
   mainOutcomeList,
@@ -499,5 +505,6 @@ window.pages = {
   documentation,
   cisMR,
   atcTree,
-  simpleQQPlotFromURL
+  simpleQQPlotFromURL,
+  simpleManhattanFromURL
 }
