@@ -120,16 +120,17 @@
     <p>
       <div class="card docs">
         <div class="card-body">
+          <div class="qqplot-docs">
             <h5>Genetic associations QQ-plot</h5>
             <div>
               <p>Inflation factor <i>𝜆=<span id="lambdaQQ"></span></i></p>
             </div>
-            <div id="qqLoading"
-                 style="background: url({{ url_for('backend_blueprint.static', filename='qq_plot_loading.svg') }}) no-repeat;">
+            <div id="qqLoading" style="background: url({{ url_for('backend_blueprint.static', filename='qq_plot_loading.svg') }}) no-repeat;">
               <div style="margin-top: 63%"></div>
               <div class="spinner-border" role="status"><span class="sr-only">Loading</span></div>
             </div>
             <svg id="geneQQ" style="display: none"></svg>
+          </div>
         </div>
       </div>
     </p>
