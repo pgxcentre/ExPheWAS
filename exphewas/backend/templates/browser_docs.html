@@ -72,7 +72,7 @@
     <p>
       <div class="card docs">
         <div class="card-body">
-          <a href="{{ url_for('backend_blueprint.static', filename='docs/select_svg_export.png') }}"><img src="{{ url_for('backend_blueprint.static', filename='docs/select_svg_export.png') }}"></a>
+          <a href="{{ url_for('backend_blueprint.static', filename='docs/select_svg_export.png') }}"><img src="{{ url_for('backend_blueprint.static', filename='docs/select_svg_export.png') }}" alt="Launch extension"></a>
         </div>
       </div>
     </p>
@@ -87,11 +87,28 @@
     <p>
       <div class="card docs">
         <div class="card-body">
-          <a href="{{ url_for('backend_blueprint.static', filename='docs/svg_export.png') }}"><img src="{{ url_for('backend_blueprint.static', filename='docs/svg_export.png') }}"></a>
+          <a href="{{ url_for('backend_blueprint.static', filename='docs/svg_export.png') }}"><img src="{{ url_for('backend_blueprint.static', filename='docs/svg_export.png') }}" alt="Export image"></a>
         </div>
       </div>
     </p>
 
+    <h4>cis-MR analysis</h4>
+
+    <p>
+      Below is an example of cis-MR analys of the effect of
+      <a href="{{ url_for('backend_blueprint.get_outcome', id='cont_v72') }}">LDL direct</a>
+      on <a href="{{ url_for('backend_blueprint.get_outcome', id='411.4') }}">Coronary astherosclerosis</a>
+      based on genetic variants close to the
+      <a href="{{ url_for('backend_blueprint.get_gene', ensg='ENSG00000169174') }}">PCSK9</a> gene.
+    </p>
+
+    <p>
+      <div class="card docs">
+        <div class="card-body">
+          <a href="{{ url_for('backend_blueprint.static', filename='docs/cisMR_example.svg') }}"><img src="{{ url_for('backend_blueprint.static', filename='docs/cisMR_example.svg') }}" alt="cis-MR analysis"></a>
+        </div>
+      </div>
+    </p>
 
 {% endblock %}
 
