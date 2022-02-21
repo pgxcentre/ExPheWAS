@@ -150,6 +150,10 @@
       <div class="card docs">
         <div class="card-body">
           <div class="g-profiler-docs">
+            <div id="enrichmentPlotLoading" style="background: url({{ url_for('backend_blueprint.static', filename='gProfiler_loading.svg') }}) no-repeat;">
+              <div style="height: 210px"></div>
+              <div class="spinner-border" role="status"><span class="sr-only">Loading</span></div>
+            </div>
             <div id="enrichment-box" style="display: none">
               <div style="margin-top: 20px" id="enrichment-plot"></div>
               <div style="margin-top: 20px">
