@@ -4,7 +4,7 @@
 import os
 from binascii import hexlify
 
-from flask import Flask
+from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 
 from .. import __version__
@@ -13,6 +13,7 @@ from .config import URL_ROOT, STATIC_FOLDER
 from .api import api as api_blueprint
 from .cache import create_or_load_startup_caches
 from .backend import backend as backend_blueprint
+from .backend import inject_db_metadata
 from .dt_api import dt_api as dt_api_blueprint
 
 from ..db.engine import Session
@@ -43,3 +44,19 @@ app.register_blueprint(dt_api_blueprint,
 @app.teardown_appcontext
 def shutdown_session(exception=None):
     Session.remove()
+
+
+@app.errorhandler(404)
+def page_not_found(error):
+    """Handles page not found error."""
+    if request.path.startswith("/api/"):
+        return jsonify({
+            "error": 404,
+            "message": "The requested API endpoint was not found on the "
+                       "server.",
+
+        }), 404
+
+    return render_template(
+        "404.html", page_title="Page not found", **inject_db_metadata(),
+    ), 404
