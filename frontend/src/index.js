@@ -4,6 +4,8 @@ import 'bootstrap';
 import 'datatables.net';
 
 import 'datatables.net-dt/css/jquery.dataTables.css';
+import 'datatables.net-buttons-dt';
+import 'datatables.net-buttons/js/buttons.html5.js';
 
 import '../scss/custom.scss';
 import { URL_PREFIX, API_URL, DT_API_URL, ICD10_URL, UNIPROT_URL } from './config';
@@ -202,6 +204,14 @@ async function mainOutcomeResults(id) {
     .DataTable({
       data: data,
       deferRender: true,
+      dom: "<'row'<'col-sm-12 col-md-6'lB><'col-sm-12 col-md-6'f>>" +
+           "<'row'<'col-sm-12'tr>>" +
+           "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+      buttons: [{
+        extend: 'csv',
+        text: 'Download as CSV',
+        className: 'btn btn-link'
+      }],
       columns: [
         {data: 'gene'},            // 0
         {data: 'gene_name'},       // 1

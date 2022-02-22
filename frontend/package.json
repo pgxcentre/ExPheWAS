@@ -39,6 +39,7 @@
     "d3fc": "^15.1.2",
     "datatables.net": "^1.10.25",
     "datatables.net-dt": "^1.10.20",
+    "datatables.net-buttons-dt": "^1.7.1",
     "popper.js": "^1.16.1"
   }
 }
