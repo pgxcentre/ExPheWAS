@@ -35,6 +35,10 @@
   color: #717171;
 }
 
+.dataTables_length {
+  padding-top: 7px;
+}
+
 .card.geneDescription, .card.outcomeDescription {
   margin: 20px 0;
 }
@@ -104,6 +108,21 @@
 }
 
 #qqLoading .spinner-border {
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+}
+
+#enrichmentPlotLoading {
+  width: 100%;
+  opacity: 0.5;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#enrichmentPlotLoading .spinner-border {
   width: 3rem;
   height: 3rem;
   display: flex;
