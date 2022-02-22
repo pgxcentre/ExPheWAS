@@ -15,38 +15,39 @@
     <p>
       The following topics are documented on this page:
       <ul class="list-group list-group-flush">
-        <li class="list-group-item"><a href="#atc">Enrichment analysis (ATC)</a></li>
-        <li class="list-group-item"><a href="#g-profiler">Enrichment analysis (g:Profiler)</a></li>
+        <li class="list-group-item"><a href="#atc">Enrichment with drug classes (phenotype pages)</a></li>
+        <li class="list-group-item"><a href="#g-profiler">Enrichment with ontologies (phenotype pages)</a></li>
         <li class="list-group-item"><a href="#save-plots">How to save plots</a></li>
-        <li class="list-group-item"><a href="#cis-MR">cis-MR analysis</a></li>
-        <li class="list-group-item"><a href="#qq-plot-interpretation">QQ-plot interpretation</a></li>
+        <li class="list-group-item"><a href="#cis-MR">cis-Mendelian Randomization analysis</a></li>
+        <li class="list-group-item"><a href="#qq-plot-interpretation">QQ-plot interpretation (gene pages)</a></li>
       </ul>
     </p>
 
     <a name="atc"></a>
-    <h4>Enrichment analysis (ATC)</h4>
+    <h4>Enrichment with drug classes (phenotype pages)</h4>
+
+    <p> 
+      <a href="https://www.who.int/tools/atc-ddd-toolkit/atc-classification">
+      Anatomical Therapeutic Chemical Classification (ATC)</a> codes define a 
+      hierarchical classification of drug classes.  Drug target proteins for
+      drugs in ATC classes were extracted from the
+      <a href="https://www.ebi.ac.uk/chembl/"> ChEMBL</a> database. Fisher's
+      exact test is then used to test for enrichment based on the 2x2 contingency
+      table of genes encoding targets of drugs in a given ATC class and genes
+      associated with a selected phenotype in ExPheWas.
+    </p>
+    <p> 
+      To represent the hierarchical structure of the ATC vocabulary, we
+      visualize the enrichment results as a tree. The color of each node
+      indicates the enrichment p-value. The color of the border represents the
+      lowest p-value in the subtree rooted at the node. The tree is interactive,
+      and each node can be expanded to show its children by clicking on it.
+    </p>
 
     <p>
       The figure below shows the results from the drug target enrichment
       analysis for genes associated with <em>essential hypertension</em>
       (outcome <a href="{{ url_for('backend_blueprint.get_outcome', id='401.1') }}">401.1</a>).
-      <a href="https://www.who.int/tools/atc-ddd-toolkit/atc-classification">
-      Anatomical Therapeutic Chemical Classification (ATC) </a>codes are
-      used to represent drug classes and drug targets associated with ATC
-      classes are extracted from the <a href="https://www.ebi.ac.uk/chembl/">
-      ChEMBL</a> database. The Fisher's exact test is used to test for
-      enrichment based on the 2x2 contingency table of genes labels as targets
-      of drugs in a given ATC class and genes associated with hypertension in
-      ExPheWas.
-    </p>
-    <p> 
-      The color of each node indicates the enrichment p-value. The color
-      of the border represents the lowest p-value in the subtree rooted at the
-      current node. The tree is interactive, and each node can be expanded to
-      show its children by clicking on it.
-    </p>
-
-    <p>
       For example, ATC class C (<i>cardiovascular system</i>) shows no
       significant gene enrichment (p-value of 0.612), but the red border shows
       that at least one of its children node has a significant p-values. Expanding
@@ -72,11 +73,11 @@
     </p>
 
     <a name="g-profiler"></a>
-    <h4>Enrichment analysis (g:Profiler)</h4>
+    <h4>Enrichment with ontologies (phenotype pages)</h4>
 
     <p>
-      To enable enrichment analysis between genes associated with a phenotype
-      and various ontologies, we use
+      We also integrated enrichment analysis between genes associated with a phenotype
+      and various ontologies using
       <a href="https://biit.cs.ut.ee/gprofiler/gost">g:Profiler</a>. If enough
       genes are associated with the phenotypes (with q-value &le; 0.05), the
       list of associated genes is automatically evaluated for enrichment with
@@ -111,8 +112,8 @@
 
     <p>
       Figures in the browser are vector-based and use the SVG format. Because
-      they are vector-based, they can be scaled and are appropriate for printed
-      documents including scientific posters or articles.
+      they are vector-based, they can be scaled and are suitable for printed
+      documents such as scientific posters or articles.
     </p>
 
     <p>
@@ -161,7 +162,7 @@
     </p>
 
     <a name="cis-MR"></a>
-    <h4>cis-MR analysis</h4>
+    <h4><i>cis</i>-MR analysis</h4>
 
     <p>
       Mendelian randomization (MR) is used to estimate the causal effect of an
@@ -183,7 +184,7 @@
     </p>
 
     <p>
-      The MR implementation used here relies on the inverse variance weighted
+      <a href="{{ url_for('backend_blueprint.cis_mr') }}">The MR implementation used here</a> relies on the inverse variance weighted
       estimator computed using gene-based principal components as instrumental
       variables. Hence, the conventional instrumental assumptions are needed to
       obtain valid causal estimates. Briefly, these assumptions are:
@@ -230,6 +231,9 @@
       exposure on the <a href="{{ url_for('backend_blueprint.get_outcome', id='411.4') }}">Coronary astherosclerosis</a>
       outcome based on genetic variants close to the
       <a href="{{ url_for('backend_blueprint.get_gene', ensg='ENSG00000169174') }}">PCSK9</a> gene.
+      Note that the effects are in standardized units for continuous traits
+      (<i>i.e.</i> expressed in units of standard deviation of the exposure
+      and/or outcome).
     </p>
 
     <p>
@@ -249,22 +253,24 @@
     </p>
 
     <a name="qq-plot-interpretation"></a>
-    <h4>QQ plot interpretation</h4>
+    <h4>QQ plot interpretation (gene pages)</h4>
     <p>
       Quantile-quantile (QQ) plots are commonly use in Genome-Wide association
       Studies as a measure of polygenicity or counfonding. Briefly, under the
       null hypothesis of no association (H<sub>0</sub>: &beta; = 0), the test
       p-values are expected to follow a uniform distribution. The QQ plot shows
       the observed p-values as a function of the expected p-values under the
-      null hypothesis. Upward deviations from the identity on this plot shows
-      that association statistics are "inflated".
+      null hypothesis (<i>i.e.</i> p-values following a uniform distribution).
+      Upward deviation from the identity on this plot indicates that association
+      statistics are "inflated".
     </p>
     <p>
       In ExPheWas, QQ-plots are used on gene pages to show the association
       p-values with all tested phenotypes. It can be used to rapidly find
       phenotypes with association p-values that deviate from the expected
       distribution under the null. Systematic deviation from the identity may
-      indicate pleiotropy, the association of a gene with different phenotypes.
+      indicate pleiotropy, the association of a gene with different pathways or
+      phenotypes.
     </p>
     <p>
       Below is a QQ plot generated for the <a href="{{ url_for('backend_blueprint.get_gene', ensg='ENSG00000162104') }}">ADCY9</a> gene.
