@@ -7,6 +7,26 @@
 
     <p>Programmatic access to ExPheWas results is provided through a web API. This makes is easy to use any programming language or the command line (<i>e.g.</i> using cURL on UNIX-based systems). Every entry from the API documentation is accompanied by a dynamically populated example (blue buttons in the table below). Clicking the "Example" button will show a sample request using the <i>curl</i> command along with live results from the API. For Python users, we suggest looking at the <a href="https://docs.python-requests.org/en/master/">requests</a> library to facilitate programmatic access. For now, all API endpoints use JSON as the content-type. This format is widely supported by modern programming languages. For specific applications that may require high throughput access, contact the authors for the possibility of deploying local instances.</p>
 
+    <p>
+      We provide provide multiple simple examples (notebooks) which uses the API.
+      <ul>
+        <li>
+          <a href="https://github.com/pgxcentre/ExPheWAS/blob/master/notebooks/1-demo-cisMR_HDL-c_CAD.ipynb">Notebook 1</a>:
+          cis-MR analysis to estimate the MR effect of all HDL-c
+          (<a href="{{ url_for('backend_blueprint.get_outcome', id='cont_v70') }}">cont_v70</a>) associated
+          genes on coronary atherosclerosis
+          (<a href="{{ url_for('backend_blueprint.get_outcome', id='411.4') }}">411.4</a>).
+        </li>
+        <li>
+          <a href="https://github.com/pgxcentre/ExPheWAS/blob/master/notebooks/2-demo_cisMR_heart_rate_afib.ipynb">Notebook 2</a>:
+          cis-MR analysis to estimate the MR effect of all pulse rate (baseline,
+          <a href="{{ url_for('backend_blueprint.get_outcome', id='cont_v9') }}">cont_v9</a>)
+          associated genes on atrial fibrillation and flutter
+          (<a href="{{ url_for('backend_blueprint.get_outcome', id='427.2') }}">427.2</a>).
+        </li>
+      </ul>
+    </p>
+
       <p><b>The API root is: '{{ full_api_url }}'</b></p>
 
       <table id="api" class="table table-striped" style="width:100%">
@@ -84,6 +104,22 @@
             <td class="dt-left">Get cross references to other external databases from an Ensembl gene ID.</td>
             <td></td>
             <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/gene/<ensg>/xrefs" data-params='{"ensg": "ENSG00000087237"}'>Example</button></td>
+          </tr>
+          <tr><td colspan=4><b>cis-MR analysis</b></td></tr>
+          <tr>
+            <td class="dt-left">GET /cisMR</td>
+            <td class="dt-left">Perform a cis-MR analysis.</td>
+            <td>
+              <ul class="list-group list-group-flush">
+                <li class="list-group-item"><span class="badge badge-pill badge-dark">ensembl_id</span> The gene's Ensembl ID.</li>
+                <li class="list-group-item"><span class="badge badge-pill badge-dark">analysis_subset</span> Sample subset (either <code>BOTH</code>, <code>FEMALE_ONLY</code> or <code>MALE_ONLY</code>, default is <code>BOTH</code>).</li>
+                <li class="list-group-item"><span class="badge badge-pill badge-dark">exposure_id</span> the exposure ID.</li>
+                <li class="list-group-item"><span class="badge badge-pill badge-dark">exposure_type</span> the exposure type (either <code>CONTINUOUS_VARIABLE</code>, <code>CV_ENDPOINTS</code>, <code>SELF_REPORTED</code> or <code>PHECODES</code>).</li>
+                <li class="list-group-item"><span class="badge badge-pill badge-dark">outcome_id</span> the outcome ID.</li>
+                <li class="list-group-item"><span class="badge badge-pill badge-dark">outcome_type</span> the outcome type (either <code>CONTINUOUS_VARIABLE</code>, <code>CV_ENDPOINTS</code>, <code>SELF_REPORTED</code> or <code>PHECODES</code>).</li>
+              </ul>
+            </td>
+            <td><button type="button" class="btn btn-primary btn-sm" data-toggle="modal" data-target="#egModal" data-endpoint="/cisMR" data-params='{"ensembl_id": "ENSG00000169174", "analysis_subset": "BOTH", "exposure_id": "cont_v72", "exposure_type": "CONTINUOUS_VARIABLE", "outcome_id": "411.4", "outcome_type": "PHECODES"}'>Example</button></td> <!-- e.g. //-->
           </tr>
         </tbody>
       </table>

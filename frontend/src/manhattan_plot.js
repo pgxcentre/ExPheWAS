@@ -210,8 +210,8 @@ function addTooltip(svg, data, scatterG, xScales, yScale) {
         .translate(+circleNode.getAttribute("cx"),
                    +circleNode.getAttribute("cy"));
 
-      let ttLeft = window.pageXOffset + matrix.e + 5;
-      let ttTop = window.pageYOffset + matrix.f - ttRect.height - 5;
+      let ttLeft = matrix.e + 5;
+      let ttTop = matrix.f - ttRect.height - 5;
 
       tooltip
         .style('left', `${ttLeft}px`)

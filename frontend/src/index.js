@@ -4,6 +4,8 @@ import 'bootstrap';
 import 'datatables.net';
 
 import 'datatables.net-dt/css/jquery.dataTables.css';
+import 'datatables.net-buttons-dt';
+import 'datatables.net-buttons/js/buttons.html5.js';
 
 import '../scss/custom.scss';
 import { URL_PREFIX, API_URL, DT_API_URL, ICD10_URL, UNIPROT_URL } from './config';
@@ -76,7 +78,7 @@ function mainOutcomeList() {
 }
 
 
-async function createEnrichmentPlot(data) {
+async function createEnrichmentPlot(data, idToRemove=null) {
 
   const ENRICHMENT_DESCRIPTIONS = {
     'GO:MF': 'Gene Ontology - Molecular function'
@@ -164,8 +166,13 @@ async function createEnrichmentPlot(data) {
   }
 
   manhattan_plot(document.getElementById('enrichment-plot'), plotConfig);
-  document.getElementById("enrichment-box").style.display = 'block';
 
+  // Need to remove a div?
+  if (idToRemove)
+    document.getElementById(idToRemove).remove();
+
+  // Showing the plot
+  document.getElementById("enrichment-box").style.display = 'block';
 }
 
 
@@ -197,6 +204,14 @@ async function mainOutcomeResults(id) {
     .DataTable({
       data: data,
       deferRender: true,
+      dom: "<'row'<'col-sm-12 col-md-6'lB><'col-sm-12 col-md-6'f>>" +
+           "<'row'<'col-sm-12'tr>>" +
+           "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+      buttons: [{
+        extend: 'csv',
+        text: 'Download as CSV',
+        className: 'btn btn-link'
+      }],
       columns: [
         {data: 'gene'},            // 0
         {data: 'gene_name'},       // 1
@@ -481,6 +496,26 @@ function mainGeneList() {
       ],
       order: [[5, 'asc'], [6, 'asc']]
   });
+}
+
+
+async function simpleQQPlotFromURL(url) {
+  // We should have a valid URL to generate the QQ plot
+  let data = await api_call(url);
+  qq(data);
+}
+
+async function simpleManhattanFromURL(url) {
+  // We should have a valid URL to generate the manhattan plot
+  let data = await api_call(url);
+  createEnrichmentPlot(data, 'enrichmentPlotLoading');
+}
+
+
+window.utils = {
+  atcTree,
+  simpleQQPlotFromURL,
+  simpleManhattanFromURL
 }
 
 

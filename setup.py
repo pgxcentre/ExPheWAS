@@ -14,7 +14,7 @@ from setuptools import setup, find_packages
 
 MAJOR = 1
 MINOR = 2
-MICRO = 2
+MICRO = 3
 VERSION = "{0}.{1}.{2}".format(MAJOR, MINOR, MICRO)
 
 
@@ -52,7 +52,8 @@ def setup_package():
                           "pandas >= 0.25.3"],
         packages=find_packages(),
         package_data={
-            "exphewas.backend": ["templates/*", "static/*", "data/*"],
+            "exphewas.backend": ["templates/*", "static/*", "static/docs/*",
+                                 "data/*"],
             "exphewas.db.scripts": ["data/*"],
         },
         classifiers=["Development Status :: 4 - Beta",

@@ -35,8 +35,25 @@
   color: #717171;
 }
 
+.dataTables_length {
+  padding-top: 7px;
+}
+
 .card.geneDescription, .card.outcomeDescription {
   margin: 20px 0;
+}
+
+.card.docs {
+  margin: auto;
+  width: 90%;
+}
+
+.card img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 100%;
+  width: inherit !important;
 }
 
 .dropdown.analyisType {
@@ -96,21 +113,36 @@
   display: flex;
 }
 
-#atc-tree {
+#enrichmentPlotLoading {
+  width: 100%;
+  opacity: 0.5;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#enrichmentPlotLoading .spinner-border {
+  width: 3rem;
+  height: 3rem;
+  display: flex;
+}
+
+.atc-tree-cls {
   width: 100%;
   min-width: 800px;
 }
 
 // Colorbar text
-#atc-tree g.node:first-of-type {
+.atc-tree-cls g.node:first-of-type {
   pointer-events: none;
 }
 
-#atc-tree text {
+.atc-tree-cls text {
   pointer-events: none;
 }
 
-#atc-tree .leaf {
+.atc-tree-cls .leaf {
   cursor: default;
 }
 

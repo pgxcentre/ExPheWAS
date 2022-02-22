@@ -38,6 +38,7 @@ EXTERNAL_DB_TO_SHOW = ("HGNC", "WikiGene", "MIM_GENE", "MIM_MORBID",
 
 @backend.context_processor
 def inject_db_metadata():
+    """Browser and DB versions."""
     metadata = {
         "exphewas_version": exphewas_version,
         "db": {}
@@ -53,29 +54,42 @@ def inject_db_metadata():
 
 @backend.route("/")
 def get_index():
+    """Home route."""
     return render_template("index.html", page_title="Home")
 
 
-@backend.route("/docs")
-def get_docs():
+@backend.route("/docs/api")
+def get_api_docs():
+    """API documentation."""
     # Infer api root
     api_root = url_for("api_blueprint.get_metadata", _external=True)
     api_root = "/".join(api_root.split("/")[:-1])
 
     return render_template(
-        "docs.html",
-        page_title="Documentation",
+        "api_docs.html",
+        page_title="API Documentation",
         full_api_url=api_root
+    )
+
+
+@backend.route("/docs/browser")
+def get_browser_docs():
+    """Browser documentation"""
+    return render_template(
+        "browser_docs.html",
+        page_title="Browser Documentation",
     )
 
 
 @backend.route("/outcome")
 def get_outcomes():
+    """Outcomes (phenotypes) (list) page."""
     return render_template("outcome_list.html", page_title="Phenotypes")
 
 
 @backend.route("/outcome/random")
 def get_random_outcome():
+    """Random outcome (phenotype)."""
     outcomes = Session().query(models.Outcome).all()
     outcome = random.choice(outcomes)
 
@@ -99,10 +113,10 @@ def get_random_outcome():
 
 @backend.route("/outcome/<id>")
 def get_outcome(id):
-    analysis_type = request.args.get("analysis_type")
+    """Specific outcome (phenotype)."""
     try:
         outcome_dict = api.get_outcome(id)
-    except api.RessourceNotFoundError as exception:
+    except api.RessourceNotFoundError:
         abort(404)
 
     # Checks if there are enrichment results for this outcome
@@ -141,16 +155,19 @@ def get_outcome(id):
 
 @backend.route("/gene")
 def get_genes():
+    """Gene (list) page."""
     return render_template("gene_list.html", page_title="Genes")
 
 
 @backend.route("/cisMR")
 def cis_mr():
+    """cis-MR page."""
     return render_template("cis_mr.html", page_title="cisMR")
 
 
 @backend.route("/gene/random")
 def get_random_gene():
+    """Random gene page."""
     ensgs = Session().query(models.Gene.ensembl_id).all()
     ensg = random.choice(ensgs)[0]
 
@@ -164,9 +181,10 @@ def get_random_gene():
 
 @backend.route("/gene/<ensg>")
 def get_gene(ensg):
+    """Specific gene page."""
     try:
         gene_info = api.get_gene_by_ensembl_id(ensg)
-    except api.RessourceNotFoundError as exception:
+    except api.RessourceNotFoundError:
         abort(404)
 
     # Adding the cross references
