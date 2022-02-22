@@ -53,7 +53,7 @@ function addColorScale(svg, scale, legendText) {
 }
 
 
-export default async function atcTree(id) {
+export default async function atcTree(id, elementId='atc-tree') {
   // The legend text
   let legendText = 'P-value (Fisher\'s exact)';
 
@@ -65,12 +65,12 @@ export default async function atcTree(id) {
   let height = 500 - margin.top - margin.bottom;
 
   // Detect width based on SVG.
-  let width = document.getElementById('atc-tree').clientWidth - margin.left - margin.right;
+  let width = document.getElementById(elementId).clientWidth - margin.left - margin.right;
 
   // append the svg object to the body of the page
   // appends a 'group' element to 'svg'
   // moves the 'group' element to the top left margin
-  let svg = d3.select('#atc-tree')
+  let svg = d3.select(`#${elementId}`)
       .on('mouseout', () => d3.select('#tooltip-atc-tree').style('opacity', 0) )
       .attr('height', height + margin.top + margin.bottom);
 

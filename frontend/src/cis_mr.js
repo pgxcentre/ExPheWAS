@@ -3,7 +3,7 @@ import 'bootstrap4c-chosen/dist/css/component-chosen.min.css'
 
 import { ANALYSIS_LABELS, BIOTYPES, api_call, formatNumber, formatP,
          formatEffect } from './utils';
-import { DT_API_URL } from './config';
+import { DT_API_URL, API_DOCS_URL } from './config';
 import scatter_plot from './scatter_plot';
 
 
@@ -190,9 +190,9 @@ function displayMRResults(results, geneSymbol) {
        <p><span id="ivw-effect">${effect}</span></p>
      <p>MR P-value : <span id="ivw-p">${formatP(results.wald_p)}</span></p>
      <p>
-       The association P-value for the exposure is
+       The association P-value between the selected gene and exposure in ExPheWas is 
        <b>${formatP(Math.pow(10, -results.exposure_nlog10p))}</b>. The strength of this
-       association is one of the MR assumptions. In general, <u>values above
+       association is one of the MR assumptions (<em>relevance</em>). In general, <u>values above
        ${formatP(0.05 / 2000)} should be met with skepticism </u>unless supported by prior data.
        This suggested threshold accounts for 2,000 association tests which is
        approximately the number of phenotypes included in ExPheWas.
@@ -201,6 +201,10 @@ function displayMRResults(results, geneSymbol) {
        <small>If the selected outcome is binary, the MR estimate is presented
        on the odds ratio scale by exponentiating the estimate from the log-odds
        scale.</small>
+     </p>
+     <p>
+       <small>Regression coefficients for PCs are accessible through the
+         <a href="${API_DOCS_URL}">Application Programming Interface</a>.</small>
      </p>`
   );
   resultsDiv.innerHTML = content;
