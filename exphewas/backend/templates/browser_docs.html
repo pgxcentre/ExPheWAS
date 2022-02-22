@@ -12,25 +12,44 @@
 
     <h3>Browser Documentation</h3>
 
-    <p>Write description here.</p>
+    <p>
+      The following topics are documented on this page:
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item"><a href="#atc">Enrichment analysis (ATC)</a></li>
+        <li class="list-group-item"><a href="#g-profiler">Enrichment analysis (g:Profiler)</a></li>
+        <li class="list-group-item"><a href="#save-plots">How to save plots</a></li>
+        <li class="list-group-item"><a href="#cis-MR">cis-MR analysis</a></li>
+        <li class="list-group-item"><a href="#qq-plot-interpretation">QQ-plot interpretation</a></li>
+      </ul>
+    </p>
 
+    <a name="atc"></a>
     <h4>Enrichment analysis (ATC)</h4>
 
     <p>
       The figure below shows the results from the drug target enrichment
-      analysis using Fisher's exact test on <i>essential hypertension</i>
+      analysis for genes associated with <em>essential hypertension</em>
       (outcome <a href="{{ url_for('backend_blueprint.get_outcome', id='401.1') }}">401.1</a>).
-      The color of each node indicates the enrichment of genes with the
-      phenotype with drugs of the corresponding ATC class or subclass. The color
-      of the border represents the lowest p-value in the branch. The tree is
-      interactive, and each node can be expanded to show its children by
-      clicking on it.
+      <a href="https://www.who.int/tools/atc-ddd-toolkit/atc-classification">
+      Anatomical Therapeutic Chemical Classification (ATC) </a>codes are
+      used to represent drug classes and drug targets associated with ATC
+      classes are extracted from the <a href="https://www.ebi.ac.uk/chembl/">
+      ChEMBL</a> database. The Fisher's exact test is used to test for
+      enrichment based on the 2x2 contingency table of genes labels as targets
+      of drugs in a given ATC class and genes associated with hypertension in
+      ExPheWas.
+    </p>
+    <p> 
+      The color of each node indicates the enrichment p-value. The color
+      of the border represents the lowest p-value in the subtree rooted at the
+      current node. The tree is interactive, and each node can be expanded to
+      show its children by clicking on it.
     </p>
 
     <p>
       For example, ATC class C (<i>cardiovascular system</i>) shows no
       significant gene enrichment (p-value of 0.612), but the red border shows
-      that at least one of its sub-classes has a significant p-values. Expanding
+      that at least one of its children node has a significant p-values. Expanding
       the C node shows enrichments for ATC codes C02 (<i>antihypertensives</i>)
       and C07 (<i>beta blocking agents</i>) with p-values of 0.008 and 0.015,
       respectively. Again, the red border for ATC class C01 (<i>cardiac
@@ -52,92 +71,8 @@
       </div>
     </p>
 
-    <h4>How to save image</h4>
-
-    <p>
-      Figures in the browser are all SVG images. A quick way to save a figure to
-      disk is using an extension (either
-      <a href="https://chrome.google.com/webstore/detail/svg-export/naeaaedieihlkmdajjefioajbbdbdjgp">SVG Export</a>
-      or <a href="https://chrome.google.com/webstore/detail/svg-grabber-get-all-the-s/ndakggdliegnegeclmfgodmgemdokdmg">svg-grabber</a>
-      on Google Chrome, or <a href="https://addons.mozilla.org/en-CA/firefox/addon/svg-export/">SVG Export</a>
-      for Firefox). SVG Export will be documented here, since it's available for
-      both Google Chrome and Firefox.
-    </p>
-
-    <p>
-      Let's say we want to save the g:Profiler figure for Essential hypertension
-      (<a href="{{ url_for('backend_blueprint.get_outcome', id='401.1') }}">401.1</a>).
-      First, navigate to the URL, and wait that all the figures are generated.
-      Then launch the SVG Export plugin by clicking on it.
-    </p>
-
-    <p>
-      <div class="card docs">
-        <div class="card-body">
-          <a href="{{ url_for('backend_blueprint.static', filename='docs/select_svg_export.png') }}"><img src="{{ url_for('backend_blueprint.static', filename='docs/select_svg_export.png') }}" alt="Launch extension"></a>
-        </div>
-      </div>
-    </p>
-
-    <p>
-      A new tab will automatically open. 1) Select the g:Profiler plot and 2)
-      the required format (PNG in this example). Finally, 3) click the "Download
-      Selected" button at the bottom to download the selected images in PNG
-      format.
-    </p>
-
-    <p>
-      <div class="card docs">
-        <div class="card-body">
-          <a href="{{ url_for('backend_blueprint.static', filename='docs/svg_export.png') }}"><img src="{{ url_for('backend_blueprint.static', filename='docs/svg_export.png') }}" alt="Export image"></a>
-        </div>
-      </div>
-    </p>
-
-    <h4>cis-MR analysis</h4>
-
-    <p>
-      Below is an example of cis-MR analys of the effect of
-      <a href="{{ url_for('backend_blueprint.get_outcome', id='cont_v72') }}">LDL direct</a>
-      exposure on the <a href="{{ url_for('backend_blueprint.get_outcome', id='411.4') }}">Coronary astherosclerosis</a>
-      outcome based on genetic variants close to the
-      <a href="{{ url_for('backend_blueprint.get_gene', ensg='ENSG00000169174') }}">PCSK9</a> gene.
-    </p>
-
-    <p>
-      <div class="card docs">
-        <div class="card-body">
-          <a href="{{ url_for('backend_blueprint.static', filename='docs/cisMR_example.svg') }}"><img src="{{ url_for('backend_blueprint.static', filename='docs/cisMR_example.svg') }}" alt="cis-MR analysis"></a>
-        </div>
-      </div>
-    </p>
-
-    <h4>QQ plot interpretation</h4>
-
-    <p>
-      Below is a QQ plot generated for the <a href="{{ url_for('backend_blueprint.get_gene', ensg='ENSG00000162104') }}">ADCY9</a> gene.
-    </p>
-
-    <p>
-      <div class="card docs">
-        <div class="card-body">
-          <div class="qqplot-docs">
-            <h5>Genetic associations QQ-plot for <a href="{{ url_for('backend_blueprint.get_gene', ensg='ENSG00000162104') }}">ADCY9</a></h5>
-            <div>
-              <p>Inflation factor <i>𝜆=<span id="lambdaQQ"></span></i></p>
-            </div>
-            <div id="qqLoading" style="background: url({{ url_for('backend_blueprint.static', filename='qq_plot_loading.svg') }}) no-repeat;">
-              <div style="margin-top: 63%"></div>
-              <div class="spinner-border" role="status"><span class="sr-only">Loading</span></div>
-            </div>
-            <svg id="geneQQ" style="display: none"></svg>
-          </div>
-        </div>
-      </div>
-    </p>
-
+    <a name="g-profiler"></a>
     <h4>Enrichment analysis (g:Profiler)</h4>
-
     <p>
 
       Below is the g:Profiler results for Essential hypertension
@@ -163,12 +98,194 @@
       </div>
     </p>
 
+    <a name="save-plots"></a>
+    <h4>How to save plots</h4>
+
+    <p>
+      Figures in the browser are vector-based and use the SVG format. Because
+      they are vector-based, they can be scaled and are appropriate for printed
+      documents including scientific posters or articles.
+    </p>
+
+    <p>
+      The easiest way to save plots displayed in ExPheWas is to use browser
+      extensions. We suggest using either
+      <a href="https://chrome.google.com/webstore/detail/svg-export/naeaaedieihlkmdajjefioajbbdbdjgp">SVG Export</a>
+      or <a href="https://chrome.google.com/webstore/detail/svg-grabber-get-all-the-s/ndakggdliegnegeclmfgodmgemdokdmg">svg-grabber</a>
+      on Google Chrome, or <a href="https://addons.mozilla.org/en-CA/firefox/addon/svg-export/">SVG Export</a>
+      for Firefox. <b>SVG Export</b> will be documented here, because it is
+      available for both Google Chrome and Firefox.
+    </p>
+
+    <p>
+      As an example, we will download the <em>g:Profiler</em> enrichment results for 
+      "<a href="{{ url_for('backend_blueprint.get_outcome', id='401.1') }}">Essential hypertension</a>".
+      First, navigate to the
+      <a href="{{ url_for('backend_blueprint.get_outcome', id='401.1') }}">
+      phenotype page</a>, and wait for the page to load completely (including
+      the automatically generated plots).
+      Then, launch the SVG Export plugin as displayed below or using your
+      brower's plugin interface.
+    </p>
+
+    <p>
+      <div class="card docs">
+        <div class="card-body">
+          <a href="{{ url_for('backend_blueprint.static', filename='docs/select_svg_export.png') }}">
+            <img src="{{ url_for('backend_blueprint.static', filename='docs/select_svg_export.png') }}" alt="Launch extension">
+          </a>
+        </div>
+      </div>
+    </p>
+
+    <p>
+      A new tab will automatically open. 1) Select the g:Profiler plot and 2)
+      the desired format (PNG in this example). 3) click the "Download
+      Selected" button at the bottom to download the selected image.
+    </p>
+
+    <p>
+      <div class="card docs">
+        <div class="card-body">
+          <a href="{{ url_for('backend_blueprint.static', filename='docs/svg_export.png') }}"><img src="{{ url_for('backend_blueprint.static', filename='docs/svg_export.png') }}" alt="Export image"></a>
+        </div>
+      </div>
+    </p>
+
+    <a name="cis-MR"></a>
+    <h4>cis-MR analysis</h4>
+
+    <p>
+      Mendelian randomization (MR) is used to estimate the causal effect of an
+      exposure on an outcome using genetic variation as an instrumental
+      variable. In ExPheWas, we implement a version of MR where genetic variation
+      within a single gene is of interest. This is useful in the setting of
+      cis-MR, a framework where genetic variants near (in <em>cis</em>) of the gene
+      product of interest are used. This approach has been formalized by others
+      (see
+      <a href="https://www.nature.com/articles/s41467-020-16969-0">
+      Schmidt AF <em>et al.</em> 2020, <em>Nature Communications</em></a>).
+      The authors of that paper emphasize that although it would be ideal to
+      have direct measurements of the gene product enabling formal mediation
+      analysis when considering the effect of a specific gene, it is also
+      possible to use proxy phenotypes selected based on the known gene function
+      in order to estimate the magnitude of the effect of genetic perturbation
+      on the target gene. The implementation of MR in ExPheWas was designed
+      under the proxy paradigm.
+    </p>
+
+    <p>
+      The MR implementation used here relies on the inverse variance weighted
+      estimator computed using gene-based principal components as instrumental
+      variables. Hence, the conventional instrumental assumptions are needed to
+      obtain valid causal estimates. Briefly, these assumptions are:
+
+      <ol>
+        <li><em>Relevance</em>: The instrumental variable is associated with the
+        exposure.</li>
+        <li><em>Unconfoundedness</em>: There are no common causes of the genetic
+        instrumental variable and outcome.</li>
+        <li><em>Exclusion</em>: The effect of the instrumental variable on the
+        outcome is fully mediated by the exposure.</li>
+      </ol>
+    </p>
+
+    <p>
+      We provide the following specific recommendations in the context of
+      ExPheWas MR analyses:
+
+      <ul>
+        <li><b>Ensure that the selected gene-exposure pair has a robust and well
+        understood relationship.</b> For example, converging evidence from
+        different sources (<i>e.g.</i> GWAS, family studies, Mendelian
+        diseases, model organisms or studies of predicted loss-of-function
+        variants) adds credibility to a result. The gene and exposure should
+        also be strongly associated in ExPheWas.</li>
+
+        <li><b>Assess the possibility of confounding due to LD or overlapping
+        genetic features</b>. It may help to visualize overlaping genes in the
+        reported region, and to assess results derived from gene regions
+        centered on neighbouring genes.</li>
+    
+        <li><b>Assess the risk of violations of the exclusion assumption through
+        pleiotropic mechanisms</b>. Visualizing the gene association QQ-plot
+        (available on the gene pages in ExPheWas) is a good way to rapidly
+        evaluate the risk for pleiotropy. Note that many associated phenotypes
+        within the <em>same causal path</em>, so called "vertical pleitropy"
+        is not problematic in MR.</li>
+      </ul>
+    </p>
+
+    <p>
+      Below is an example of cis-MR analys of the effect of
+      <a href="{{ url_for('backend_blueprint.get_outcome', id='cont_v72') }}">LDL direct</a>
+      exposure on the <a href="{{ url_for('backend_blueprint.get_outcome', id='411.4') }}">Coronary astherosclerosis</a>
+      outcome based on genetic variants close to the
+      <a href="{{ url_for('backend_blueprint.get_gene', ensg='ENSG00000169174') }}">PCSK9</a> gene.
+    </p>
+
+    <p>
+      <div class="card docs">
+        <div class="card-body">
+          <div>
+            <a href="{{ url_for('backend_blueprint.static', filename='docs/cisMR_example.svg') }}"><img src="{{ url_for('backend_blueprint.static', filename='docs/cisMR_example.svg') }}" alt="cis-MR analysis"></a>
+          </div>
+          <div>
+            <p>
+              The estimated MR effect displayed on the page for this example is:
+              2.04 (1.74, 2.39) (p=1.0 &times; 10<sup>-18</sup>)
+            </p>
+          </div>
+        </div>
+      </div>
+    </p>
+
+    <a name="qq-plot-interpretation"></a>
+    <h4>QQ plot interpretation</h4>
+    <p>
+      Quantile-quantile (QQ) plots are commonly use in Genome-Wide association
+      Studies as a measure of polygenicity or counfonding. Briefly, under the
+      null hypothesis of no association (H<sub>0</sub>: &beta; = 0), the test
+      p-values are expected to follow a uniform distribution. The QQ plot shows
+      the observed p-values as a function of the expected p-values under the
+      null hypothesis. Upward deviations from the identity on this plot shows
+      that association statistics are "inflated".
+    </p>
+    <p>
+      In ExPheWas, QQ-plots are used on gene pages to show the association
+      p-values with all tested phenotypes. It can be used to rapidly find
+      phenotypes with association p-values that deviate from the expected
+      distribution under the null. Systematic deviation from the identity may
+      indicate pleiotropy, the association of a gene with different phenotypes.
+    </p>
+    <p>
+      Below is a QQ plot generated for the <a href="{{ url_for('backend_blueprint.get_gene', ensg='ENSG00000162104') }}">ADCY9</a> gene.
+    </p>
+
+    <p>
+      <div class="card docs">
+        <div class="card-body">
+          <div class="qqplot-docs">
+            <h5>Genetic associations QQ-plot for <a href="{{ url_for('backend_blueprint.get_gene', ensg='ENSG00000162104') }}">ADCY9</a></h5>
+            <div>
+              <p>Inflation factor <i>𝜆=<span id="lambdaQQ"></span></i></p>
+            </div>
+            <div id="qqLoading" style="background: url({{ url_for('backend_blueprint.static', filename='qq_plot_loading.svg') }}) no-repeat;">
+              <div style="margin-top: 63%"></div>
+              <div class="spinner-border" role="status"><span class="sr-only">Loading</span></div>
+            </div>
+            <svg id="geneQQ" style="display: none"></svg>
+          </div>
+        </div>
+      </div>
+    </p>
+
 {% endblock %}
 
 {% block other_script %}
     <script>
-      window.pages.atcTree('401.1', 'atc-tree-401-1');
-      window.pages.simpleQQPlotFromURL('/gene/ENSG00000162104/results?analysis_subset=BOTH');
-      window.pages.simpleManhattanFromURL('/outcome/401.1/results?analysis_subset=BOTH');
+      window.utils.atcTree('401.1', 'atc-tree-401-1');
+      window.utils.simpleQQPlotFromURL('/gene/ENSG00000162104/results?analysis_subset=BOTH');
+      window.utils.simpleManhattanFromURL('/outcome/401.1/results?analysis_subset=BOTH');
     </script>
 {% endblock %}

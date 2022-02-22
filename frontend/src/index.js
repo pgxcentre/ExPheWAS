@@ -497,14 +497,18 @@ async function simpleManhattanFromURL(url) {
 }
 
 
+window.utils = {
+  atcTree,
+  simpleQQPlotFromURL,
+  simpleManhattanFromURL
+}
+
+
 window.pages = {
   mainOutcomeList,
   mainOutcomeResults,
   mainGeneResults,
   mainGeneList,
   documentation,
-  cisMR,
-  atcTree,
-  simpleQQPlotFromURL,
-  simpleManhattanFromURL
+  cisMR
 }
