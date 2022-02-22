@@ -75,11 +75,19 @@
     <h4>Enrichment analysis (g:Profiler)</h4>
 
     <p>
+      To enable enrichment analysis between genes associated with a phenotype
+      and various ontologies, we use
+      <a href="https://biit.cs.ut.ee/gprofiler/gost">g:Profiler</a>. If enough
+      genes are associated with the phenotypes (with q-value &le; 0.05), the
+      list of associated genes is automatically evaluated for enrichment with
+      Gene Ontology term, Human Phenotype Ontology terms or KEGG pathways.
+      The enrichment p-values are then visualized.
+    </p>
 
-      Below is the g:Profiler results for Essential hypertension
-      (<a href="{{ url_for('backend_blueprint.get_outcome', id='401.1') }}">401.1</a>).
-      The plot are created using g:Profiler and with the significant genes for
-      the given outcome.
+    <p>
+      Enrichment results for Essential hypertension
+      (<a href="{{ url_for('backend_blueprint.get_outcome', id='401.1') }}">401.1</a>)
+      are shown below.
     </p>
 
     <p>
@@ -92,11 +100,6 @@
             </div>
             <div id="enrichment-box" style="display: none">
               <div style="margin-top: 20px" id="enrichment-plot"></div>
-              <div style="margin-top: 20px">
-                <p><a href="https://biit.cs.ut.ee/gprofiler/gost">g:Profiler</a> is
-                used to automatically compute enrichment analyses when more
-                than 5 genes are significant with a <i>Q</i> &lt; 0.05.</p>
-              </div>
             </div>
           </div>
         </div>
