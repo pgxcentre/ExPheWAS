@@ -494,7 +494,20 @@ function mainGeneList() {
           render: (pstrand, type, row, meta) => pstrand? '+': '-'
         }
       ],
-      order: [[5, 'asc'], [6, 'asc']]
+      order: [[5, 'asc'], [6, 'asc']],
+      initComplete: function() {
+        // https://datatables.net/examples/api/multi_filter.html
+        this.api().columns().every( function () {
+          var that = this;
+          $('input', this.footer()).on('keyup change clear', function() {
+              if (that.search() !== this.value) {
+                that
+                  .search( this.value )
+                  .draw();
+              }
+          });
+        });
+      }
   });
 }
 
