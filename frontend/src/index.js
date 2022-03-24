@@ -439,14 +439,13 @@ function mainGeneList() {
       columns: [
         {data: "ensembl_id"},             // 0
         {data: null},                     // 1
-        {data: null},                     // 2
-        {data: "name"},                   // 3
-        {data: "description"},            // 4
-        {data: "biotype"},                // 5
-        {data: "chrom"},                  // 6
-        {data: "start"},                  // 7
-        {data: "end"},                    // 8
-        {data: "positive_strand"}         // 9
+        {data: "name"},                   // 2
+        {data: "description"},            // 3
+        {data: "biotype"},                // 4
+        {data: "chrom"},                  // 5
+        {data: "start"},                  // 6
+        {data: "end"},                    // 7
+        {data: "positive_strand"}         // 8
       ],
       createdRow: function(row, data, dataIndex) {
         if (!data.has_results) {
@@ -461,25 +460,19 @@ function mainGeneList() {
             if (!row.has_results)
               return ensembl_id
 
+            let region = `chr${row.chrom}:${row.start-1}-${row.end-1}`;
+
             let a = `<a href="${URL_PREFIX}/gene/${ensembl_id}?analysis_subset=BOTH">`;
             a += ensembl_id + "</a>";
+
+            a += ` <a href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=${region}" target="_blank">(`;
+            a += "View)</a>"
+
             return a;
           }
         },
         {
           targets: 1,
-          orderable: false,
-          searchable: false,
-          render: (data, type, row, meta) => {
-            if (!row.has_results)
-              return "";
-
-            let region = `chr${data.chrom}:${data.start-1}-${data.end-1}`;
-            return `<a href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=${region}" target="_blank">View region</a>`;
-          }
-        },
-        {
-          targets: 2,
           orderable: false,
           searchable: false,
           render: (a, type, row, meta) => {
@@ -506,23 +499,36 @@ function mainGeneList() {
             return badges.join(" ");
           }
         },
-        { targets: 5, render: biotype => BIOTYPES[biotype] },
+        { targets: 4, render: biotype => BIOTYPES[biotype] },
         {
-          targets: [7, 8],
+          targets: [6, 7],
           render: (position, type, row, meta) => formatNumber(position)
         },
         {
-          targets: [6, 7, 8],
+          targets: [5, 6, 7],
           searchable: false,
           className: 'dt-body-right'
         },
         {
-          targets: 9,
+          targets: 8,
           searchable: false,
           render: (pstrand, type, row, meta) => pstrand? '+': '-'
         }
       ],
-      order: [[6, 'asc'], [7, 'asc']]
+      order: [[5, 'asc'], [6, 'asc']],
+      initComplete: function() {
+        // https://datatables.net/examples/api/multi_filter.html
+        this.api().columns().every( function () {
+          var that = this;
+          $('input', this.footer()).on('keyup change clear', function() {
+              if (that.search() !== this.value) {
+                that
+                  .search( this.value )
+                  .draw();
+              }
+          });
+        });
+      }
   });
 }
 

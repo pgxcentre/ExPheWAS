@@ -1,8 +1,9 @@
+wheel==0.37
 appnope==0.1.2
 asgiref==3.3.4
 backcall==0.2.0
 click==8.0.1
-datatables==0.4.9
+git+https://github.com/orf/datatables@dec3acc46898d611ea951b057cecd909c023d086#egg=datatables
 decorator==5.0.9
 Flask==2.0.1
 Flask-Cors==3.0.10
