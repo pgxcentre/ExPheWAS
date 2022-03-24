@@ -15,12 +15,45 @@
     <p>
       The following topics are documented on this page:
       <ul class="list-group list-group-flush">
+        <li class="list-group-item"><a href="#multiple-hypothesis-testing">Multiple hypothesis testing</a></li>
         <li class="list-group-item"><a href="#atc">Enrichment with drug classes (phenotype pages)</a></li>
         <li class="list-group-item"><a href="#g-profiler">Enrichment with ontologies (phenotype pages)</a></li>
         <li class="list-group-item"><a href="#save-plots">How to save plots</a></li>
         <li class="list-group-item"><a href="#cis-MR">cis-Mendelian Randomization analysis</a></li>
         <li class="list-group-item"><a href="#qq-plot-interpretation">QQ-plot interpretation (gene pages)</a></li>
       </ul>
+    </p>
+
+    <a name="multiple-hypothesis-testing"></a>
+    <h4>Multiple hypothesis testing</h4>
+
+    <p>
+      In ExPheWas, we do a single association test for every gene, phenotype
+      pair. In total, this corresponds to ~4.6 million tests (26,616 &times;
+      1,746) per subgroup (<em>i.e.</em> male-only, female-only and everyone).
+    </p>
+    <p>
+      To control for false positives due to multiple testing, we provide
+      statistics of varying stringency including the uncorrected P-value, the
+      Bonferroni corrected P-value and the Q-value.
+    </p>
+      
+    <p>
+      When browsing results by phenotype, we assume that users are interested in
+      finding genes possibly associated with their phenotype and interest and
+      the multiple testing correction is based on the <b>26,613</b> considered
+      genes. This adjustment is used for the Bonferroni correction. The Q-values
+      are also calculated based on the 26,613 tests.
+    </p>
+
+    <p>
+      When browsing results by gene, we assume that users are interested in
+      finding all phenotypes associated with their gene of interest. Hence,
+      the correction is based on the <b>1,746</b> tested phenotypes. For this
+      reason, the reported Bonferroni corrected P-values and Q-values will be
+      different for the same association test depending on the page on which they
+      are found. This is expected because our multiple hypothesis testing
+      strategy depends on the underlying research question.
     </p>
 
     <a name="atc"></a>

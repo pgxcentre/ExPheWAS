@@ -215,11 +215,12 @@ async function mainOutcomeResults(id) {
       columns: [
         {data: 'gene'},            // 0
         {data: 'gene_name'},       // 1
-        {data: 'nlog10p'},         // 2
-        {data: 'p'},               // 3
-        {data: 'bonf'},            // 4
-        {data: 'q'},               // 5
-        {data: 'n_components'}     // 6
+        {data: 'region'},          // 2
+        {data: 'nlog10p'},         // 3
+        {data: 'p'},               // 4
+        {data: 'bonf'},            // 5
+        {data: 'q'},               // 6
+        {data: 'n_components'}     // 7
       ],
       columnDefs: [
         {
@@ -230,22 +231,36 @@ async function mainOutcomeResults(id) {
         },
         {
           targets: 2,
+          orderable: false,
+          sortable: false,
+          render: function(region, type, row, meta) {
+            let region0 = `chr${region.chrom}:${region.start-1}-${region.end-1}`;
+            let region_display = `chr${region.chrom}:` +
+              `${region.start.toLocaleString('en-US')}-` +
+              `${region.end.toLocaleString('en-US')}`;
+
+            return `<a href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=${region0}"` +
+              ` target="_blank">${region_display}</a>`;
+          }
+        },
+        {
+          targets: 3,
           render: function(nlog10p, type, row, meta) {
             return nlog10p.toFixed(2);
           }
         },
         {
-          targets: [3, 4, 5],
+          targets: [4, 5, 6],
           render: function(p, type, row, meta) {
             return formatP(p);
           }
         },
         {
-          targets: [2, 3, 4, 5, 6],
+          targets: [3, 4, 5, 6, 7],
           className: 'dt-body-right'
         }
       ],
-      order: [[2, 'desc']]
+      order: [[3, 'desc']]
   });
 }
 
@@ -445,8 +460,14 @@ function mainGeneList() {
             if (!row.has_results)
               return ensembl_id
 
+            let region = `chr${row.chrom}:${row.start-1}-${row.end-1}`;
+
             let a = `<a href="${URL_PREFIX}/gene/${ensembl_id}?analysis_subset=BOTH">`;
             a += ensembl_id + "</a>";
+
+            a += ` <a href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=${region}" target="_blank">(`;
+            a += "Region)</a>"
+
             return a;
           }
         },
@@ -494,7 +515,20 @@ function mainGeneList() {
           render: (pstrand, type, row, meta) => pstrand? '+': '-'
         }
       ],
-      order: [[5, 'asc'], [6, 'asc']]
+      order: [[5, 'asc'], [6, 'asc']],
+      initComplete: function() {
+        // https://datatables.net/examples/api/multi_filter.html
+        this.api().columns().every( function () {
+          var that = this;
+          $('input', this.footer()).on('keyup change clear', function() {
+              if (that.search() !== this.value) {
+                that
+                  .search( this.value )
+                  .draw();
+              }
+          });
+        });
+      }
   });
 }
 

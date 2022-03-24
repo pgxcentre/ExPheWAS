@@ -197,6 +197,11 @@ def get_outcome_results(id):
     return [
         {
             "gene": o.gene_obj.ensembl_id,
+            "region": {
+                "chrom": o.gene_obj.chrom,
+                "start": o.gene_obj.start,
+                "end": o.gene_obj.end,
+            },
             "analysis_type": outcome.analysis_type,
             "outcome_id": outcome.id,
             "outcome_label": outcome.label,
