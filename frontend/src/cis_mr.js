@@ -40,7 +40,20 @@ function createGeneTable() {
         { targets: [5, 6], render: formatNumber },
         { targets: [4, 5, 6], searchable: false, className: 'dt-body-right' },
       ],
-      order: [[4, 'asc'], [5, 'asc']]
+      order: [[4, 'asc'], [5, 'asc']],
+      initComplete: function() {
+        // https://datatables.net/examples/api/multi_filter.html
+        this.api().columns().every( function () {
+          var that = this;
+          $('input', this.footer()).on('keyup change clear', function() {
+              if (that.search() !== this.value) {
+                that
+                  .search( this.value )
+                  .draw();
+              }
+          });
+        });
+      }
   });
 
   $('#genes tbody').on('click', 'tr', function () {
