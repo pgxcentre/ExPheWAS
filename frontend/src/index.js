@@ -466,7 +466,7 @@ function mainGeneList() {
             a += ensembl_id + "</a>";
 
             a += ` <a href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=${region}" target="_blank">(`;
-            a += "View)</a>"
+            a += "Region)</a>"
 
             return a;
           }
