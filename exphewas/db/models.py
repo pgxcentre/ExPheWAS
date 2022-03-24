@@ -376,6 +376,15 @@ class Gene(Base):
         lazy="joined"
     )
 
+    def get_region_str(self, zero_based=False):
+        start = self.start
+        end = self.end
+        if zero_based:
+            start -= 1
+            end -= 1
+
+        return f"chr{self.chrom}:{start}-{end}"
+
     @property
     def n_pcs(self):
         return self.n_pcs_obj.n_pcs_95

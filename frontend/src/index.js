@@ -215,11 +215,12 @@ async function mainOutcomeResults(id) {
       columns: [
         {data: 'gene'},            // 0
         {data: 'gene_name'},       // 1
-        {data: 'nlog10p'},         // 2
-        {data: 'p'},               // 3
-        {data: 'bonf'},            // 4
-        {data: 'q'},               // 5
-        {data: 'n_components'}     // 6
+        {data: 'region'},          // 2
+        {data: 'nlog10p'},         // 3
+        {data: 'p'},               // 4
+        {data: 'bonf'},            // 5
+        {data: 'q'},               // 6
+        {data: 'n_components'}     // 7
       ],
       columnDefs: [
         {
@@ -230,22 +231,36 @@ async function mainOutcomeResults(id) {
         },
         {
           targets: 2,
+          orderable: false,
+          sortable: false,
+          render: function(region, type, row, meta) {
+            let region0 = `chr${region.chrom}:${region.start-1}-${region.end-1}`;
+            let region_display = `chr${region.chrom}:` +
+              `${region.start.toLocaleString('en-US')}-` +
+              `${region.end.toLocaleString('en-US')}`;
+
+            return `<a href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=${region0}"` +
+              ` target="_blank">${region_display}</a>`;
+          }
+        },
+        {
+          targets: 3,
           render: function(nlog10p, type, row, meta) {
             return nlog10p.toFixed(2);
           }
         },
         {
-          targets: [3, 4, 5],
+          targets: [4, 5, 6],
           render: function(p, type, row, meta) {
             return formatP(p);
           }
         },
         {
-          targets: [2, 3, 4, 5, 6],
+          targets: [3, 4, 5, 6, 7],
           className: 'dt-body-right'
         }
       ],
-      order: [[2, 'desc']]
+      order: [[3, 'desc']]
   });
 }
 
@@ -424,13 +439,14 @@ function mainGeneList() {
       columns: [
         {data: "ensembl_id"},             // 0
         {data: null},                     // 1
-        {data: "name"},                   // 2
-        {data: "description"},            // 3
-        {data: "biotype"},                // 4
-        {data: "chrom"},                  // 5
-        {data: "start"},                  // 6
-        {data: "end"},                    // 7
-        {data: "positive_strand"}         // 8
+        {data: null},                     // 2
+        {data: "name"},                   // 3
+        {data: "description"},            // 4
+        {data: "biotype"},                // 5
+        {data: "chrom"},                  // 6
+        {data: "start"},                  // 7
+        {data: "end"},                    // 8
+        {data: "positive_strand"}         // 9
       ],
       createdRow: function(row, data, dataIndex) {
         if (!data.has_results) {
@@ -452,6 +468,18 @@ function mainGeneList() {
         },
         {
           targets: 1,
+          orderable: false,
+          searchable: false,
+          render: (data, type, row, meta) => {
+            if (!row.has_results)
+              return "";
+
+            let region = `chr${data.chrom}:${data.start-1}-${data.end-1}`;
+            return `<a href="https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg19&position=${region}" target="_blank">View region</a>`;
+          }
+        },
+        {
+          targets: 2,
           orderable: false,
           searchable: false,
           render: (a, type, row, meta) => {
@@ -478,23 +506,23 @@ function mainGeneList() {
             return badges.join(" ");
           }
         },
-        { targets: 4, render: biotype => BIOTYPES[biotype] },
+        { targets: 5, render: biotype => BIOTYPES[biotype] },
         {
-          targets: [6, 7],
+          targets: [7, 8],
           render: (position, type, row, meta) => formatNumber(position)
         },
         {
-          targets: [5, 6, 7],
+          targets: [6, 7, 8],
           searchable: false,
           className: 'dt-body-right'
         },
         {
-          targets: 8,
+          targets: 9,
           searchable: false,
           render: (pstrand, type, row, meta) => pstrand? '+': '-'
         }
       ],
-      order: [[5, 'asc'], [6, 'asc']]
+      order: [[6, 'asc'], [7, 'asc']]
   });
 }
 
