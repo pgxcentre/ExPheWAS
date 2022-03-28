@@ -53,6 +53,9 @@
             <sup>*</sup> Estimated average across genes.
 
             <div id="enrichment-box" style="display: none">
+              <div style="margin-top: 20px">
+                <h5>Ontology Enrichment Analysis</h5>
+              </div>
               <div style="margin-top: 20px" id="enrichment-plot"></div>
               <div style="margin-top: 20px">
                 <p><a href="https://biit.cs.ut.ee/gprofiler/gost">g:Profiler</a> is
@@ -60,6 +63,9 @@
                 than 5 genes are significant with a <i>Q</i> &lt; 0.05.</p>
                 <p>The above plot was created using this resource and with the
                 significant genes from the table below.</p>
+                <p>This plot may be used to find meaningful terms that are
+                disproportionately found in genes associated with this
+                phenotype.</p>
               </div>
             </div>
 
@@ -71,11 +77,22 @@
           {% if has_atc_enrichment -%}
           <div class="atc-enrichment" style="text-align: center;">
             <div class="atc-enrichment-header">
-              <h5>Enrichment Analysis</h5>
+              <h5>Drug Target Enrichment Analysis</h5>
             </div>
             <svg id="atc-tree" class="atc-tree-cls"></svg>
           </div>
-          <div>The above tree shows drug classes based on Anatomical Therapeutic Chemical (ATC) Classification codes. The color of the nodes indicates an enrichment of genes associated with the current phenotype (at <i>Q</i> &lt; 0.05) with drugs of the corresponding ATC class.</div>
+          <div>
+            <p>The above tree shows drug classes based on Anatomical Therapeutic
+            Chemical (ATC) Classification codes. The color of the nodes
+            indicates an enrichment of genes associated with the current
+            phenotype (at <i>Q</i> &lt; 0.05) with drugs of the corresponding
+            ATC class.</p>
+            <p>This plot shows drug classes that may disproportionately target
+            the product of genes associated with the phenotype. This information
+            may correlate with pharmacological treatment for disease phenotypes,
+            highlight possible adverse effects for the drug class or identify
+            drug repurposing opportunities.</p>
+          </div>
           {%- endif %}
         </div>
       </div>
@@ -87,6 +104,7 @@
             <tr>
               <th class="dt-head-left">Gene</th>
               <th class="dt-head-left">Symbol</th>
+              <th class="dt-head-left">UCSC Browser Link</th>
               <th class="dt-head-right">-log<sub>10</sub>(<i>P</i>)</th>
               <th class="dt-head-right">P-Value</th>
               <th class="dt-head-right">P-Value (Bonferroni)</th>
