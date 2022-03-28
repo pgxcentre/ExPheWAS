@@ -28,32 +28,34 @@
     <h4>Multiple hypothesis testing</h4>
 
     <p>
-      In ExPheWas, we do a single association test for every gene, phenotype
-      pair. In total, this corresponds to ~4.6 million tests (26,616 &times;
-      1,746) per subgroup (<em>i.e.</em> male-only, female-only and everyone).
+      In ExPheWas, a single association test is conducted for every
+      gene-phenotype pair. In total, this corresponds to ~4.6 million tests
+      (26,616 &times; 1,746) per subgroup (<em>i.e.</em> male-only, female-only
+      and sex-combined).
     </p>
+
     <p>
       To control for false positives due to multiple testing, we provide
       statistics of varying stringency including the uncorrected P-value, the
       Bonferroni corrected P-value and the Q-value.
     </p>
-      
+
     <p>
-      When browsing results by phenotype, we assume that users are interested in
-      finding genes possibly associated with their phenotype and interest and
-      the multiple testing correction is based on the <b>26,613</b> considered
-      genes. This adjustment is used for the Bonferroni correction. The Q-values
-      are also calculated based on the 26,613 tests.
+      When browsing results by phenotype, we assume that users are searching for
+      genes associated with one phenotype of interest, and the multiple testing
+      correction is based on the 26,613 considered genes. This adjustment is
+      used for the Bonferroni correction and the Q-values are also calculated
+      based on the 26,613 tests.
     </p>
 
     <p>
-      When browsing results by gene, we assume that users are interested in
-      finding all phenotypes associated with their gene of interest. Hence,
-      the correction is based on the <b>1,746</b> tested phenotypes. For this
-      reason, the reported Bonferroni corrected P-values and Q-values will be
-      different for the same association test depending on the page on which they
-      are found. This is expected because our multiple hypothesis testing
-      strategy depends on the underlying research question.
+      When browsing results by gene, we assume that users are searching for
+      phenotypes associated with a gene of interest. Hence, the correction is
+      based on the 1,746 tested phenotypes. For this reason, the reported
+      Bonferroni corrected P-values and Q-values will be different for the same
+      association test depending on the page on which they are found. This is
+      expected because our multiple hypothesis testing strategy depends on the
+      underlying research question.
     </p>
 
     <a name="atc"></a>
@@ -200,20 +202,20 @@
     <p>
       Mendelian randomization (MR) is used to estimate the causal effect of an
       exposure on an outcome using genetic variation as an instrumental
-      variable. In ExPheWas, we implement a version of MR where genetic variation
-      within a single gene is of interest. This is useful in the setting of
-      cis-MR, a framework where genetic variants near (in <em>cis</em>) of the gene
-      product of interest are used. This approach has been formalized by others
-      (see
+      variable. In ExPheWas, we implement a version of MR where genetic
+      variation within a single gene is of interest. This is useful in the
+      setting of cis-MR, a framework where only genetic variants near (in
+      <em>cis</em>) of the gene encoding the gene product of interest are used.
+      This approach has been formalized by others (see
       <a href="https://www.nature.com/articles/s41467-020-16969-0">
-      Schmidt AF <em>et al.</em> 2020, <em>Nature Communications</em></a>).
-      The authors of that paper emphasize that although it would be ideal to
-      have direct measurements of the gene product enabling formal mediation
-      analysis when considering the effect of a specific gene, it is also
-      possible to use proxy phenotypes selected based on the known gene function
-      in order to estimate the magnitude of the effect of genetic perturbation
-      on the target gene. The implementation of MR in ExPheWas was designed
-      under the proxy paradigm.
+      Schmidt AF <em>et al.</em> 2020, <em>Nature Communications</em></a>),
+      where it is emphasized that although it would be ideal to have direct
+      measurements of the gene product enabling formal mediation analysis when
+      considering the effect of a specific gene, it is also possible to use
+      proxy phenotypes selected based on the known gene function in order to
+      estimate the magnitude of the effect of genetic perturbation on the target
+      gene. The implementation of MR in ExPheWas was designed under this
+      paradigm.
     </p>
 
     <p>
