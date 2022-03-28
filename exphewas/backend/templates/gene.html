@@ -60,6 +60,9 @@
                   <div style="text-align: center">
                     <svg id="geneGTEX"></svg>
                   </div>
+                  <p>This plot shows tissues where the current gene is most
+                  expressed in GTEx to help contextualize phenotype
+                  associations.</p>
                 </div>
                 {%- endif %}
               </div>
@@ -81,6 +84,12 @@
               <div class="spinner-border" role="status"><span class="sr-only">Loading</span></div>
             </div>
             <svg id="geneQQ" style="display: none"></svg>
+
+            <p>This plot shows the distribution of observed association P-values
+            compared to the expected distribution under the null hypothesis of
+            no association (uniform distribution of P-values). Systematic
+            deviation from the shaded region indicates statistical inflation
+            that could be explained by pleiotropy.</p>
 
             <div>
               <h5>Browse associated phenotypes:</h5>

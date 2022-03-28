@@ -82,6 +82,19 @@
             <th class="dt-head-right">End</th>
           </tr>
         </thead>
+        <tbody>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th>Ensembl Id</th>
+            <th>Symbol</th>
+            <th>Description</th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+          </tr>
+        </tfoot>
       </table>
     </div>
 
@@ -113,6 +126,11 @@
 {% block other_script %}
     <script>
       window.pages.cisMR();
+      $('#genes tfoot th').each(function() {
+        var title = $(this).text();
+        if (title) {
+          $(this).html('<input type="text" placeholder="Search '+title+'" />');
+        }
+      });
     </script>
 {% endblock %}
-

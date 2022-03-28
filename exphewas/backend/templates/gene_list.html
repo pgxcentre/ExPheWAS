@@ -7,17 +7,32 @@
       <table id="genes" class="display" style="width:100%">
         <thead>
           <tr>
-            <th class="dt-head-left">Ensembl Id</th>
+            <th class="dt-head-left">Ensembl Id (UCSC Browser link)</th>
             <th class="dt-head-left">Available Subgroups</th>
             <th class="dt-head-left">Symbol</th>
             <th class="dt-head-left">Description</th>
             <th class="dt-head-left">Biotype</th>
-            <th class="dt-head-right">Chromosome</th>
+            <th class="dt-head-right">Chr.</th>
             <th class="dt-head-right">Start</th>
             <th class="dt-head-right">End</th>
             <th class="dt-head-left">Strand</th>
           </tr>
         </thead>
+        <tbody>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th>Ensembl Id</th>
+            <th></th>
+            <th>Symbol</th>
+            <th>Description</th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th></th>
+          </tr>
+        </tfoot>
       </table>
 
     </div>
@@ -26,5 +41,11 @@
 {% block other_script %}
     <script type="text/javascript">
       window.pages.mainGeneList();
+      $('#app #genes tfoot th').each( function () {
+        var title = $(this).text();
+        if (title) {
+          $(this).html('<input type="text" placeholder="Search '+title+'" />');
+        }
+      });
     </script>
 {% endblock %}
