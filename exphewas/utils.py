@@ -153,7 +153,7 @@ def one_sample_ivw_mr(x_model, y_model, alpha=None, instrument_prune=True):
     }
 
     if alpha:
-        z = scipy.stats.norm.ppf((1 - alpha) / 2)
+        z = scipy.stats.norm.ppf(alpha / 2)
         ci_pct = str(int((1 - alpha) * 100))
         out[f"lower_ci{ci_pct}"] = ivw + z * se
         out[f"upper_ci{ci_pct}"] = ivw - z * se
